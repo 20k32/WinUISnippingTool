@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Window
-    x:Class="WinUISnippingTool.MainWindow"
+    x:Class="WinUISnippingTool.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:WinUISnippingTool"
+    xmlns:local="using:WinUISnippingTool.Models.Items"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:templateSelector="using:WinUISnippingTool.Models.TemplateSelectors"
@@ -12,17 +12,19 @@
 
     <Grid>
         <Grid.Resources>
-            <DataTemplate x:Key="comboBoxDefaultItemTemplate">
+            <DataTemplate x:Key="comboBoxDefaultItemTemplate"
+                          x:DataType="local:SnipShapeKind">
                 <StackPanel Orientation="Horizontal">
-                    <FontIcon Glyph="{Binding Glyph}"
+                    <FontIcon Glyph="{x:Bind Glyph, Mode=OneWay}"
                               Margin="0, 0, 10, 0"/>
-                    <TextBlock Text="{Binding Name}" />
+                    <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
                 </StackPanel>
             </DataTemplate>
 
-            <DataTemplate x:Key="comboBoxSelectedItemTemplate">
+            <DataTemplate x:Key="comboBoxSelectedItemTemplate"
+                          x:DataType="local:SnipShapeKind">
                 <StackPanel Orientation="Horizontal">
-                    <FontIcon Glyph="{Binding Glyph}"/>
+                    <FontIcon Glyph="{x:Bind Glyph, Mode=OneWay}"/>
                 </StackPanel>
             </DataTemplate>
             
@@ -48,12 +50,14 @@
                 <ColumnDefinition/>
                 <ColumnDefinition x:Name="RightPaddingColumn" Width="0"/>
             </Grid.ColumnDefinitions>
+            
             <FontIcon Glyph="&#xE8C6;"
                       Grid.Column="0"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Center"
                       Margin="5, 0, 0, 0"
                       FontSize="15"/>
+            
             <TextBlock x:Name="AppTitleTextBlock"
                        Text="Snipping Tool" 
                        Style="{ThemeResource CaptionTextBlockStyle}" 
@@ -79,15 +83,16 @@
                         Margin="20, 0, 0, 0"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
+                
                 <Button Margin="0, 0, 15, 0">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="5">
                         <FontIcon Glyph="&#xE10F;"
                                   x:Name="NewPictureIcon"
                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Hell to world"
-                                   x:Name="PART_TakePictureButtonName"
-                                   RelativePanel.RightOf="NewPictureIcon"/>
+                        <TextBlock x:Name="PART_TakePictureButtonName"
+                                   RelativePanel.RightOf="NewPictureIcon"
+                                   Text="{x:Bind ViewModel.TakePhotoButtonName}"/>
                     </StackPanel>
                     
                 </Button>
@@ -100,7 +105,8 @@
                           Background="Transparent"
                           BorderThickness="0"
                           ItemTemplateSelector="{StaticResource comboBoxItemTemplateSelector}"
-                          ItemsSource="{x:Bind ComboBoxItems}"
+                          ItemsSource="{x:Bind ViewModel.SnipKinds, Mode=OneTime}"
+                          SelectedItem="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"
                           SelectedIndex="0">
                 </ComboBox>
             </StackPanel>
@@ -123,6 +129,7 @@
                 <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xED60;" />
                 </Button>
+                
                 <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         Width="1"
                         Height="27"
@@ -193,6 +200,8 @@
                 Height="500"
                 x:Name="MyPanel">
                 <Button x:Name="myButton" Click="myButton_Click">zxvzxcv</Button>
+
+                <TextBlock x:Uid="FullScreenAreaName"/>
             </StackPanel>
         </Border>
 

@@ -18,12 +18,12 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.WindowManagement;
 using WinRT.Interop;
-using WinUISnippingTool.Models;
+using WinUISnippingTool.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace WinUISnippingTool
+namespace WinUISnippingTool.Views
 {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
@@ -36,7 +36,8 @@ namespace WinUISnippingTool
         private bool isScreenMiddleSized;
         private bool contentLoaded;
 
-        public List<ComboBoxItemWithIcon> ComboBoxItems { get; }
+
+        public MainWindowViewModel ViewModel { get; }
 
         public MainWindow()
         {
@@ -44,11 +45,7 @@ namespace WinUISnippingTool
             this.ExtendsContentIntoTitleBar = true;
             var element = (FrameworkElement)this.Content;
             element.ActualThemeChanged += ThemeChanged;
-            ComboBoxItems = new(4);
-            ComboBoxItems.Add(new("Rectangle", "\uF407"));
-            ComboBoxItems.Add(new("Window", "\uF7ED"));
-            ComboBoxItems.Add(new("Full screen", "\uE7F4"));
-            ComboBoxItems.Add(new("Freeform", "\uF408"));
+            ViewModel = new();
         }
 
         private void ThemeChanged(FrameworkElement sender, object args)
@@ -58,7 +55,7 @@ namespace WinUISnippingTool
 
         private void myButton_Click(object sender, RoutedEventArgs e)
         {
-            myButton.Content = "safaxzvzxcvsdf";
+
         }
 
         private void Window_SizeChanged(object sender, WindowSizeChangedEventArgs args)
