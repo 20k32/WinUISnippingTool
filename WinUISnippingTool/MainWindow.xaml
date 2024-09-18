@@ -6,14 +6,30 @@
     xmlns:local="using:WinUISnippingTool"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:templateSelector="using:WinUISnippingTool.Models.TemplateSelectors"
     mc:Ignorable="d"
     SizeChanged="Window_SizeChanged">
 
-
-    <!--<Window.SystemBackdrop>
-        <MicaBackdrop Kind="BaseAlt"/>
-    </Window.SystemBackdrop>-->
     <Grid>
+        <Grid.Resources>
+            <DataTemplate x:Key="comboBoxDefaultItemTemplate">
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="{Binding Glyph}"
+                              Margin="0, 0, 10, 0"/>
+                    <TextBlock Text="{Binding Name}" />
+                </StackPanel>
+            </DataTemplate>
+
+            <DataTemplate x:Key="comboBoxSelectedItemTemplate">
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="{Binding Glyph}"/>
+                </StackPanel>
+            </DataTemplate>
+            
+            <templateSelector:ComboBoxItemTemplateSelector x:Key="comboBoxItemTemplateSelector"
+                                                           DropdownItemTemplate="{StaticResource comboBoxDefaultItemTemplate}"
+                                                           SelectedItemTemplate="{StaticResource comboBoxSelectedItemTemplate}"/>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="31"/>
             <RowDefinition Height="Auto"/>
@@ -22,9 +38,10 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-
+        
+        <!-- Title bar -->
         <Grid x:Name="AppTitleBar" 
-              Background="{StaticResource SystemChromeMediumColor}"
+              Background="{ThemeResource SystemChromeMediumColor}"
               Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="LeftPaddingColumn" Width="24"/>
@@ -38,136 +55,118 @@
                       Margin="5, 0, 0, 0"
                       FontSize="15"/>
             <TextBlock x:Name="AppTitleTextBlock"
-                       Text="Snapping Tool" 
-                       Style="{StaticResource CaptionTextBlockStyle}" 
+                       Text="Snipping Tool" 
+                       Style="{ThemeResource CaptionTextBlockStyle}" 
                        VerticalAlignment="Top"
                        Margin="7,5,0,0"
                        Grid.Column="1"/>
         </Grid>
 
-        <Grid Background="{StaticResource SystemChromeMediumColor}"
+        <!-- Main pane -->
+        <Grid Background="{ThemeResource SystemChromeMediumColor}"
               Grid.Row="1"
-              Padding="0, 5">
+              Padding="0, 5"
+              x:Name="PART_MainPane">
             
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
+            <!-- New photo (Left) pane  -->
             <StackPanel Grid.Column="0"
                         Margin="20, 0, 0, 0"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
                 <Button Margin="0, 0, 15, 0">
-                    <TextBlock Text="hell to world New"
-                               TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="5">
+                        <FontIcon Glyph="&#xE10F;"
+                                  x:Name="NewPictureIcon"
+                                  VerticalAlignment="Center"/>
+                        <TextBlock Text="Hell to world"
+                                   x:Name="PART_TakePictureButtonName"
+                                   RelativePanel.RightOf="NewPictureIcon"/>
+                    </StackPanel>
+                    
                 </Button>
 
                 <Button Margin="0, 0, 15, 0">
-                    <FontIcon Glyph="&#xE722;" 
-                              FontSize="20"/>
+                    <FontIcon Glyph="&#xE722;"/>
                 </Button>
+
                 <ComboBox VerticalAlignment="Center"
                           Background="Transparent"
-                          BorderThickness="0">
-                    <ComboBoxItem>
-                        <StackPanel Orientation="Horizontal">
-                            <FontIcon Glyph="&#xF407;" 
-                                      Margin="0, 0, 6, 0"/>
-                            <TextBlock Text="Rectangle"/>
-                        </StackPanel>
-                    </ComboBoxItem>
-                    <ComboBoxItem>
-                        <StackPanel Orientation="Horizontal">
-                            <FontIcon Glyph="&#xF7ED;"
-                                      Margin="0, 0, 6, 0"/>
-                            <TextBlock Text="Window"/>
-                        </StackPanel>
-                    </ComboBoxItem>
-                    <ComboBoxItem>
-                        <StackPanel Orientation="Horizontal">
-                            <FontIcon Glyph="&#xE7F4;" 
-                                      Margin="0, 0, 6, 0"/>
-                            <TextBlock Text="Full screen"/>
-                        </StackPanel>
-                    </ComboBoxItem>
-                    <ComboBoxItem>
-                        <StackPanel Orientation="Horizontal">
-                            <FontIcon Glyph="&#xF408;"
-                                      Margin="0, 0, 6, 0"/>
-                            <TextBlock Text="Freeform"/>
-                        </StackPanel>
-                    </ComboBoxItem>
+                          BorderThickness="0"
+                          ItemTemplateSelector="{StaticResource comboBoxItemTemplateSelector}"
+                          ItemsSource="{x:Bind ComboBoxItems}"
+                          SelectedIndex="0">
                 </ComboBox>
             </StackPanel>
 
+            <!-- Redact picture (Middle) pane -->
             <StackPanel Orientation="Horizontal"
                         Grid.Column="1"
                         Spacing="5"
-                        HorizontalAlignment="Center">
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                        HorizontalAlignment="Center"
+                        x:Name="PART_RedactPicturePane">
+                
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xED63;" />
                 </Button>
 
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xED64;" />
                 </Button>
 
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xED60;" />
                 </Button>
-                <Border Background="{StaticResource SubtleFillColorSecondaryBrush}"
+                <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         Width="1"
                         Height="27"
                         HorizontalAlignment="Stretch"/>
 
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xE7A8;" />
                 </Button>
 
-                <Border Background="{StaticResource SubtleFillColorSecondaryBrush}"
+                <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         Width="1"
                         Height="27"
                         HorizontalAlignment="Stretch"/>
 
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xE7A7;" />
                 </Button>
 
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xE7A6;" />
                 </Button>
             </StackPanel>
 
+            <!-- Save/Load picture (Right) pane -->
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         Grid.Column="2"
                         Spacing="5">
 
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xE792;" />
                 </Button>
 
-                <Button Background="Transparent"
-                        BorderThickness="0">
+                <Button Style="{StaticResource TransparentButton}">
                     <FontIcon Glyph="&#xE8C8;" />
                 </Button>
 
-                <Border Background="{StaticResource SubtleFillColorSecondaryBrush}"
+                <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         Width="1"
                         Height="27"
                         HorizontalAlignment="Stretch"/>
+                
                 <Button Content="..."
-                        Background="Transparent"
-                        BorderThickness="0">
+                        Style="{StaticResource TransparentButton}">
                     <Button.Flyout>
                         <MenuFlyout  Placement="Bottom">
                             <MenuFlyoutItem Text="Reset"/>
@@ -181,12 +180,14 @@
 
         </Grid>
 
-        <Border Background="{StaticResource ControlSolidFillColorDefaultBrush}"
+        <!-- Separator -->
+        <Border Background="{ThemeResource ControlSolidFillColorDefaultBrush}"
                 Height="1"
                 Grid.Row="2"
                 HorizontalAlignment="Stretch"/>
 
-        <Border Background="{StaticResource SolidBackgroundFillColorTertiaryBrush}"
+        <!-- Canvas -->
+        <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}"
                 Grid.Row="3">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
                 Height="500"
@@ -195,53 +196,17 @@
             </StackPanel>
         </Border>
 
-        <StackPanel Height="Auto"
-                    x:Name="AdditionalPanel"
-                    Grid.Row="4"
-                    Background="{StaticResource SystemChromeMediumColor}">
-            <StackPanel Orientation="Horizontal"
-                        Spacing="5"
-                        HorizontalAlignment="Center">
-                <Button Background="Transparent"
-                        BorderThickness="0">
-                    <FontIcon Glyph="&#xED63;" />
-                </Button>
-
-                <Button Background="Transparent"
-                        BorderThickness="0">
-                    <FontIcon Glyph="&#xED64;" />
-                </Button>
-
-                <Button Background="Transparent"
-                        BorderThickness="0">
-                    <FontIcon Glyph="&#xED60;" />
-                </Button>
-                <Border Background="{StaticResource SubtleFillColorSecondaryBrush}"
-                        Width="1"
-                        Height="27"
-                        HorizontalAlignment="Stretch"/>
-
-                <Button Background="Transparent"
-                        BorderThickness="0">
-                    <FontIcon Glyph="&#xE7A8;" />
-                </Button>
-
-                <Border Background="{StaticResource SubtleFillColorSecondaryBrush}"
-                        Width="1"
-                        Height="27"
-                        HorizontalAlignment="Stretch"/>
-
-                <Button Background="Transparent"
-                        BorderThickness="0">
-                    <FontIcon Glyph="&#xE7A7;" />
-                </Button>
-
-                <Button Background="Transparent"
-                        BorderThickness="0">
-                    <FontIcon Glyph="&#xE7A6;" />
-                </Button>
-            </StackPanel>
-        </StackPanel>
+        <!-- Sub pane for small screen -->
+        <Grid Background="{ThemeResource SystemChromeMediumColor}"
+              x:Name="PART_SubPane"
+              Grid.Row="4"
+              Height="Auto">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+        </Grid>
     </Grid>
 
 
