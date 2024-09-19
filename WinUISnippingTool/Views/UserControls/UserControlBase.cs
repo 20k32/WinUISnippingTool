@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.UI.Xaml.Controls;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -6,11 +7,11 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WinUISnippingTool.Models
+namespace WinUISnippingTool.Views.CustomControls
 {
-    internal class ModelBase : INotifyPropertyChanged
+    internal class UserControlBase : Control, INotifyPropertyChanged
     {
-        protected ModelBase() { }
+        protected UserControlBase() { }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

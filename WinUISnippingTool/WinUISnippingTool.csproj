@@ -16,6 +16,8 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\Styles\SimpleStyles.xaml" />
+    <None Remove="Views\SnipScreenWindow.xaml" />
+    <None Remove="Views\UserControls\SnapControl.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0-preview.24415.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -47,10 +50,17 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Views\" />
+    <Page Update="Views\SnipScreenWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Resources\Styles\SimpleStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\UserControls\SnapControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

@@ -36,7 +36,6 @@ namespace WinUISnippingTool.Views
         private bool isScreenMiddleSized;
         private bool contentLoaded;
 
-
         public MainWindowViewModel ViewModel { get; }
 
         public MainWindow()
@@ -50,12 +49,24 @@ namespace WinUISnippingTool.Views
 
         private void ThemeChanged(FrameworkElement sender, object args)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
-        private void myButton_Click(object sender, RoutedEventArgs e)
+        private async void myButton_Click(object sender, RoutedEventArgs e)
         {
 
+            //ContentDialog dialog = new ContentDialog();
+
+            //dialog.XamlRoot = this.Content.XamlRoot;
+            //dialog.Title = "Save your work?";
+            //dialog.PrimaryButtonText = "Save";
+            //dialog.SecondaryButtonText = "Don't Save";
+            //dialog.CloseButtonText = "Cancel";
+            //dialog.DefaultButton = ContentDialogButton.Primary;
+
+            //var result = await dialog.ShowAsync();
+
+            ViewModel.InputCommand();
         }
 
         private void Window_SizeChanged(object sender, WindowSizeChangedEventArgs args)
@@ -106,6 +117,20 @@ namespace WinUISnippingTool.Views
                     }
                 }
             }
+        }
+
+        private void NewPhotoButton_Click(object sender, RoutedEventArgs e)
+        {
+            var newWindow = new SnipScreenWindow();
+            var presenter = ((OverlappedPresenter)newWindow.AppWindow.Presenter);
+            presenter.IsMinimizable = false;
+            presenter.IsMaximizable = false;
+            presenter.IsResizable = false;
+            AppWindow.IsShownInSwitchers = false;
+            presenter.SetBorderAndTitleBar(false, false);
+            presenter.Maximize();
+            newWindow.Activate();
+            this.Close();
         }
     }
 }
