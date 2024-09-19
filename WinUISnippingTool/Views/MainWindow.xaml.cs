@@ -1,3 +1,5 @@
+using Microsoft.Graphics.DirectX;
+using Microsoft.Graphics.Display;
 using Microsoft.UI;
 using Microsoft.UI.System;
 using Microsoft.UI.Windowing;
@@ -7,18 +9,30 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Graphics.Capture;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
+using Windows.UI.Core;
 using Windows.UI.WindowManagement;
 using WinRT.Interop;
 using WinUISnippingTool.ViewModels;
+using static System.Net.Mime.MediaTypeNames;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -45,6 +59,7 @@ namespace WinUISnippingTool.Views
             var element = (FrameworkElement)this.Content;
             element.ActualThemeChanged += ThemeChanged;
             ViewModel = new();
+
         }
 
         private void ThemeChanged(FrameworkElement sender, object args)
@@ -69,7 +84,7 @@ namespace WinUISnippingTool.Views
             ViewModel.InputCommand();
         }
 
-        private void Window_SizeChanged(object sender, WindowSizeChangedEventArgs args)
+        private void Window_SizeChanged(object sender, Microsoft.UI.Xaml.WindowSizeChangedEventArgs args)
         {
             if (_contentLoaded)
             {
@@ -87,7 +102,7 @@ namespace WinUISnippingTool.Views
                     PART_TakePictureButtonName.Visibility = Visibility.Visible;
                     isScreenSmallSized = true;
                 }
-                else if(!isScreenTinySized 
+                else if (!isScreenTinySized
                         && args.Size.Width < 500)
                 {
                     PART_TakePictureButtonName.Visibility = Visibility.Collapsed;
@@ -109,7 +124,7 @@ namespace WinUISnippingTool.Views
                         PART_TakePictureButtonName.Visibility = Visibility.Collapsed;
                         isScreenSmallSized = false;
                     }
-                    else if(isScreenTinySized
+                    else if (isScreenTinySized
                         && args.Size.Width > 500)
                     {
                         PART_TakePictureButtonName.Visibility = Visibility.Visible;
@@ -119,18 +134,38 @@ namespace WinUISnippingTool.Views
             }
         }
 
+        private byte[] buffer = new byte[8000];
+        private GraphicsCaptureItem _item;
+        private Direct3D11CaptureFramePool _framePool;
+
+        private GraphicsCaptureSession _session;
+
         private void NewPhotoButton_Click(object sender, RoutedEventArgs e)
         {
-            var newWindow = new SnipScreenWindow();
-            var presenter = ((OverlappedPresenter)newWindow.AppWindow.Presenter);
-            presenter.IsMinimizable = false;
-            presenter.IsMaximizable = false;
-            presenter.IsResizable = false;
-            AppWindow.IsShownInSwitchers = false;
-            presenter.SetBorderAndTitleBar(false, false);
-            presenter.Maximize();
-            newWindow.Activate();
-            this.Close();
+            Array.Clear(buffer);
+            using (var bmpScreenshot = new Bitmap(1920, 1080))
+            {
+                using (var g = Graphics.FromImage(bmpScreenshot))
+                {
+                    g.CopyFromScreen(0, 0, 0, 0, bmpScreenshot.Size);
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+                    var bitmapImage = new BitmapImage();
+                    bitmapImage.DecodePixelWidth = 800;
+                    using (MemoryStream stream = new MemoryStream(capacity: 8000))
+                    {
+                        bmpScreenshot.Save(stream, ImageFormat.Png);
+                        stream.Position = 0;
+                        bitmapImage.SetSource(stream.AsRandomAccessStream());
+                    }
+
+                    var image = new Microsoft.UI.Xaml.Controls.Image();
+                    image.Stretch = Stretch.Uniform;
+                    image.Source = bitmapImage;
+                    image.Height = 1080;
+                    image.Width = 1920;
+                    PART_Canvas.Children.Add(image);
+                }
+            }
         }
     }
 }

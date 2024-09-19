@@ -8,7 +8,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Title="SnipScreenWindow">
-    <Grid Opacity="0">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop/>
+    </Window.SystemBackdrop>
+    
+    <Border BorderThickness="0" BorderBrush="Transparent">
         <Button Content="hell to world"/>
-    </Grid>
+    </Border>
 </Window>

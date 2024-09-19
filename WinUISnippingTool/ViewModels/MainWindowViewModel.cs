@@ -1,17 +1,14 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml;
-using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Core;
-using Windows.UI.Core;
-using Windows.UI.Popups;
+using Windows.ApplicationModel.Resources.Core;
+using Windows.Graphics.Capture;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
+using Windows.Storage;
+using Windows.UI.WindowManagement;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Items;
-using Windows.ApplicationModel.Store;
 using WinUISnippingTool.Views;
-using Windows.ApplicationModel.Resources.Core;
 
 namespace WinUISnippingTool.ViewModels;
 
@@ -28,12 +25,19 @@ internal sealed partial class MainWindowViewModel : ViewModelBase
 
     public void InputCommand()
     {
-        Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "en-US";
+        Microsoft.Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "en-US";
+
         var resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
         SnipKinds[0].Name = resourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipKinds[1].Name = resourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipKinds[2].Name = resourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipKinds[3].Name = resourceMap.GetValue("FreeFormAreaName/Text")?.ValueAsString ?? "emtpy_value";
+    }
+
+    public void OpenSnipScreenWindow()
+    {
+        var newWindow = new SnipScreenWindow();
+        newWindow.Activate();
     }
 
     private void Initialize()

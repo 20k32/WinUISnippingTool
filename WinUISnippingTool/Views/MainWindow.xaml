@@ -20,7 +20,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        
         <!-- Title bar -->
         <Grid x:Name="AppTitleBar" 
               Background="{ThemeResource SystemChromeMediumColor}"
@@ -166,7 +165,10 @@
         <!-- Canvas -->
         <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}"
                 Grid.Row="3">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
+            <Canvas x:Name="PART_Canvas" HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="AntiqueWhite"/>
+            <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
                 Height="500"
                 x:Name="MyPanel">
                 <Button x:Name="myButton" 
@@ -174,7 +176,7 @@
                         Content="zxvzxcv"/>
 
                 <TextBlock x:Uid="FullScreenAreaName"/>
-            </StackPanel>
+            </StackPanel>-->
         </Border>
 
         <!-- Sub pane for small screen -->

@@ -1,3 +1,4 @@
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -5,10 +6,13 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -26,6 +30,13 @@ namespace WinUISnippingTool.Views
         public SnipScreenWindow()
         {
             this.InitializeComponent();
+            var presenter = ((OverlappedPresenter)AppWindow.Presenter);
+            //presenter.IsMinimizable = false;
+            //presenter.IsMaximizable = false;
+            //presenter.IsResizable = false;
+           // AppWindow.IsShownInSwitchers = false;
+            //presenter.SetBorderAndTitleBar(false, false);
+            //presenter.Maximize();
         }
     }
 }
