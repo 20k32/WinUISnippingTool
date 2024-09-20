@@ -9,7 +9,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:templateSelector="using:WinUISnippingTool.Models.TemplateSelectors"
     mc:Ignorable="d"
-    SizeChanged="Window_SizeChanged">
+    SizeChanged="Window_SizeChanged"
+    x:Name="mainWindow">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -163,21 +164,24 @@
                 HorizontalAlignment="Stretch"/>
 
         <!-- Canvas -->
-        <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}"
-                Grid.Row="3">
-            <Canvas x:Name="PART_Canvas" HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    Background="AntiqueWhite"/>
-            <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
-                Height="500"
-                x:Name="MyPanel">
-                <Button x:Name="myButton" 
-                        Click="myButton_Click" 
-                        Content="zxvzxcv"/>
-
-                <TextBlock x:Uid="FullScreenAreaName"/>
-            </StackPanel>-->
+        <Border Grid.Row="3"
+                Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}"
+                x:Name="PART_Border">
+            
+            <Canvas x:Name="PART_Canvas" 
+                    Background="Transparent"
+                    Width="Auto"
+                    Height="Auto"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    MinHeight="100"
+                    MinWidth="100">
+                <!--<Viewbox x:Name="PART_ViewBox"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Center"/>-->
+            </Canvas>
         </Border>
+
 
         <!-- Sub pane for small screen -->
         <Grid Background="{ThemeResource SystemChromeMediumColor}"

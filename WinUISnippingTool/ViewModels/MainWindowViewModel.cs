@@ -9,19 +9,28 @@ using Windows.UI.WindowManagement;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Items;
 using WinUISnippingTool.Views;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Controls;
+using Windows.Devices.Enumeration;
+using Windows.Devices.Display;
+using Windows.Foundation;
 
 namespace WinUISnippingTool.ViewModels;
 
 internal sealed partial class MainWindowViewModel : ViewModelBase
 {
 
+    private ScaleTransformManager transformManager;
     public NotifyOnCompleteAddingCollection<SnipShapeKind> SnipKinds { get; private set; }
 
     public MainWindowViewModel()
     {
+        transformManager = new();
         Initialize();
         TrySetAndLoadLocalization("uk-UA");
     }
+
+    public ScaleTransform GetTransformSource() => transformManager.TransfromSource;
 
     public void InputCommand()
     {
@@ -33,6 +42,20 @@ internal sealed partial class MainWindowViewModel : ViewModelBase
         SnipKinds[2].Name = resourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipKinds[3].Name = resourceMap.GetValue("FreeFormAreaName/Text")?.ValueAsString ?? "emtpy_value";
     }
+
+    public void SetTransformObjectSize(Size transformObject) 
+        => transformManager.SetTransformObject(transformObject);
+
+    public void SetRelativeObjectSize(Size relativeObject) 
+        => transformManager.SetRelativeObject(relativeObject);
+
+    public void SetScaleSenterCoords(Size size)
+        => transformManager.SetScaleCenterCoords(size);
+
+    public void Transform(Size relativeTo) => transformManager.Transform(relativeTo);
+    public void Transform() => transformManager.Transform();
+
+    public void ResetTransform() => transformManager.ResetTransform();
 
     public void OpenSnipScreenWindow()
     {
@@ -54,6 +77,38 @@ internal sealed partial class MainWindowViewModel : ViewModelBase
 
         SelectedSnipKind = SnipKinds.First();
     }
+
+    #region Relative object size
+
+    private double relativeObjectWidth;
+    public double RelativeObjectWidth
+    {
+        get => relativeObjectWidth;
+        set
+        {
+            if(relativeObjectWidth != value)
+            {
+                relativeObjectWidth = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private double relativeObjectHeight;
+    public double RelativeObjectHeight
+    {
+        get => relativeObjectHeight;
+        set
+        {
+            if(relativeObjectHeight != value)
+            {
+                relativeObjectHeight = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    #endregion
 
     #region Selected snip kind
 
