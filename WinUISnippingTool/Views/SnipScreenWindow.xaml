@@ -6,14 +6,41 @@
     xmlns:local="using:WinUISnippingTool.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControl="using:WinUISnippingTool.Views.UserControls"
+    xmlns:i="using:Microsoft.Xaml.Interactivity" 
+    xmlns:ia="using:Microsoft.Xaml.Interactions.Core"
     mc:Ignorable="d"
     Title="SnipScreenWindow">
 
-    <Window.SystemBackdrop>
-        <MicaBackdrop/>
-    </Window.SystemBackdrop>
-    
-    <Border BorderThickness="0" BorderBrush="Transparent">
-        <Button Content="hell to world"/>
-    </Border>
+    <Grid>
+        <ItemsControl ItemsSource="{x:Bind ViewModel.CanvasItems}"
+                          x:Name="PART_Canvas"
+                          HorizontalContentAlignment="Center"
+                          VerticalContentAlignment="Center"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center"
+                          Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
+                          Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
+                          Background="{ThemeResource SystemChromeMediumColor}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Background="Transparent"
+                            PointerPressed="Canvas_PointerPressed"
+                            PointerMoved="Canvas_PointerMoved"
+                            PointerReleased="Canvas_PointerReleased"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Background="{ThemeResource SystemChromeMediumColor}"
+                    Orientation="Horizontal">
+            <userControl:SnapControl />
+            <Button Content="Exit"
+                    Click="ExitButton_Click"/>
+        </StackPanel>
+            
+    </Grid>
+
 </Window>

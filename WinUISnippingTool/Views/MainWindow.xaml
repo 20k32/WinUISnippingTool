@@ -12,7 +12,7 @@
     SizeChanged="Window_SizeChanged"
     x:Name="mainWindow">
 
-    <Grid>
+    <Grid x:Name="mainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="31"/>
             <RowDefinition Height="Auto"/>
@@ -65,7 +65,7 @@
                         VerticalAlignment="Center">
 
                 <Button Margin="0, 0, 15, 0"
-                        Click="NewPhotoButton_Click">
+                        Click="myButton_Click">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="5">
                         <FontIcon Glyph="&#xE10F;"
@@ -77,7 +77,7 @@
                     </StackPanel>
                 </Button>
 
-                <userControl:SnapControl SnipKinds="{x:Bind ViewModel.SnipKinds}"
+                <userControl:SnapControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
                                          SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"/>
             </StackPanel>
 
@@ -161,25 +161,30 @@
         <Border Background="{ThemeResource ControlSolidFillColorDefaultBrush}"
                 Height="1"
                 Grid.Row="2"
-                HorizontalAlignment="Stretch"/>
+                HorizontalAlignment="Stretch"
+                x:Name="PART_Separator"/>
 
         <!-- Canvas -->
         <Border Grid.Row="3"
                 Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}"
                 x:Name="PART_Border">
-            
-            <Canvas x:Name="PART_Canvas" 
-                    Background="Transparent"
-                    Width="Auto"
-                    Height="Auto"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    MinHeight="100"
-                    MinWidth="100">
-                <!--<Viewbox x:Name="PART_ViewBox"
-                         HorizontalAlignment="Center"
-                         VerticalAlignment="Center"/>-->
-            </Canvas>
+            <ItemsControl ItemsSource="{x:Bind ViewModel.CanvasItems}"
+                          x:Name="PART_Canvas"
+                          HorizontalContentAlignment="Center"
+                          VerticalContentAlignment="Center"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas Background="Blue"
+                                RenderTransform="{Binding TransformSource, Mode=OneWay}"
+                                MinHeight="100"
+                                MinWidth="100"
+                                Width="{Binding CanvasWidth, Mode=OneWay}"
+                                Height="{Binding CanvasHeight, Mode=OneWay}"/> 
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
         </Border>
 
 

@@ -8,6 +8,8 @@ namespace WinUISnippingTool.Models.Items
 {
     internal sealed class SnipShapeKind : ModelBase
     {
+        public readonly SnipKinds Kind;
+
         #region Shape name
         private string name { get; set; }
 
@@ -44,7 +46,7 @@ namespace WinUISnippingTool.Models.Items
 
         #endregion
 
-        public SnipShapeKind(string name, string glyph) =>
-            (this.name, this.glyph) = (name, glyph);
+        public SnipShapeKind(string name, string glyph, SnipKinds kind) =>
+            (this.name, this.glyph, Kind) = (name, glyph, kind);
     }
 }
