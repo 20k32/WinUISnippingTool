@@ -5,57 +5,87 @@ using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Items;
 using WinUISnippingTool.Views;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Shapes;
+using Microsoft.Web.WebView2.Core;
+using Windows.ApplicationModel.DataTransfer;
+using System;
 
 namespace WinUISnippingTool.ViewModels;
 
 internal sealed class MainWindowViewModel : CanvasViewModelBase
 {
-
+    private SnipScreenWindow snipScreen;
+    private bool previousImageExists;
     private ScaleTransformManager transformManager;
     public NotifyOnCompleteAddingCollection<SnipShapeKind> SnipShapeKinds { get; private set; }
 
     public MainWindowViewModel() : base()
     {
+        snipScreen = new();
         transformManager = new();
         SnipShapeKinds = new();
         CanvasWidth = 100;
         CanvasHeight = 100;
         Initialize();
         TrySetAndLoadLocalization("uk-UA");
+        previousImageExists = false;
+
+        snipScreen.Closed += async (x, args) =>
+         {
+             CanvasItems.Clear();
+             var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
+             var content = Clipboard.GetContent();
+             var bitmap = await content.GetBitmapAsync();
+             using (var stream = await bitmap.OpenReadAsync())
+             {
+                 var bitmapImage = new BitmapImage();
+                 bitmapImage.SetSource(stream);
+                 CanvasItems.Add(new Image { Source = bitmapImage});
+             }
+
+             CanvasWidth = vm.ResultFigureActualWidth;
+             CanvasHeight = vm.ResultFigureActualHeight;
+
+             SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+             SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+         };
     }
 
     public ScaleTransform TransformSource => transformManager.TransfromSource;
 
-    public async Task EnterSnippingMode()
+    public void EnterSnippingMode(bool byShortcut)
     {
-        //Microsoft.Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = "en-US";
-
-        //var resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
-        //SnipKinds[0].Name = resourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        //SnipKinds[1].Name = resourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        //SnipKinds[2].Name = resourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        //SnipKinds[3].Name = resourceMap.GetValue("FreeFormAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        //var bitmapImage = new BitmapImage();
-
-        //var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(500, 500);
-        //CanvasWidth = bitmapImage.PixelHeight;
-        //CanvasHeight = bitmapImage.PixelWidth;
-
-        //if (currentImage is not null)
-        //{
-        //    CanvasItems.Remove(currentImage);
-        //}
-
-        //var image = new Microsoft.UI.Xaml.Controls.Image();
-        //image.Source = bitmapImage;
-        //CanvasItems.Add(image);
-        //currentImage = image;
-        //var newSize = new Windows.Foundation.Size(CanvasWidth, CanvasHeight);
-        //SetTransformObjectSize(newSize);
-        
         var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(2560, 1440);
-        var window = new SnipScreenWindow(bitmapImage, SelectedSnipKind.Kind);
-        window.Activate();
+        snipScreen.SetBitmapImage(bitmapImage);
+        snipScreen.SetResponceType(byShortcut);
+        snipScreen.DefineKind(SelectedSnipKind.Kind);
+       
+        //snipScreen.PrepareWindow();
+        snipScreen.Activate();
+    }
+
+    public void AddImage(Image image, int width, int height)
+    {
+        if (previousImageExists)
+        {
+            var existing = (Image)CanvasItems.First(x => x.GetType() == typeof(Image));
+            CanvasItems.Remove(existing);
+            previousImageExists = false;
+        }
+        else
+        {
+            previousImageExists = true;
+        }
+        CanvasItems.Add(image);
+        var bitmapImage = ((BitmapImage)image.Source);
+
+        CanvasWidth = width;
+        CanvasHeight = height;
+
+        SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+        SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
     }
 
     public void SetTransformObjectSize(Windows.Foundation.Size transformObject) 

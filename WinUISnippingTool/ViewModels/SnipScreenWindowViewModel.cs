@@ -12,6 +12,14 @@ using Windows.Storage.Streams;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using System.IO;
+using Microsoft.UI.Xaml.Shapes;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
+using Microsoft.UI.Xaml;
+using WinUISnippingTool.Views;
+using WinUISnippingTool.Models.Extensions;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 
 
 
@@ -19,23 +27,52 @@ namespace WinUISnippingTool.ViewModels;
 
 internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 {
-    private readonly PaintBase windowPaint;
-    private readonly PaintBase customShapeKind;
-    private readonly PaintBase rectangleSelectionPaint;
+    private PaintBase windowPaint;
+    private PaintBase customShapeKind;
+    private PaintBase rectangleSelectionPaint;
     private PaintBase paintSnipKind;
+    private bool shortcutResponce;
+    public Shape ResultFigure { get; private set; }
+    public int ResultFigureActualWidth;
+    public int ResultFigureActualHeight;
+
+    public void SetResponceType(bool isShortcut)
+    {
+        shortcutResponce = isShortcut;
+    }
+
+    public SnipScreenWindowViewModel()
+    { }
+
 
     public SnipScreenWindowViewModel(BitmapImage bmpImage, SnipKinds kind) : base()
     {
         currentImage = new Image();
-        currentImage.Opacity = 0.8;
+        currentImage.Opacity = 0.3;
         currentImage.Source = bmpImage;
+
         CanvasItems.Add(currentImage);
         CanvasWidth = bmpImage.PixelWidth;
         CanvasHeight = bmpImage.PixelHeight;
-        windowPaint = new WindowPaint(CanvasItems, new Size(2560, 1440));
-        customShapeKind = new CustomShapePaint(CanvasItems);
-        rectangleSelectionPaint = new RectangleSelectionPaint(CanvasItems);
+        windowPaint = new WindowPaint(CanvasItems, new Size(2560, 1440), currentImage.Source);
+        customShapeKind = new CustomShapePaint(CanvasItems, currentImage.Source);
+        rectangleSelectionPaint = new RectangleSelectionPaint(CanvasItems, currentImage.Source);
+
         DefineKind(kind);
+    }
+
+    public void SetBitmapImage(BitmapImage bmpImage)
+    {
+        currentImage = new Image();
+        currentImage.Opacity = 0.3;
+        currentImage.Source = bmpImage;
+
+        CanvasItems.Add(currentImage);
+        CanvasWidth = bmpImage.PixelWidth;
+        CanvasHeight = bmpImage.PixelHeight;
+        windowPaint = new WindowPaint(CanvasItems, new Size(2560, 1440), currentImage.Source);
+        customShapeKind = new CustomShapePaint(CanvasItems, currentImage.Source);
+        rectangleSelectionPaint = new RectangleSelectionPaint(CanvasItems, currentImage.Source);
     }
 
     public void DefineKind(SnipKinds kind)
@@ -59,47 +96,34 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         paintSnipKind.OnPointerMoved(position);
     }
 
+    private bool pointerReleased;
+
     public async Task OnPointerReleased(Point position)
     {
-        try
+        ResultFigure = paintSnipKind.OnPointerReleased(position);
+        var renderBitmap = new RenderTargetBitmap();
+        await renderBitmap.RenderAsync(ResultFigure);
+        var pixelBuffer = await renderBitmap.GetPixelsAsync();
+
+        var storageFile = await PicturesLibraryExtensions.SaveAsync(renderBitmap, pixelBuffer);
+        await ClipboardExtensions.CopyAsync(renderBitmap, pixelBuffer);
+
+        ResultFigureActualWidth = renderBitmap.PixelWidth;
+        ResultFigureActualHeight = renderBitmap.PixelHeight;
+
+        if (shortcutResponce)
         {
-            currentImage.Clip = new()
-            {
-                Rect = new(0, 0, 50, 50)
-            };
+            var imageUri = new Uri("file:///" + storageFile.Path); //todo: better use temp folder
+            var builder = new AppNotificationBuilder()
+                .SetInlineImage(imageUri)
+                .AddArgument("snapshotStatus", "snapshotTaken")
+                .AddArgument("snapshotUri", imageUri.ToString())
+                .AddArgument("snapshotWidth", ResultFigureActualWidth.ToString())
+                .AddArgument("snapshotHeight", ResultFigureActualHeight.ToString());
 
-            //var figure = paintSnipKind.OnPointerReleased(position);
-
-
-            var renderTargetBitmap = new RenderTargetBitmap();
-            renderTargetBitmap.RenderAsync(currentImage).GetResults();
-
-            var pixelBuffer = renderTargetBitmap.GetPixelsAsync().Get();
-            var width = renderTargetBitmap.PixelWidth;
-            var height = renderTargetBitmap.PixelHeight;
-
-            var croppedBitmap = new WriteableBitmap(width, height);
-            pixelBuffer.CopyTo(croppedBitmap.PixelBuffer);
-
-            using var stream = pixelBuffer.AsStream().AsRandomAccessStream();
-
-            //var softwareBitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, width, height);
-            //softwareBitmap.CopyFromBuffer(croppedBitmap.PixelBuffer);
-
-            DataPackage dataPackage = new();
-            dataPackage.RequestedOperation = DataPackageOperation.Copy;
-            var streamR = RandomAccessStreamReference.CreateFromStream(stream);
-            dataPackage.SetBitmap(streamR);
-            Clipboard.SetContent(dataPackage);
-
-            var package = Clipboard.GetContent();
+            var notificationManager = AppNotificationManager.Default;
+            notificationManager.Show(builder.BuildNotification());
         }
-        catch (Exception ex)
-        {
-            var e = ex;
-            var asla = currentImage.IsLoaded;
-        }
-
     }
 
     public void Exit()

@@ -11,9 +11,8 @@ namespace WinUISnippingTool.Models.Paint
     {
         private bool isSelected;
         private Rectangle rect;
-
         private Size windowSize;
-        public WindowPaint(NotifyOnCompleteAddingCollection<UIElement> shapes, Size windowSize) : base(shapes)
+        public WindowPaint(NotifyOnCompleteAddingCollection<UIElement> shapes, Size windowSize, ImageSource source) : base(shapes)
         {
             this.windowSize = windowSize;
             rect = new()
@@ -21,9 +20,11 @@ namespace WinUISnippingTool.Models.Paint
                 Width = windowSize.Width,
                 Height = windowSize.Height,
                 StrokeThickness = 0,
-                Fill = new SolidColorBrush(Colors.DarkGray)
+                Fill = new ImageBrush
+                {
+                    ImageSource = source
+                }
             };
-            rect.Fill.Opacity = 0.7;
             isSelected = false;
         }
 

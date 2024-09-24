@@ -55,23 +55,11 @@ namespace WinUISnippingTool.Views
             //throw new NotImplementedException();
         }
 
-        private async void myButton_Click(object sender, RoutedEventArgs e)
+        private void myButton_Click(object sender, RoutedEventArgs e)
         {
-
-            //ContentDialog dialog = new ContentDialog();
-
-            //dialog.XamlRoot = this.Content.XamlRoot;
-            //dialog.Title = "Save your work?";
-            //dialog.PrimaryButtonText = "Save";
-            //dialog.SecondaryButtonText = "Don't Save";
-            //dialog.CloseButtonText = "Cancel";
-            //dialog.DefaultButton = ContentDialogButton.Primary;
-
-            //var result = await dialog.ShowAsync();
             var presenter = ((OverlappedPresenter)AppWindow.Presenter);
             presenter.Minimize(false);
-            await Task.Delay(100);
-            await ViewModel.EnterSnippingMode();
+            ViewModel.EnterSnippingMode(false);
         }
 
         private void Window_SizeChanged(object sender, WindowSizeChangedEventArgs args)
@@ -129,14 +117,21 @@ namespace WinUISnippingTool.Views
 
         private void NewPhotoButton_Click(object sender, RoutedEventArgs e)
         {
-            ViewModel.EnterSnippingMode();
+            ViewModel.EnterSnippingMode(false);
             if (PART_Border.ActualWidth <= PART_Canvas.Width
                        || PART_Border.ActualHeight <= PART_Canvas.Height)
             {
                 ViewModel.Transform(new(PART_Border.ActualWidth, PART_Border.ActualHeight));
             }
+        }
 
-            //ViewModel.SetScaleCenterCoords(new(PART_Canvas.Width, PART_Canvas.Height));
+        public void TransformImage()
+        {
+            if (PART_Border.ActualWidth <= PART_Canvas.Width
+                       || PART_Border.ActualHeight <= PART_Canvas.Height)
+            {
+                ViewModel.Transform(new(PART_Border.ActualWidth, PART_Border.ActualHeight));
+            }
         }
 
         private void PART_Canvas_SizeChanged()
@@ -163,6 +158,16 @@ namespace WinUISnippingTool.Views
             {
                 ViewModel.ResetTransform();
             }
+        }
+
+        private void KeyboardAccelerator_Invoked(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+        {
+            
+            var presenter = ((OverlappedPresenter)AppWindow.Presenter);
+            presenter.Minimize(false);
+            ViewModel.EnterSnippingMode(true);
+
+            args.Handled = true;
         }
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
@@ -17,18 +18,30 @@ namespace WinUISnippingTool.Models.Paint
 {
     internal sealed class RectangleSelectionPaint : PaintBase
     {
+        Point firstPosition;
         Point previousPosition;
+        private TranslateTransform translateTransform;
         private ScaleTransform scaleTransform;
         private SolidColorBrush strokeColor;
-        private SolidColorBrush fillColor;
+        private ImageBrush fillColor;
         private Path rect;
 
-        public RectangleSelectionPaint(NotifyOnCompleteAddingCollection<UIElement> shapes) : base(shapes)
+        public RectangleSelectionPaint(NotifyOnCompleteAddingCollection<UIElement> shapes, ImageSource source) : base(shapes)
         {
             scaleTransform = new();
             strokeColor = new SolidColorBrush(Colors.White);
-            fillColor = new SolidColorBrush(Colors.DarkGray);
-            fillColor.Opacity = 0.2;
+            translateTransform = new();
+
+            fillColor = new ImageBrush()
+            {
+                ImageSource = source,
+                Stretch = Stretch.None,
+                AlignmentX = AlignmentX.Left,
+                AlignmentY = AlignmentY.Top,
+                Transform = translateTransform
+            };
+
+            fillColor.Opacity = 1;
         }
 
         public override void OnPointerPressed(Point position)
@@ -49,6 +62,7 @@ namespace WinUISnippingTool.Models.Paint
                     },
                 };
                 
+                firstPosition = position;
                 previousPosition = position;
                 Canvas.SetLeft(rect, position.X - 1);
                 Canvas.SetTop(rect, position.Y - 1);
@@ -68,13 +82,37 @@ namespace WinUISnippingTool.Models.Paint
 
                 scaleTransform.ScaleX = scaleX;
                 scaleTransform.ScaleY = scaleY;
+
+                if(firstPosition.X < position.X
+                   && firstPosition.Y < position.Y)
+                {
+                    translateTransform.X = -firstPosition.X;
+                    translateTransform.Y = -firstPosition.Y;
+                }
+                else if(firstPosition.X < position.X
+                        && firstPosition.Y > position.Y)
+                {
+                    translateTransform.Y = -position.Y + 1;
+                }
+                else if(firstPosition.X > position.X
+                        && firstPosition.Y < position.Y)
+                {
+                    translateTransform.X = -position.X + 1;
+                    translateTransform.Y = -firstPosition.Y;
+                }
+                else if(firstPosition.X > position.X
+                        && firstPosition.Y > position.Y)
+                {
+                    translateTransform.X = -position.X + 1;
+                    translateTransform.Y = -position.Y + 1;
+                }
             }
         }
 
         public override Shape OnPointerReleased(Point position)
         {
             IsDrawing = false;
-            rect.Clip = new() { Rect = new(Canvas.GetTop(rect), Canvas.GetLeft(rect), 100, 100)};
+            rect.StrokeThickness = 0;
             return rect;
         }
     }

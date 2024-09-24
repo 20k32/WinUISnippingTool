@@ -13,18 +13,29 @@ namespace WinUISnippingTool.Models.Paint
 {
     internal class CustomShapePaint : PaintBase
     {
+        Point firstPosition;
         Point previousPosition;
+        private TranslateTransform translateTransform;
         private PolyLineSegment polyLineSegment;
         private SolidColorBrush strokeColor;
-        private SolidColorBrush fillColor;
+        private ImageBrush fillColor;
         private Path userFigure;
 
-        public CustomShapePaint(NotifyOnCompleteAddingCollection<UIElement> shapes) : base(shapes)
+        public CustomShapePaint(NotifyOnCompleteAddingCollection<UIElement> shapes, ImageSource source) : base(shapes)
         {
+            translateTransform = new();
             polyLineSegment = new();
             strokeColor = new SolidColorBrush(Colors.White);
-            fillColor = new SolidColorBrush(Colors.DarkGray);
-            fillColor.Opacity = 0.2;
+            fillColor = new ImageBrush()
+            {
+                ImageSource = source,
+                Stretch = Stretch.UniformToFill, 
+                AlignmentX = AlignmentX.Center,
+                AlignmentY = AlignmentY.Center,
+                Transform = translateTransform
+            };
+
+            fillColor.Opacity =1;
         }
         public override void OnPointerPressed(Point position)
         {

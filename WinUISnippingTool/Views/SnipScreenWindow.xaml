@@ -17,8 +17,8 @@
                           x:Name="PART_Canvas"
                           HorizontalContentAlignment="Center"
                           VerticalContentAlignment="Center"
-                          VerticalAlignment="Center"
-                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          HorizontalAlignment="Left"
                           Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
                           Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
                           Background="{ThemeResource SystemChromeMediumColor}">

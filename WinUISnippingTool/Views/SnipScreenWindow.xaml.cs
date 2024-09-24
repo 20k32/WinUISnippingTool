@@ -1,24 +1,8 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Graphics;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.ViewModels;
@@ -33,6 +17,7 @@ namespace WinUISnippingTool.Views
     /// </summary>
     internal sealed partial class SnipScreenWindow : Window
     {
+        private bool isPointerReleased;
         public SnipScreenWindowViewModel ViewModel { get; }
 
         public SnipScreenWindow(BitmapImage bmpImage, SnipKinds kind)
@@ -41,12 +26,43 @@ namespace WinUISnippingTool.Views
             ViewModel = new(bmpImage, kind);
             var presenter = ((OverlappedPresenter)AppWindow.Presenter);
             presenter.Maximize();
-            //presenter.IsMinimizable = false;
-            //presenter.IsMaximizable = false;
-            //presenter.IsResizable = false;
-           // AppWindow.IsShownInSwitchers = false;
-            //presenter.SetBorderAndTitleBar(false, false);
+            presenter.IsMinimizable = false;
+            presenter.IsMaximizable = false;
+            presenter.IsResizable = false;
+            AppWindow.IsShownInSwitchers = false;
+            presenter.SetBorderAndTitleBar(false, false);
+            isPointerReleased = false;
         }
+
+        public SnipScreenWindow()
+        {
+            this.InitializeComponent();
+            ViewModel = new();
+            isPointerReleased = false;
+        }
+
+        public void PrepareWindow()
+        {
+            var presenter = ((OverlappedPresenter)AppWindow.Presenter);
+            presenter.Maximize();
+            presenter.IsMinimizable = false;
+            presenter.IsMaximizable = false;
+            presenter.IsResizable = false;
+            AppWindow.IsShownInSwitchers = false;
+            presenter.SetBorderAndTitleBar(false, false);
+        }
+
+        public void SetBitmapImage(BitmapImage bmpImage)
+        {
+            ViewModel.SetBitmapImage(bmpImage);
+        }
+
+        public void DefineKind(SnipKinds kind)
+        {
+            ViewModel.DefineKind(kind);
+        }
+
+        public void SetResponceType(bool isShortcut) => ViewModel.SetResponceType(isShortcut);
 
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
@@ -67,8 +83,13 @@ namespace WinUISnippingTool.Views
 
         private async void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
-            this.Close();
+            if (!isPointerReleased)
+            {
+                isPointerReleased = true;
+                await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
+                this.Close();
+                isPointerReleased = false;
+            }
         }
     }
 }
