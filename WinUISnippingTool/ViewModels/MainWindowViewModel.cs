@@ -11,11 +11,18 @@ using Microsoft.UI.Xaml.Shapes;
 using Microsoft.Web.WebView2.Core;
 using Windows.ApplicationModel.DataTransfer;
 using System;
+using WinUISnippingTool.Models.Draw;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI;
+using Windows.Foundation;
 
 namespace WinUISnippingTool.ViewModels;
 
-internal sealed class MainWindowViewModel : CanvasViewModelBase
+internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 {
+    private DrawBase drawBrush;
+    private SolidColorBrush drawBrushColor;
+    private double drawBrushThickness;
     private SnipScreenWindow snipScreen;
     private bool previousImageExists;
     private ScaleTransformManager transformManager;
@@ -23,7 +30,6 @@ internal sealed class MainWindowViewModel : CanvasViewModelBase
 
     public MainWindowViewModel() : base()
     {
-        snipScreen = new();
         transformManager = new();
         SnipShapeKinds = new();
         CanvasWidth = 100;
@@ -32,25 +38,43 @@ internal sealed class MainWindowViewModel : CanvasViewModelBase
         TrySetAndLoadLocalization("uk-UA");
         previousImageExists = false;
 
-        snipScreen.Closed += async (x, args) =>
-         {
-             CanvasItems.Clear();
-             var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
-             var content = Clipboard.GetContent();
-             var bitmap = await content.GetBitmapAsync();
-             using (var stream = await bitmap.OpenReadAsync())
-             {
-                 var bitmapImage = new BitmapImage();
-                 bitmapImage.SetSource(stream);
-                 CanvasItems.Add(new Image { Source = bitmapImage});
-             }
+        drawBrushColor = new SolidColorBrush(Colors.Yellow);
+        drawBrushThickness = 3;
+        drawBrush = new SimpleBrush(CanvasItems, drawBrushColor, drawBrushThickness);
+    }
 
-             CanvasWidth = vm.ResultFigureActualWidth;
-             CanvasHeight = vm.ResultFigureActualHeight;
+    public void OnPointerPressed(Point value) => drawBrush.OnPointerPressed(value);
+    public void OnPointerMoved(Point value) => drawBrush.OnPointerMoved(value);
+    public void OnPointerReleased(Point value) => drawBrush.OnPointerReleased(value);
 
-             SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
-             SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
-         };
+    [RelayCommand]
+    private void SetEraseBrush()
+    {
+        drawBrush = new Erase(CanvasItems);
+    }
+
+    [RelayCommand]
+    private void GlobalUndo()
+    {
+        drawBrush.UndoGlobal();
+    }
+
+    [RelayCommand]
+    private void GlobalRedo()
+    {
+        drawBrush.RedoGlobal();
+    }
+
+    [RelayCommand]
+    private void SetSimpleBrush()
+    {
+        drawBrush = new SimpleBrush(CanvasItems, drawBrushColor, drawBrushThickness);
+    }
+
+    [RelayCommand]
+    private void SetMarkerBrush()
+    {
+        drawBrush = new MarkerBrush(CanvasItems, drawBrushColor, drawBrushThickness);
     }
 
     public ScaleTransform TransformSource => transformManager.TransfromSource;
@@ -58,11 +82,32 @@ internal sealed class MainWindowViewModel : CanvasViewModelBase
     public void EnterSnippingMode(bool byShortcut)
     {
         var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(2560, 1440);
+        snipScreen = new();
         snipScreen.SetBitmapImage(bitmapImage);
         snipScreen.SetResponceType(byShortcut);
         snipScreen.DefineKind(SelectedSnipKind.Kind);
-       
-        //snipScreen.PrepareWindow();
+
+        snipScreen.Closed += async (x, args) =>
+        {
+            CanvasItems.Clear();
+            var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
+            var content = Clipboard.GetContent();
+            var bitmap = await content.GetBitmapAsync();
+            using (var stream = await bitmap.OpenReadAsync())
+            {
+                var bitmapImage = new BitmapImage();
+                bitmapImage.SetSource(stream);
+                CanvasItems.Add(new Image { Source = bitmapImage });
+            }
+
+            CanvasWidth = vm.ResultFigureActualWidth;
+            CanvasHeight = vm.ResultFigureActualHeight;
+
+            SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+            SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+        };
+
+        snipScreen.PrepareWindow();
         snipScreen.Activate();
     }
 

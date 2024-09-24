@@ -92,15 +92,18 @@
                         HorizontalAlignment="Center"
                         x:Name="PART_RedactPicturePane">
                 
-                <Button Style="{StaticResource TransparentButton}">
+                <Button Style="{StaticResource TransparentButton}"
+                        Command="{x:Bind ViewModel.SetSimpleBrushCommand}">
                     <FontIcon Glyph="&#xED63;" />
                 </Button>
 
-                <Button Style="{StaticResource TransparentButton}">
+                <Button Style="{StaticResource TransparentButton}"
+                        Command="{x:Bind ViewModel.SetMarkerBrushCommand}">
                     <FontIcon Glyph="&#xED64;" />
                 </Button>
 
-                <Button Style="{StaticResource TransparentButton}">
+                <Button Style="{StaticResource TransparentButton}"
+                        Command="{x:Bind ViewModel.SetEraseBrushCommand}">
                     <FontIcon Glyph="&#xED60;" />
                 </Button>
                 
@@ -118,11 +121,13 @@
                         Height="27"
                         HorizontalAlignment="Stretch"/>
 
-                <Button Style="{StaticResource TransparentButton}">
+                <Button Style="{StaticResource TransparentButton}"
+                        Command="{x:Bind ViewModel.GlobalUndoCommand}">
                     <FontIcon Glyph="&#xE7A7;" />
                 </Button>
 
-                <Button Style="{StaticResource TransparentButton}">
+                <Button Style="{StaticResource TransparentButton}"
+                        Command="{x:Bind ViewModel.GlobalRedoCommand}">
                     <FontIcon Glyph="&#xE7A6;" />
                 </Button>
             </StackPanel>
@@ -179,11 +184,18 @@
                           VerticalAlignment="Center"
                           HorizontalAlignment="Center"
                           Width="{Binding CanvasWidth, Mode=OneWay}"
-                          Height="{Binding CanvasHeight, Mode=OneWay}">
+                          Height="{Binding CanvasHeight, Mode=OneWay}"
+                          Loaded="PART_Canvas_Loaded">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Canvas Background="Blue"
-                                RenderTransform="{Binding TransformSource, Mode=OneWay}"/> 
+                                RenderTransform="{Binding TransformSource, Mode=OneWay}"
+                                PointerPressed="Canvas_PointerPressed"
+                                PointerMoved="Canvas_PointerMoved"
+                                PointerReleased="Canvas_PointerReleased"
+                                x:Name="parentCanvas"
+                                Width="100"
+                                Height="100"/> 
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>

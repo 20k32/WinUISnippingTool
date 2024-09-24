@@ -19,6 +19,8 @@ using System.Drawing;
 using Windows.UI.WindowManagement;
 using WinUISnippingTool.ViewModels;
 using System.Threading.Tasks;
+using WinUISnippingTool.Models.Draw;
+using WinUISnippingTool.Models.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -35,6 +37,7 @@ namespace WinUISnippingTool.Views
         private bool isScreenSmallSized;
         private bool isScreenMiddleSized;
         private bool contentLoaded;
+        private Canvas parentCanvas;
 
         public MainWindowViewModel ViewModel { get; }
 
@@ -46,7 +49,6 @@ namespace WinUISnippingTool.Views
             element.ActualThemeChanged += ThemeChanged;
             ViewModel = new();
             contentLoaded = true;
-            //PART_Canvas.RenderTransform = ViewModel.GetTransformSource();
             mainGrid.DataContext = ViewModel;
         }
 
@@ -162,12 +164,31 @@ namespace WinUISnippingTool.Views
 
         private void KeyboardAccelerator_Invoked(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
         {
-            
             var presenter = ((OverlappedPresenter)AppWindow.Presenter);
             presenter.Minimize(false);
             ViewModel.EnterSnippingMode(true);
 
             args.Handled = true;
+        }
+
+        private void Canvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas(parentCanvas));
+        }
+
+        private void Canvas_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas(parentCanvas));
+        }
+
+        private void Canvas_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas(parentCanvas));
+        }
+
+        private void PART_Canvas_Loaded(object sender, RoutedEventArgs e)
+        {
+            parentCanvas = (Canvas)PART_Canvas.ItemsPanelRoot;
         }
     }
 }
