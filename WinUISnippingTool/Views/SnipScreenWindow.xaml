@@ -35,8 +35,10 @@
         <StackPanel HorizontalAlignment="Center"
                     VerticalAlignment="Top"
                     Background="{ThemeResource SystemChromeMediumColor}"
-                    Orientation="Horizontal">
-            <userControl:SnapControl />
+                    Orientation="Horizontal"
+                    Visibility="{x:Bind ViewModel.IsOverlayVisible, Mode=OneWay}">
+            <userControl:SnapControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
+                                     SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"/>
             <Button Content="Exit"
                     Click="ExitButton_Click"/>
         </StackPanel>

@@ -14,7 +14,11 @@
 
     <Grid x:Name="mainGrid">
         <Grid.KeyboardAccelerators>
-            <KeyboardAccelerator Key="X" Modifiers="Shift,Control" Invoked="KeyboardAccelerator_Invoked"/>
+            <KeyboardAccelerator Key="X" Modifiers="Shift,Control" Invoked="EnterSnippingModeByShortcut"/>
+            <KeyboardAccelerator Key="Z" Modifiers="Control" Invoked="GlobalUndoShortcut"/>
+            <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="GlobalRedoShortcut"/>
+            <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="SaveToClipboardShortcut"/>
+            <KeyboardAccelerator Key="S" Modifiers="Control" Invoked="SaveFileDialogShortcut"/>
         </Grid.KeyboardAccelerators>
         
         <Grid.RowDefinitions>
@@ -106,7 +110,12 @@
                         Command="{x:Bind ViewModel.SetEraseBrushCommand}">
                     <FontIcon Glyph="&#xED60;" />
                 </Button>
-                
+
+                <Button Style="{StaticResource TransparentButton}"
+                        Content="ClearCanvas"
+                        Command="{x:Bind ViewModel.ResetCanvasCommand}">
+                </Button>
+
                 <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         Width="1"
                         Height="27"
@@ -194,8 +203,8 @@
                                 PointerMoved="Canvas_PointerMoved"
                                 PointerReleased="Canvas_PointerReleased"
                                 x:Name="parentCanvas"
-                                Width="100"
-                                Height="100"/> 
+                                Width="{Binding CanvasWidth, Mode=OneWay}"
+                                Height="{Binding CanvasHeight, Mode=OneWay}"/> 
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>

@@ -9,11 +9,11 @@ namespace WinUISnippingTool.Models;
 
 internal static class ScreenshotHelper
 {
-    public static BitmapImage GetBitmapImageScreenshotForArea(int width, int height)
+    public static BitmapImage GetBitmapImageScreenshotForArea(Windows.Foundation.Size size)
     {
         var bitmapImage = new BitmapImage();
 
-        using (var bmpScreenshot = new Bitmap(width, height))
+        using (var bmpScreenshot = new Bitmap((int)size.Width, (int)size.Height))
         {
             using (var g = Graphics.FromImage(bmpScreenshot))
             {

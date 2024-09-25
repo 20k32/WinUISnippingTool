@@ -12,7 +12,7 @@ namespace WinUISnippingTool.Models.Paint
         private bool isSelected;
         private Rectangle rect;
         private Size windowSize;
-        public WindowPaint(NotifyOnCompleteAddingCollection<UIElement> shapes, Size windowSize, ImageSource source) : base(shapes)
+        public WindowPaint(NotifyOnCompletionCollection<UIElement> shapes, Size windowSize, ImageSource source) : base(shapes)
         {
             this.windowSize = windowSize;
             rect = new()
@@ -61,6 +61,11 @@ namespace WinUISnippingTool.Models.Paint
             }
 
             return result;
+        }
+
+        public override void Clear()
+        {
+            Shapes.Clear();
         }
     }
 }

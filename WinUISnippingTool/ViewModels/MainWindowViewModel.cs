@@ -15,6 +15,8 @@ using WinUISnippingTool.Models.Draw;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI;
 using Windows.Foundation;
+using WinUISnippingTool.Models.Extensions;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace WinUISnippingTool.ViewModels;
 
@@ -26,26 +28,26 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private SnipScreenWindow snipScreen;
     private bool previousImageExists;
     private ScaleTransformManager transformManager;
-    public NotifyOnCompleteAddingCollection<SnipShapeKind> SnipShapeKinds { get; private set; }
 
     public MainWindowViewModel() : base()
     {
         transformManager = new();
-        SnipShapeKinds = new();
         CanvasWidth = 100;
         CanvasHeight = 100;
-        Initialize();
         TrySetAndLoadLocalization("uk-UA");
         previousImageExists = false;
 
         drawBrushColor = new SolidColorBrush(Colors.Yellow);
         drawBrushThickness = 3;
         drawBrush = new SimpleBrush(CanvasItems, drawBrushColor, drawBrushThickness);
+        SelectedSnipKind = SnipShapeKinds.First();
     }
 
     public void OnPointerPressed(Point value) => drawBrush.OnPointerPressed(value);
     public void OnPointerMoved(Point value) => drawBrush.OnPointerMoved(value);
     public void OnPointerReleased(Point value) => drawBrush.OnPointerReleased(value);
+
+    public Size GetActualImageSize() => transformManager.ActualSize;
 
     [RelayCommand]
     private void SetEraseBrush()
@@ -77,34 +79,68 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         drawBrush = new MarkerBrush(CanvasItems, drawBrushColor, drawBrushThickness);
     }
 
+    [RelayCommand]
+    private void ResetCanvas()
+    {
+        drawBrush.Clear();
+    }
+
+    public async Task SaveBmpToFileAsync (RenderTargetBitmap renderBitmap)
+    {
+        var pixelBuffer = await renderBitmap.GetPixelsAsync();
+        var file = await FilePickerExtensions.ShowSaveAsync();
+
+        if (file is not null)
+        {
+            await FileExtensions.SaveBmpBufferAsync(
+                file,
+                (uint)renderBitmap.PixelWidth,
+                (uint)renderBitmap.PixelHeight,
+                pixelBuffer.ToArray());
+        }
+    }
+
+    public async Task SaveBmpToClipboardAsync(RenderTargetBitmap renderBitmap)
+    {
+        var pixelBuffer = await renderBitmap.GetPixelsAsync();
+        await ClipboardExtensions.CopyAsync((uint)renderBitmap.PixelWidth, (uint)renderBitmap.PixelHeight, pixelBuffer.ToArray());
+    }
+
     public ScaleTransform TransformSource => transformManager.TransfromSource;
 
-    public void EnterSnippingMode(bool byShortcut)
+    public void EnterSnippingMode(bool byShortcut, Action sizeChangedCallback = null)
     {
-        var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(2560, 1440);
+        var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(defaultWindowSize);
         snipScreen = new();
-        snipScreen.SetBitmapImage(bitmapImage);
-        snipScreen.SetResponceType(byShortcut);
-        snipScreen.DefineKind(SelectedSnipKind.Kind);
+        snipScreen.ViewModel.SetWindowSize(defaultWindowSize);
+        snipScreen.ViewModel.SetBitmapImage(bitmapImage);
+        snipScreen.ViewModel.SetResponceType(byShortcut);
+        snipScreen.ViewModel.SetSelectedItem(SelectedSnipKind.Kind);
 
         snipScreen.Closed += async (x, args) =>
         {
-            CanvasItems.Clear();
-            var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
-            var content = Clipboard.GetContent();
-            var bitmap = await content.GetBitmapAsync();
-            using (var stream = await bitmap.OpenReadAsync())
+            if (!snipScreen.ViewModel.ExitRequested)
             {
-                var bitmapImage = new BitmapImage();
-                bitmapImage.SetSource(stream);
-                CanvasItems.Add(new Image { Source = bitmapImage });
+                drawBrush.Clear();
+                CanvasItems.Clear();
+                var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
+                var content = Clipboard.GetContent();
+                var bitmap = await content.GetBitmapAsync();
+                using (var stream = await bitmap.OpenReadAsync())
+                {
+                    var bitmapImage = new BitmapImage();
+                    bitmapImage.SetSource(stream);
+                    CanvasItems.Add(new Image { Source = bitmapImage });
+                }
+
+                CanvasWidth = vm.ResultFigureActualWidth;
+                CanvasHeight = vm.ResultFigureActualHeight;
+
+                SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+                SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+
+                sizeChangedCallback?.Invoke();
             }
-
-            CanvasWidth = vm.ResultFigureActualWidth;
-            CanvasHeight = vm.ResultFigureActualHeight;
-
-            SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
-            SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
         };
 
         snipScreen.PrepareWindow();
@@ -146,50 +182,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     public void Transform() => transformManager.Transform();
 
     public void ResetTransform() => transformManager.ResetTransform();
-
-    private void Initialize()
-    {
-        SnipShapeKinds.AddRange(new SnipShapeKind[]
-        {
-            new(string.Empty, "\uF407", SnipKinds.Recntangular),
-            new(string.Empty, "\uF7ED", SnipKinds.Window),
-            new(string.Empty, "\uE7F4", SnipKinds.AllWindows),
-            new(string.Empty, "\uF408", SnipKinds.CustomShape)
-        });
-
-        SelectedSnipKind = SnipShapeKinds.First();
-    }
-
-    #region Selected snip kind
-
-    private SnipShapeKind selectedSnipKind;
-
-    public SnipShapeKind SelectedSnipKind
-    {
-        get => selectedSnipKind;
-        set
-        {
-            selectedSnipKind = value;
-            NotifyOfPropertyChange();
-        }
-    }
-
-    #endregion
-
-    private void TrySetAndLoadLocalization(string bcpTag)
-    {
-        if (Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride != bcpTag)
-        {
-            Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = bcpTag;
-        }
-        var languages = Windows.Globalization.ApplicationLanguages.Languages;
-
-        var resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
-        SnipShapeKinds[0].Name = resourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        SnipShapeKinds[1].Name = resourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        SnipShapeKinds[2].Name = resourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        SnipShapeKinds[3].Name = resourceMap.GetValue("FreeFormAreaName/Text")?.ValueAsString ?? "emtpy_value";
-    }
 
     #region Take photo button name
 

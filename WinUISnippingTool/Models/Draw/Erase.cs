@@ -15,7 +15,7 @@ namespace WinUISnippingTool.Models.Draw
     {
         private List<UIElement> linesToRemove;
 
-        public Erase(NotifyOnCompleteAddingCollection<UIElement> shapes) : base(shapes, null, default)
+        public Erase(NotifyOnCompletionCollection<UIElement> shapes) : base(shapes, null, default)
         {
             linesToRemove = new();
         }

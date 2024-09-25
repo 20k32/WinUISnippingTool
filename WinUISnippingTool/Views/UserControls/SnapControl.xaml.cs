@@ -22,7 +22,6 @@ namespace WinUISnippingTool.Views.UserControls
 {
     internal sealed partial class SnapControl : UserControl
     {
-        public string Title => "Hell to world";
         public SnapControl()
         {
             this.InitializeComponent();
@@ -30,12 +29,12 @@ namespace WinUISnippingTool.Views.UserControls
 
         public readonly static DependencyProperty SnipKindsProperty = DependencyProperty.Register(
             nameof(SnipKinds),
-            typeof(NotifyOnCompleteAddingCollection<SnipShapeKind>),
+            typeof(NotifyOnCompletionCollection<SnipShapeKind>),
             typeof(SnapControl), new(default));
 
-        public NotifyOnCompleteAddingCollection<SnipShapeKind> SnipKinds
+        public NotifyOnCompletionCollection<SnipShapeKind> SnipKinds
         {
-            get => (NotifyOnCompleteAddingCollection<SnipShapeKind>)GetValue(SnipKindsProperty);
+            get => (NotifyOnCompletionCollection<SnipShapeKind>)GetValue(SnipKindsProperty);
             set => SetValue(SnipKindsProperty, value);
         }
 

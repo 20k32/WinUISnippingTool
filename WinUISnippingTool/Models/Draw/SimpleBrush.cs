@@ -15,8 +15,11 @@ namespace WinUISnippingTool.Models.Draw
         private SolidColorBrush drawingColor;
         private double drawingThickness;
         private Polyline line;
+        Point previousPosition;
+        protected override int MinRenderDistance => 5;
 
-        public SimpleBrush(NotifyOnCompleteAddingCollection<UIElement> shapes, SolidColorBrush drawingColor, double drawingThickness) 
+
+        public SimpleBrush(NotifyOnCompletionCollection<UIElement> shapes, SolidColorBrush drawingColor, double drawingThickness) 
             : base(shapes, drawingColor, drawingThickness)
         {
             this.drawingColor = drawingColor;
@@ -37,6 +40,7 @@ namespace WinUISnippingTool.Models.Draw
 
                 line.Points.Add(position);
                 Shapes.Add(line);
+                previousPosition = position;
             }
         }
 
@@ -44,7 +48,11 @@ namespace WinUISnippingTool.Models.Draw
         {
             if (IsDrawing)
             {
-                line.Points.Add(position);
+                if(CalculateDistance(previousPosition, position) > MinRenderDistance)
+                {
+                    line.Points.Add(position);
+                    previousPosition = position;
+                }
             }
         }
 

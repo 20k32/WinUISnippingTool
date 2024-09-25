@@ -1,9 +1,12 @@
 ﻿using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,72 +16,102 @@ namespace WinUISnippingTool.Models.Paint
 {
     internal class CustomShapePaint : PaintBase
     {
-        Point firstPosition;
-        Point previousPosition;
-        private TranslateTransform translateTransform;
-        private PolyLineSegment polyLineSegment;
+        private Point firstPosition;
+        private Point previousPosition;
+        private Size windowSize;
         private SolidColorBrush strokeColor;
         private ImageBrush fillColor;
-        private Path userFigure;
+        private Polyline polyline;
 
-        public CustomShapePaint(NotifyOnCompleteAddingCollection<UIElement> shapes, ImageSource source) : base(shapes)
+        public CustomShapePaint(NotifyOnCompletionCollection<UIElement> shapes, ImageSource source) : base(shapes)
         {
-            translateTransform = new();
-            polyLineSegment = new();
             strokeColor = new SolidColorBrush(Colors.White);
             fillColor = new ImageBrush()
             {
                 ImageSource = source,
-                Stretch = Stretch.UniformToFill, 
+                Stretch = Stretch.None,
                 AlignmentX = AlignmentX.Center,
                 AlignmentY = AlignmentY.Center,
-                Transform = translateTransform
+                Opacity = 1
             };
 
-            fillColor.Opacity =1;
+            polyline = new()
+            {
+                Stroke = strokeColor,
+                Fill = fillColor,
+                StrokeThickness = 4,
+                FillRule = FillRule.Nonzero
+            };
+
+            windowSize = new(2560, 1440);
         }
         public override void OnPointerPressed(Point position)
         {
             if (!IsDrawing)
             {
                 IsDrawing = true;
-                previousPosition = position;
-                polyLineSegment.Points.Add(position);
+                var widthCoeff = windowSize.Width / 3;
+                var heightCoeff = windowSize.Height / 3;
+                int column = (int)(position.X / widthCoeff); 
+                int row = (int)(position.Y / heightCoeff); 
 
-                var segmentCollection = new PathSegmentCollection();
-                segmentCollection.Add(polyLineSegment);
+                AlignmentX alignmentX = AlignmentX.Center;
+                AlignmentY alignmentY = AlignmentY.Center;
 
-                var pathFigure = new PathFigure();
-                pathFigure.StartPoint = position;
-                pathFigure.Segments = segmentCollection;
+                
+                switch (column)
+                {
+                    case 0:
+                        alignmentX = AlignmentX.Left;
+                        break;
+                    case 1:
+                        alignmentX = AlignmentX.Center;
+                        break;
+                    case 2:
+                        alignmentX = AlignmentX.Right;
+                        break;
+                }
 
-                var figureCollection = new PathFigureCollection();
-                figureCollection.Add(pathFigure);
+                
+                switch (row)
+                {
+                    case 0:
+                        alignmentY = AlignmentY.Top;
+                        break;
+                    case 1:
+                        alignmentY = AlignmentY.Center;
+                        break;
+                    case 2:
+                        alignmentY = AlignmentY.Bottom;
+                        break;
+                }
 
-                var geometry = new PathGeometry();
-                geometry.Figures = figureCollection;
 
-                userFigure = new Path();
-                userFigure.Stroke = strokeColor;
-                userFigure.Fill = fillColor;
-                userFigure.StrokeThickness = 4;
-                userFigure.Data = geometry;
-                Shapes.Add(userFigure);
+                fillColor.AlignmentX = alignmentX;
+                fillColor.AlignmentY = alignmentY;
+
+                Shapes.Add(polyline);
             }
         }
 
         public override void OnPointerMoved(Point position)
         {
-            if (IsDrawing && CalculateDistance(previousPosition, position) > MinRenderDistance)
+            if (IsDrawing /*&& CalculateDistance(previousPosition, position) > MinRenderDistance*/)
             {
-                polyLineSegment.Points.Add(position);
+                polyline.Points.Add(position);
             }
         }
 
         public override Shape OnPointerReleased(Point position)
         {
             IsDrawing = false;
-            return userFigure;
+            polyline.StrokeThickness = 0;
+            return polyline;
+        }
+
+        public override void Clear()
+        {
+            Shapes.Clear();
         }
     }
 }

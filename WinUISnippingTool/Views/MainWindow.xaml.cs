@@ -1,26 +1,18 @@
-using ABI.Windows.Foundation;
-using Microsoft.Graphics.Display;
-using Microsoft.UI.Content;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
-using System;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Security;
-using Windows.Devices.Display;
 using Windows.Foundation;
-using Windows.Graphics;
-using Windows.Services.Maps;
-using System.Drawing;
 using Windows.UI.WindowManagement;
 using WinUISnippingTool.ViewModels;
-using System.Threading.Tasks;
-using WinUISnippingTool.Models.Draw;
 using WinUISnippingTool.Models.Extensions;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Storage.Pickers;
+using Windows.Storage;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -32,12 +24,14 @@ namespace WinUISnippingTool.Views
     /// </summary>
     internal sealed partial class MainWindow : Window
     {
+        private DisplayArea display;
         private Microsoft.UI.Windowing.AppWindow currentWindow;
         private bool isScreenTinySized;
         private bool isScreenSmallSized;
         private bool isScreenMiddleSized;
         private bool contentLoaded;
         private Canvas parentCanvas;
+        
 
         public MainWindowViewModel ViewModel { get; }
 
@@ -50,6 +44,10 @@ namespace WinUISnippingTool.Views
             ViewModel = new();
             contentLoaded = true;
             mainGrid.DataContext = ViewModel;
+            display = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
+            ViewModel.SetWindowSize(new(display.OuterBounds.Width, display.OuterBounds.Height));
+            nint windowHandle = WindowNative.GetWindowHandle(this);
+            FilePickerExtensions.SetWindowHandle(windowHandle);
         }
 
         private void ThemeChanged(FrameworkElement sender, object args)
@@ -61,7 +59,7 @@ namespace WinUISnippingTool.Views
         {
             var presenter = ((OverlappedPresenter)AppWindow.Presenter);
             presenter.Minimize(false);
-            ViewModel.EnterSnippingMode(false);
+            ViewModel.EnterSnippingMode(false, PART_Canvas_SizeChanged);
         }
 
         private void Window_SizeChanged(object sender, WindowSizeChangedEventArgs args)
@@ -115,11 +113,10 @@ namespace WinUISnippingTool.Views
             }
         }
 
-        Microsoft.UI.Xaml.Controls.Image currentImage;
-
         private void NewPhotoButton_Click(object sender, RoutedEventArgs e)
         {
-            ViewModel.EnterSnippingMode(false);
+            ViewModel.EnterSnippingMode(false, PART_Canvas_SizeChanged);
+
             if (PART_Border.ActualWidth <= PART_Canvas.Width
                        || PART_Border.ActualHeight <= PART_Canvas.Height)
             {
@@ -138,20 +135,7 @@ namespace WinUISnippingTool.Views
 
         private void PART_Canvas_SizeChanged()
         {
-            var display = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
-            
-            if (this.Bounds.Width == display.OuterBounds.Width
-                    && (this.Bounds.Height == display.OuterBounds.Height - 48
-                        || this.Bounds.Height == display.OuterBounds.Height))
-            {
-                ViewModel.ResetTransform();
-            }
-            else if (PART_Border.ActualWidth <= ViewModel.CanvasWidth
-                || PART_Border.ActualHeight <= ViewModel.CanvasHeight)
-            {
-                ViewModel.Transform(new(PART_Border.ActualWidth, PART_Border.ActualHeight));
-            }
-            else if (this.Bounds.Width <= ViewModel.CanvasWidth
+            if (this.Bounds.Width <= ViewModel.CanvasWidth
                 || this.Bounds.Height - 80 <= ViewModel.CanvasHeight)
             {
                 ViewModel.Transform(new(this.Bounds.Width, this.Bounds.Height - 80));
@@ -162,13 +146,41 @@ namespace WinUISnippingTool.Views
             }
         }
 
-        private void KeyboardAccelerator_Invoked(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+        private void EnterSnippingModeByShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
         {
             var presenter = ((OverlappedPresenter)AppWindow.Presenter);
             presenter.Minimize(false);
             ViewModel.EnterSnippingMode(true);
-
             args.Handled = true;
+        }
+
+        private void GlobalUndoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+        {
+            ViewModel.GlobalUndoCommand?.Execute(null);
+        }
+
+        private void GlobalRedoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+        {
+            ViewModel.GlobalRedoCommand?.Execute(null);
+        }
+
+        private async void SaveToClipboardShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+        {
+            var renderBitmap = new RenderTargetBitmap();
+            var size = ViewModel.GetActualImageSize();
+            await renderBitmap.RenderAsync(PART_Canvas, (int)size.Width, (int)size.Height);
+            await ViewModel.SaveBmpToClipboardAsync(renderBitmap);
+        }
+
+        private async void SaveFileDialogShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+
+            var renderBitmap = new RenderTargetBitmap();
+            var size = ViewModel.GetActualImageSize();
+            await renderBitmap.RenderAsync(PART_Canvas, (int)size.Width, (int)size.Height);
+            
+            await ViewModel.SaveBmpToFileAsync(renderBitmap);
         }
 
         private void Canvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)

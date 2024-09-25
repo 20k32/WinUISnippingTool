@@ -5,13 +5,23 @@ using System.Collections.Specialized;
 
 namespace WinUISnippingTool.Models
 {
-    internal sealed class NotifyOnCompleteAddingCollection<T> : ObservableCollection<T>
+    internal sealed class NotifyOnCompletionCollection<T> : ObservableCollection<T>
     {
         public void AddRange(IEnumerable<T> range)
         {
             foreach (var item in range)
             {
                 Items.Add(item);
+            }
+
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+
+        public void RemoveRange(IEnumerable<T> range)
+        {
+            foreach(var item in range)
+            {
+                Items.Remove(item);
             }
 
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));

@@ -20,6 +20,8 @@ internal sealed class ScaleTransformManager
         this.transformObject = transformObject;
     }
 
+    public Size ActualSize => transformObject;
+
     public void SetRelativeObject(Size relativeEntity)
     {
         this.relativeEntity = relativeEntity;

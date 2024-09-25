@@ -16,8 +16,8 @@ internal abstract class DrawBase : PaintBase
     private Stack<UIElement> shapeStack;
     protected SolidColorBrush DrawingColor;
     protected double DrawingThickness;
-    protected bool IsDrawing;
-    protected DrawBase(NotifyOnCompleteAddingCollection<UIElement> shapes, SolidColorBrush drawingColor, double drawingThickness) : base(shapes)
+
+    protected DrawBase(NotifyOnCompletionCollection<UIElement> shapes, SolidColorBrush drawingColor, double drawingThickness) : base(shapes)
     {
         this.DrawingColor = drawingColor;
         this.DrawingThickness = drawingThickness;
@@ -40,5 +40,13 @@ internal abstract class DrawBase : PaintBase
         {
             Shapes.Add(shapeStack.Pop());
         }
+    }
+
+    public override void Clear()
+    {
+        var tempArr = Shapes.Skip(1).ToArray(); // first object is always user image
+        
+        Shapes.RemoveRange(tempArr);
+        shapeStack.Clear();
     }
 }

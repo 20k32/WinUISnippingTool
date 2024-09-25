@@ -26,7 +26,7 @@ namespace WinUISnippingTool.Models.Paint
         private ImageBrush fillColor;
         private Path rect;
 
-        public RectangleSelectionPaint(NotifyOnCompleteAddingCollection<UIElement> shapes, ImageSource source) : base(shapes)
+        public RectangleSelectionPaint(NotifyOnCompletionCollection<UIElement> shapes, ImageSource source) : base(shapes)
         {
             scaleTransform = new();
             strokeColor = new SolidColorBrush(Colors.White);
@@ -114,6 +114,11 @@ namespace WinUISnippingTool.Models.Paint
             IsDrawing = false;
             rect.StrokeThickness = 0;
             return rect;
+        }
+
+        public override void Clear()
+        {
+            Shapes.Clear();
         }
     }
 }

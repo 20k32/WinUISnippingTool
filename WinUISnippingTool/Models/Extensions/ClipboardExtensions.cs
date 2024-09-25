@@ -14,21 +14,20 @@ namespace WinUISnippingTool.Models.Extensions
 {
     internal static class ClipboardExtensions
     {
-        public static async Task CopyAsync(RenderTargetBitmap renderTargetBitmap, IBuffer pixelBuffer)
+        public static async Task CopyAsync(uint pixelWidth, uint pixelHeight, byte[] buffer)
         {
-            try
+            using (var stream = new InMemoryRandomAccessStream())
             {
-                var stream = new InMemoryRandomAccessStream();
-                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream);
+                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
 
                 encoder.SetPixelData(
                     BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Premultiplied,
-                    (uint)renderTargetBitmap.PixelWidth,
-                    (uint)renderTargetBitmap.PixelHeight,
-                    96.0,
-                    96.0,
-                    pixelBuffer.ToArray());
+                    BitmapAlphaMode.Straight,
+                    pixelWidth,
+                    pixelHeight,
+                    BitmapSavingConstants.DpiX,
+                    BitmapSavingConstants.DpiY,
+                    buffer);
 
                 await encoder.FlushAsync();
 
@@ -37,10 +36,6 @@ namespace WinUISnippingTool.Models.Extensions
                 dataPackage.RequestedOperation = DataPackageOperation.Copy;
                 Clipboard.SetContent(dataPackage);
                 Clipboard.Flush();
-            }
-            catch(Exception ex)
-            {
-                var e = ex;
             }
         }
     }

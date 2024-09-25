@@ -16,7 +16,7 @@ namespace WinUISnippingTool.Models.Extensions
     internal static class PicturesLibraryExtensions
     {
         private static bool isBusy = false;
-        public static async Task<StorageFile> SaveAsync(RenderTargetBitmap renderTargetBitmap, IBuffer pixelBuffer)
+        public static async Task<StorageFile> SaveAsync(uint pixelWidth, uint pixelHeight, byte[] buffer)
         {
             var currDate = DateTime.Now;
             var fileName = $"Screenshot {currDate.ToString("yyyy-dd-MM")} {currDate.Hour}{currDate.Minute}{currDate.Second}.jpg";
@@ -27,16 +27,16 @@ namespace WinUISnippingTool.Models.Extensions
             using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
             {
 
-                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, stream); // error here
+                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream); // error here
 
                 encoder.SetPixelData(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Ignore,
-                    (uint)renderTargetBitmap.PixelWidth,
-                    (uint)renderTargetBitmap.PixelHeight,
-                    96,
-                    96,
-                    pixelBuffer.ToArray());
+                     BitmapPixelFormat.Bgra8,
+                     BitmapAlphaMode.Straight,
+                     pixelWidth,
+                     pixelHeight,
+                     BitmapSavingConstants.DpiX,
+                     BitmapSavingConstants.DpiY,
+                     buffer);
 
                 await encoder.FlushAsync();
             }
