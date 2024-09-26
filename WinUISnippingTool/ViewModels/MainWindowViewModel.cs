@@ -23,6 +23,9 @@ namespace WinUISnippingTool.ViewModels;
 internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 {
     private DrawBase drawBrush;
+    private DrawBase simpleBrush;
+    private DrawBase eraseBrush;
+    private DrawBase markerBrush;
     private SolidColorBrush drawBrushColor;
     private double drawBrushThickness;
     private SnipScreenWindow snipScreen;
@@ -36,23 +39,55 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         CanvasHeight = 100;
         TrySetAndLoadLocalization("uk-UA");
         previousImageExists = false;
-
-        drawBrushColor = new SolidColorBrush(Colors.Yellow);
-        drawBrushThickness = 3;
-        drawBrush = new SimpleBrush(CanvasItems, drawBrushColor, drawBrushThickness);
         SelectedSnipKind = SnipShapeKinds.First();
+        DrawingColorList = new();
+        DrawingColorList.AddRange(new ColorKind[]
+        {
+            new("#000000"),
+            new("#E8E8E8"),
+            new("#D20103"),
+            new("#FE9900"),
+            new("#7DDA58"),
+            new("#5DE2E7"),
+            new("#060270"),
+            new("#8D6F64"),
+            new("#CC6CE7")
+        });
+
+        MarkerColorList = new();
+        MarkerColorList.AddRange(new ColorKind[] 
+        { 
+            new("#98F5F9"),
+            new("#EFC3CA"),
+            new("#FFECA1")
+        });
+
+        SelectedDrawingColor = DrawingColorList.First();
+        SelectedMarkerColor = MarkerColorList.First();
+
+        simpleBrush = new SimpleBrush(CanvasItems);
+        markerBrush = new MarkerBrush(CanvasItems);
+        eraseBrush = new EraseBrush(CanvasItems);
+        
+        simpleBrush.SetColorHex(SelectedDrawingColor.Hex);
+        markerBrush.SetColorHex(selectedMarkerColor.Hex);
+
+        DrawingStrokeThickness = 1;
+        MarkerStrokeThickness = 0.5;
+
+        drawBrush = simpleBrush;
     }
 
-    public void OnPointerPressed(Point value) => drawBrush.OnPointerPressed(value);
-    public void OnPointerMoved(Point value) => drawBrush.OnPointerMoved(value);
-    public void OnPointerReleased(Point value) => drawBrush.OnPointerReleased(value);
+    public void OnPointerPressed(Point value) => drawBrush?.OnPointerPressed(value);
+    public void OnPointerMoved(Point value) => drawBrush?.OnPointerMoved(value);
+    public void OnPointerReleased(Point value) => drawBrush?.OnPointerReleased(value);
 
     public Size GetActualImageSize() => transformManager.ActualSize;
 
     [RelayCommand]
     private void SetEraseBrush()
     {
-        drawBrush = new Erase(CanvasItems);
+        drawBrush = eraseBrush;
     }
 
     [RelayCommand]
@@ -70,13 +105,13 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     [RelayCommand]
     private void SetSimpleBrush()
     {
-        drawBrush = new SimpleBrush(CanvasItems, drawBrushColor, drawBrushThickness);
+        drawBrush = simpleBrush;
     }
 
     [RelayCommand]
     private void SetMarkerBrush()
     {
-        drawBrush = new MarkerBrush(CanvasItems, drawBrushColor, drawBrushThickness);
+        drawBrush = markerBrush;
     }
 
     [RelayCommand]
@@ -85,7 +120,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         drawBrush.Clear();
     }
 
-    public async Task SaveBmpToFileAsync (RenderTargetBitmap renderBitmap)
+    public async Task SaveBmpToFileAsync(RenderTargetBitmap renderBitmap)
     {
         var pixelBuffer = await renderBitmap.GetPixelsAsync();
         var file = await FilePickerExtensions.ShowSaveAsync();
@@ -169,10 +204,10 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
     }
 
-    public void SetTransformObjectSize(Windows.Foundation.Size transformObject) 
+    public void SetTransformObjectSize(Windows.Foundation.Size transformObject)
         => transformManager.SetTransformObject(transformObject);
 
-    public void SetRelativeObjectSize(Windows.Foundation.Size relativeObject) 
+    public void SetRelativeObjectSize(Windows.Foundation.Size relativeObject)
         => transformManager.SetRelativeObject(relativeObject);
 
     public void SetScaleCenterCoords(Windows.Foundation.Size size)
@@ -180,7 +215,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     public void Transform(Windows.Foundation.Size relativeTo) => transformManager.Transform(relativeTo);
     public void Transform() => transformManager.Transform();
-
     public void ResetTransform() => transformManager.ResetTransform();
 
     #region Take photo button name
@@ -195,6 +229,90 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             {
                 takePhotoButtonName = value;
                 NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    #endregion
+
+    #region Drawing Color list
+
+    public NotifyOnCompletionCollection<ColorKind> DrawingColorList { get; }
+
+    private ColorKind selectedDrawingColor;
+
+    public ColorKind SelectedDrawingColor
+    {
+        get => selectedDrawingColor;
+        set
+        {
+            if (selectedDrawingColor != value)
+            {
+                selectedDrawingColor = value;
+                NotifyOfPropertyChange();
+                simpleBrush?.SetColorHex(selectedDrawingColor.Hex);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Marker color list
+
+    public NotifyOnCompletionCollection<ColorKind> MarkerColorList { get; }
+
+    private ColorKind selectedMarkerColor;
+
+    public ColorKind SelectedMarkerColor
+    {
+        get => selectedMarkerColor;
+        set
+        {
+            if (selectedMarkerColor != value)
+            {
+                selectedMarkerColor = value;
+                NotifyOfPropertyChange();
+                markerBrush?.SetColorHex(selectedMarkerColor.Hex);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Drawing troke thickness
+
+    private double drawingStrokeThickness;
+
+    public double DrawingStrokeThickness
+    {
+        get => drawingStrokeThickness;
+        set
+        {
+            if(drawingStrokeThickness != value)
+            {
+                drawingStrokeThickness = value;
+                NotifyOfPropertyChange();
+                simpleBrush.SetDrawingThickness(drawingStrokeThickness);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Marker stroke thickness
+
+    private double markerStrokeThickness;
+
+    public double MarkerStrokeThickness
+    {
+        get => markerStrokeThickness;
+        set
+        {
+            if (markerStrokeThickness != value)
+            {
+                markerStrokeThickness = value;
+                NotifyOfPropertyChange();
+                markerBrush.SetDrawingThickness(markerStrokeThickness);
             }
         }
     }

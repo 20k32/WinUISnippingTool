@@ -38,7 +38,7 @@ namespace WinUISnippingTool.Views.UserControls
             set => SetValue(SnipKindsProperty, value);
         }
 
-        public static DependencyProperty SelectedSnipKindProperty = DependencyProperty.Register(
+        public static readonly DependencyProperty SelectedSnipKindProperty = DependencyProperty.Register(
             nameof(SelectedSnipKind),
             typeof(SnipShapeKind),
             typeof(SnapControl),

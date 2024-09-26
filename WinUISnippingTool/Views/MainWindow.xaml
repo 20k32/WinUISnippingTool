@@ -12,13 +12,14 @@
     SizeChanged="Window_SizeChanged"
     x:Name="mainWindow">
 
-    <Grid x:Name="mainGrid">
+<Grid x:Name="mainGrid">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="X" Modifiers="Shift,Control" Invoked="EnterSnippingModeByShortcut"/>
             <KeyboardAccelerator Key="Z" Modifiers="Control" Invoked="GlobalUndoShortcut"/>
             <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="GlobalRedoShortcut"/>
             <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="SaveToClipboardShortcut"/>
             <KeyboardAccelerator Key="S" Modifiers="Control" Invoked="SaveFileDialogShortcut"/>
+
         </Grid.KeyboardAccelerators>
         
         <Grid.RowDefinitions>
@@ -52,6 +53,8 @@
                        VerticalAlignment="Top"
                        Margin="7,5,0,0"
                        Grid.Column="1"/>
+
+           
         </Grid>
 
         <!-- Main pane -->
@@ -95,15 +98,45 @@
                         Spacing="5"
                         HorizontalAlignment="Center"
                         x:Name="PART_RedactPicturePane">
-                
+
                 <Button Style="{StaticResource TransparentButton}"
                         Command="{x:Bind ViewModel.SetSimpleBrushCommand}">
-                    <FontIcon Glyph="&#xED63;" />
+                    <Button.Content>
+                        <FontIcon Glyph="&#xED63;" />
+                    </Button.Content>
+
+                    <Button.Flyout>
+                        <Flyout>
+                            <userControl:ColorPicker SelectedColor="{x:Bind ViewModel.SelectedDrawingColor, Mode=TwoWay}"
+                                                     ColorList="{x:Bind ViewModel.DrawingColorList}"
+                                                     StrokeThickness="{x:Bind ViewModel.DrawingStrokeThickness, Mode=TwoWay}"
+                                                     Width="300"
+                                                     Height="300"
+                                                     MinThickness="1"
+                                                     MaxThickness="30"
+                                                     ShapeOpacity="1"/>
+                        </Flyout>
+                    </Button.Flyout>
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
                         Command="{x:Bind ViewModel.SetMarkerBrushCommand}">
-                    <FontIcon Glyph="&#xED64;" />
+                    <Button.Content>
+                        <FontIcon Glyph="&#xED64;" />
+                    </Button.Content>
+                    
+                    <Button.Flyout>
+                        <Flyout>
+                            <userControl:ColorPicker SelectedColor="{x:Bind ViewModel.SelectedMarkerColor, Mode=TwoWay}"
+                                                     ColorList="{x:Bind ViewModel.MarkerColorList}"
+                                                     StrokeThickness="{x:Bind ViewModel.MarkerStrokeThickness, Mode=TwoWay}"
+                                                     Width="300"
+                                                     Height="300"
+                                                     MinThickness="10"
+                                                     MaxThickness="50"
+                                                     ShapeOpacity="0.5"/>
+                        </Flyout>
+                    </Button.Flyout>
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
@@ -221,8 +254,8 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-        </Grid>
-    </Grid>
+        </Grid>    
+</Grid>
 
 
 

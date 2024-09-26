@@ -1,34 +1,44 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
+using Windows.UI;
 using WinUISnippingTool.Models.Paint;
 
 namespace WinUISnippingTool.Models.Draw;
 
 internal abstract class DrawBase : PaintBase
 {
+    private Dictionary<string, SolidColorBrush> usedBrushes;
     private Stack<UIElement> shapeStack;
+
+    protected bool IsErasing;
     protected SolidColorBrush DrawingColor;
     protected double DrawingThickness;
+    protected Polyline Line;
 
-    protected DrawBase(NotifyOnCompletionCollection<UIElement> shapes, SolidColorBrush drawingColor, double drawingThickness) : base(shapes)
+    protected DrawBase(NotifyOnCompletionCollection<UIElement> shapes) : base(shapes)
     {
-        this.DrawingColor = drawingColor;
-        this.DrawingThickness = drawingThickness;
         shapeStack = new();
+        usedBrushes = new();
     }
 
     public void UndoGlobal()
     {
         var lastValue = Shapes.LastOrDefault();
 
-        if(lastValue is not null)
+        if(lastValue is not null
+            && lastValue is not Image)
         {
             Shapes.Remove(lastValue);
             shapeStack.Push(lastValue);
@@ -46,7 +56,63 @@ internal abstract class DrawBase : PaintBase
     {
         var tempArr = Shapes.Skip(1).ToArray(); // first object is always user image
         
-        Shapes.RemoveRange(tempArr);
+        foreach(Shape item in tempArr)
+        {
+            DetachEraseHandler(item);
+            Shapes.Remove(item);
+        }
+        
+        foreach(Shape item in shapeStack)
+        {
+            DetachEraseHandler(item);
+        }
+
         shapeStack.Clear();
+    }
+
+    public void SetColorHex(string hex)
+    {
+        if (usedBrushes.TryGetValue(hex, out var solidBrush))
+        {
+            DrawingColor = solidBrush;
+        }
+        else
+        {
+            var color = Color.FromArgb(255,
+               byte.Parse(hex.Substring(1, 2), NumberStyles.HexNumber),
+               byte.Parse(hex.Substring(3, 2), NumberStyles.HexNumber),
+               byte.Parse(hex.Substring(5, 2), NumberStyles.HexNumber));
+
+            DrawingColor = new(color);
+            usedBrushes.Add(hex, DrawingColor);
+        }
+    }
+
+    public void SetDrawingThickness(double thickness)
+    {
+        DrawingThickness = thickness;
+    }
+
+    protected void AddEraseHandler(Shape line)
+    {
+        line.PointerMoved += Line_PointerMoved;
+    }
+
+    private void Line_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        var element = (UIElement)sender;
+
+        if (this is EraseBrush
+            && IsDrawing
+            && Shapes.Contains(element))
+        {
+            Shapes.Remove(element);
+            shapeStack.Push(element);
+        }
+    }
+
+    private void DetachEraseHandler(Shape line)
+    {
+        line.PointerMoved -= Line_PointerMoved;
     }
 }

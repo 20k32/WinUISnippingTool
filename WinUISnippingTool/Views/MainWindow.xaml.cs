@@ -34,7 +34,7 @@ namespace WinUISnippingTool.Views
         
 
         public MainWindowViewModel ViewModel { get; }
-
+        
         public MainWindow()
         {
             this.InitializeComponent();
@@ -48,6 +48,7 @@ namespace WinUISnippingTool.Views
             ViewModel.SetWindowSize(new(display.OuterBounds.Width, display.OuterBounds.Height));
             nint windowHandle = WindowNative.GetWindowHandle(this);
             FilePickerExtensions.SetWindowHandle(windowHandle);
+            
         }
 
         private void ThemeChanged(FrameworkElement sender, object args)

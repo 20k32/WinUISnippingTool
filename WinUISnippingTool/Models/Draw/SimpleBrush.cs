@@ -12,19 +12,12 @@ namespace WinUISnippingTool.Models.Draw
 {
     internal sealed class SimpleBrush : DrawBase
     {
-        private SolidColorBrush drawingColor;
-        private double drawingThickness;
-        private Polyline line;
         Point previousPosition;
         protected override int MinRenderDistance => 5;
 
-
-        public SimpleBrush(NotifyOnCompletionCollection<UIElement> shapes, SolidColorBrush drawingColor, double drawingThickness) 
-            : base(shapes, drawingColor, drawingThickness)
-        {
-            this.drawingColor = drawingColor;
-            this.drawingThickness = drawingThickness;
-        }
+        public SimpleBrush(NotifyOnCompletionCollection<UIElement> shapes) 
+            : base(shapes)
+        { }
 
         public override void OnPointerPressed(Point position)
         {
@@ -32,14 +25,17 @@ namespace WinUISnippingTool.Models.Draw
             {
                 IsDrawing = true;
 
-                line = new()
+                Line = new Polyline()
                 {
-                    Stroke = drawingColor,
-                    StrokeThickness = drawingThickness
+                    Stroke = DrawingColor,
+                    StrokeThickness = DrawingThickness,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
                 };
 
-                line.Points.Add(position);
-                Shapes.Add(line);
+                ((Polyline)Line).Points.Add(position);
+                Shapes.Add(Line);
                 previousPosition = position;
             }
         }
@@ -50,7 +46,7 @@ namespace WinUISnippingTool.Models.Draw
             {
                 if(CalculateDistance(previousPosition, position) > MinRenderDistance)
                 {
-                    line.Points.Add(position);
+                    ((Polyline)Line).Points.Add(position);
                     previousPosition = position;
                 }
             }
@@ -59,7 +55,8 @@ namespace WinUISnippingTool.Models.Draw
         public override Shape OnPointerReleased(Point position)
         {
             IsDrawing = false;
-            return line;
+
+            return Line;
         }
     }
 }
