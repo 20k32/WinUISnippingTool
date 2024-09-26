@@ -11,6 +11,7 @@ using System.Linq;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Media;
+using WinUISnippingTool.Views.Pages;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -48,7 +49,7 @@ namespace WinUISnippingTool
             var activationKind = activatedArgs.Kind;
             if (activationKind != ExtendedActivationKind.AppNotification)
             {
-                LaunchAndBringToForegroundIfNeeded();
+                LaunchAndBringToForegroundIfNeeded(args);
             }
             else
             {
@@ -59,11 +60,21 @@ namespace WinUISnippingTool
             //m_window.Activate();
         }
 
-        private void LaunchAndBringToForegroundIfNeeded()
+        private void LaunchAndBringToForegroundIfNeeded(LaunchActivatedEventArgs args)
         {
             if (m_window == null)
             {
                 m_window = new MainWindow();
+                //Frame rootFrame = new Frame();
+
+               // rootFrame.NavigationFailed += RootFrame_NavigationFailed;
+                // Navigate to the first page, configuring the new page
+                // by passing required information as a navigation parameter
+                //rootFrame.Navigate(typeof(MainPage), args.Arguments);
+
+                // Place the frame in the current Window
+                //m_window.Content = rootFrame;
+                // Ensure the MainWindow is active
                 m_window.Activate();
 
                 // Additionally we show using our helper, since if activated via a app notification, it doesn't
@@ -77,6 +88,10 @@ namespace WinUISnippingTool
             }
         }
 
+        private void RootFrame_NavigationFailed(object sender, Microsoft.UI.Xaml.Navigation.NavigationFailedEventArgs e)
+        {
+            throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
+        }
 
         private void NotificationManager_NotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
         {
@@ -94,10 +109,9 @@ namespace WinUISnippingTool
 
                 try
                 {
-
-                    switch(args.Arguments["snapshotStatus"])
+                    switch (args.Arguments["snapshotStatus"])
                     {
-                        case "snapshotTaken": 
+                        case "snapshotTaken":
                             {
                                 string uriStr = args.Arguments["snapshotUri"];
                                 var uri = new Uri(uriStr);
@@ -110,10 +124,16 @@ namespace WinUISnippingTool
                                 };
                                 var width = int.Parse(args.Arguments["snapshotWidth"]);
                                 var height = int.Parse(args.Arguments["snapshotHeight"]);
-                                ((MainWindow)m_window).ViewModel.AddImage(image, width, height);
+
+                                //todo: launch vm methods
+                                /*((MainWindow)m_window).ViewModel.AddImage(image, width, height);
                                 ((MainWindow)m_window).TransformImage();
+                                m_window.Activate();*/
+
                                 m_window.Activate();
-                            } break;
+
+                            }
+                            break;
                     }
                 }
                 catch

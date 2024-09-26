@@ -17,6 +17,10 @@ using Microsoft.UI;
 using Windows.Foundation;
 using WinUISnippingTool.Models.Extensions;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Storage;
+using CommunityToolkit.WinUI.UI.Controls;
+using System.IO;
+using Windows.Devices.Bluetooth.Advertisement;
 
 namespace WinUISnippingTool.ViewModels;
 
@@ -62,20 +66,12 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             new("#FFECA1")
         });
 
-        SelectedDrawingColor = DrawingColorList.First();
-        SelectedMarkerColor = MarkerColorList.First();
-
         simpleBrush = new SimpleBrush(CanvasItems);
         markerBrush = new MarkerBrush(CanvasItems);
         eraseBrush = new EraseBrush(CanvasItems);
-        
-        simpleBrush.SetColorHex(SelectedDrawingColor.Hex);
-        markerBrush.SetColorHex(selectedMarkerColor.Hex);
-
+       
         DrawingStrokeThickness = 1;
         MarkerStrokeThickness = 0.5;
-
-        drawBrush = simpleBrush;
     }
 
     public void OnPointerPressed(Point value) => drawBrush?.OnPointerPressed(value);
@@ -156,7 +152,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         {
             if (!snipScreen.ViewModel.ExitRequested)
             {
-                drawBrush.Clear();
+                drawBrush?.Clear();
                 CanvasItems.Clear();
                 var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
                 var content = Clipboard.GetContent();
@@ -318,4 +314,38 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     }
 
     #endregion
+
+
+    private ImageCropper imageCropper;
+
+    public async Task EnterCroppingMode(RenderTargetBitmap renderTargetBitmap)
+    {
+        imageCropper = new ImageCropper()
+        {
+            Height = renderTargetBitmap.PixelHeight,
+            Width = renderTargetBitmap.PixelWidth,
+            Padding = new Microsoft.UI.Xaml.Thickness(10),
+            Margin = new Microsoft.UI.Xaml.Thickness(0)
+        };
+
+        var pixels = await renderTargetBitmap.GetPixelsAsync();
+        var pixelsArr = pixels.ToArray();
+
+        var writeableBitmap = new WriteableBitmap(renderTargetBitmap.PixelWidth, renderTargetBitmap.PixelHeight);
+        using (Stream stream = writeableBitmap.PixelBuffer.AsStream())
+        {
+            await stream.WriteAsync(pixelsArr, 0, pixelsArr.Length);
+        }
+
+        imageCropper.Source = writeableBitmap;
+        CanvasItems.Add(imageCropper);
+    }
+
+    public void ExitCroppingMode()
+    {
+        //imageCropper.Reset();
+        //imageCropper.CancelDirectManipulations();
+        imageCropper.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        CanvasItems.Remove(imageCropper);
+    }
 }
