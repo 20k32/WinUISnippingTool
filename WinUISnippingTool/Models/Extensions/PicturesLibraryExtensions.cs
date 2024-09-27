@@ -15,11 +15,10 @@ namespace WinUISnippingTool.Models.Extensions
 {
     internal static class PicturesLibraryExtensions
     {
-        private static bool isBusy = false;
         public static async Task<StorageFile> SaveAsync(uint pixelWidth, uint pixelHeight, byte[] buffer)
         {
             var currDate = DateTime.Now;
-            var fileName = $"Screenshot {currDate.ToString("yyyy-dd-MM")} {currDate.Hour}{currDate.Minute}{currDate.Second}.jpg";
+            var fileName = $"Screenshot {currDate:yyyy-dd-MM} {currDate.Hour}{currDate.Minute}{currDate.Second}.jpg";
             var screenshotsFolder = await KnownFolders.PicturesLibrary.GetFolderAsync("Screenshots");
 
             var file = await screenshotsFolder.CreateFileAsync(fileName);

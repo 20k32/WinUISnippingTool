@@ -20,7 +20,7 @@ namespace WinUISnippingTool.Models.Draw
         {
             if (!IsDrawing)
             {
-                foreach(Shape item in Shapes.Skip(1))
+                foreach (Shape item in Shapes.Skip(1).Cast<Shape>())
                 {
                     AddEraseHandler(item);
                 }

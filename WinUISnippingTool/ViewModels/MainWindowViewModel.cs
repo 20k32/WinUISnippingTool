@@ -1,44 +1,32 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Resources.Core;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Items;
 using WinUISnippingTool.Views;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Shapes;
-using Microsoft.Web.WebView2.Core;
 using Windows.ApplicationModel.DataTransfer;
 using System;
 using WinUISnippingTool.Models.Draw;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.UI;
 using Windows.Foundation;
 using WinUISnippingTool.Models.Extensions;
 using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Storage;
 using CommunityToolkit.WinUI.UI.Controls;
 using System.IO;
-using Microsoft.Graphics.Canvas;
-using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
-using Microsoft.Graphics.Canvas.UI.Xaml;
-
 namespace WinUISnippingTool.ViewModels;
 
 internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 {
     private DrawBase tempBrush;
     private DrawBase drawBrush;
-    private DrawBase simpleBrush;
-    private DrawBase eraseBrush;
-    private DrawBase markerBrush;
-    private SolidColorBrush drawBrushColor;
-    private double drawBrushThickness;
+    private readonly DrawBase simpleBrush;
+    private readonly DrawBase eraseBrush;
+    private readonly DrawBase markerBrush;
     private SnipScreenWindow snipScreen;
     private bool previousImageExists;
-    private ScaleTransformManager transformManager;
+    private readonly ScaleTransformManager transformManager;
 
 
     public MainWindowViewModel() : base()

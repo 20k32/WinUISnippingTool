@@ -19,10 +19,8 @@ namespace WinUISnippingTool.Models.Draw;
 
 internal abstract class DrawBase : PaintBase
 {
-    private Dictionary<string, SolidColorBrush> usedBrushes;
-    private Stack<UIElement> shapeStack;
-
-    protected bool IsErasing;
+    private readonly Dictionary<string, SolidColorBrush> usedBrushes;
+    private readonly Stack<UIElement> shapeStack;
     protected SolidColorBrush DrawingColor;
     protected double DrawingThickness;
     protected Polyline Line;
@@ -56,13 +54,13 @@ internal abstract class DrawBase : PaintBase
     {
         var tempArr = Shapes.Skip(1).ToArray(); // first object is always user image
         
-        foreach(Shape item in tempArr)
+        foreach (Shape item in tempArr.Cast<Shape>())
         {
             DetachEraseHandler(item);
             Shapes.Remove(item);
         }
-        
-        foreach(Shape item in shapeStack)
+
+        foreach (Shape item in shapeStack.Cast<Shape>())
         {
             DetachEraseHandler(item);
         }

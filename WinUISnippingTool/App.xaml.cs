@@ -102,7 +102,7 @@ namespace WinUISnippingTool
             var dispatcherQueue = m_window?.DispatcherQueue ?? DispatcherQueue.GetForCurrentThread();
 
 
-            dispatcherQueue.TryEnqueue(async delegate
+            dispatcherQueue.TryEnqueue(delegate
             {
 
                 try

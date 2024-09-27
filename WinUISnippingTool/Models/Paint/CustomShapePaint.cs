@@ -19,9 +19,9 @@ namespace WinUISnippingTool.Models.Paint
     {
         private Point previousPosition;
         private Size windowSize;
-        private SolidColorBrush strokeColor;
-        private ImageBrush fillColor;
-        private Polyline polyline;
+        private readonly SolidColorBrush strokeColor;
+        private readonly ImageBrush fillColor;
+        private readonly Polyline polyline;
 
         public CustomShapePaint(NotifyOnCompletionCollection<UIElement> shapes, ImageSource source) : base(shapes)
         {
@@ -89,7 +89,7 @@ namespace WinUISnippingTool.Models.Paint
                 fillColor.AlignmentX = alignmentX;
                 fillColor.AlignmentY = alignmentY;
 
-
+                previousPosition = position;
                 Shapes.Add(polyline);
             }
         }
@@ -99,6 +99,7 @@ namespace WinUISnippingTool.Models.Paint
             if (IsDrawing && CalculateDistance(previousPosition, position) > MinRenderDistance)
             {
                 polyline.Points.Add(position);
+                previousPosition = position;
             }
         }
 

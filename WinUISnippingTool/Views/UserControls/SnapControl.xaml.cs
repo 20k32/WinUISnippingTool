@@ -44,8 +44,6 @@ namespace WinUISnippingTool.Views.UserControls
             typeof(SnapControl),
             new(default));
 
-        private SnipShapeKind selectedSnipKind;
-
         public SnipShapeKind SelectedSnipKind
         {
             get => (SnipShapeKind)GetValue(SelectedSnipKindProperty);

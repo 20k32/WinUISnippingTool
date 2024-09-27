@@ -1,3 +1,4 @@
+using ABI.System;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Composition;
 using Microsoft.UI;
@@ -42,7 +43,6 @@ namespace WinUISnippingTool.Views.Pages;
 internal sealed partial class MainPage : Page
 {
     private DisplayArea display;
-    private Microsoft.UI.Windowing.AppWindow currentWindow;
     private bool isScreenTinySized;
     private bool isScreenSmallSized;
     private bool isScreenMiddleSized;
@@ -73,8 +73,10 @@ internal sealed partial class MainPage : Page
             display = mainPageParameter.displayArea;
             contentLoaded = true;
             ViewModel.SetWindowSize(new(display.OuterBounds.Width, display.OuterBounds.Height));
-            timer = new();
-            timer.Interval = TimeSpan.FromMilliseconds(500);
+            timer = new()
+            {
+                Interval = System.TimeSpan.FromMilliseconds(500),
+            };
             timer.Tick += Timer_Tick;
             timer.Start();
         }
@@ -163,17 +165,6 @@ internal sealed partial class MainPage : Page
         }
     }
 
-    private void NewPhotoButton_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.EnterSnippingMode(false, PART_Canvas_SizeChanged);
-
-        if (PART_Border.ActualWidth <= PART_Canvas.Width
-                   || PART_Border.ActualHeight <= PART_Canvas.Height)
-        {
-            ViewModel.Transform(new(PART_Border.ActualWidth, PART_Border.ActualHeight));
-        }
-    }
-
     public void TransformImage()
     {
         if (PART_Border.ActualWidth <= PART_Canvas.Width
@@ -188,8 +179,6 @@ internal sealed partial class MainPage : Page
         if (PageWidth + 32 <= ViewModel.CanvasWidth
             || PageHeight - 64 <= ViewModel.CanvasHeight)
         {
-            var difWidth = ViewModel.CanvasWidth - PageWidth;
-            var difHeight = ViewModel.CanvasHeight - PageHeight;
             ViewModel.Transform(new(PageWidth - 32, PageHeight - 64));
         }
         else
