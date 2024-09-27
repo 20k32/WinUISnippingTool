@@ -20,12 +20,16 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Storage;
 using CommunityToolkit.WinUI.UI.Controls;
 using System.IO;
-using Windows.Devices.Bluetooth.Advertisement;
+using Microsoft.Graphics.Canvas;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
+using Microsoft.Graphics.Canvas.UI.Xaml;
 
 namespace WinUISnippingTool.ViewModels;
 
 internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 {
+    private DrawBase tempBrush;
     private DrawBase drawBrush;
     private DrawBase simpleBrush;
     private DrawBase eraseBrush;
@@ -36,12 +40,12 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private bool previousImageExists;
     private ScaleTransformManager transformManager;
 
+
     public MainWindowViewModel() : base()
     {
         transformManager = new();
         CanvasWidth = 100;
         CanvasHeight = 100;
-        TrySetAndLoadLocalization("uk-UA");
         previousImageExists = false;
         SelectedSnipKind = SnipShapeKinds.First();
         DrawingColorList = new();
@@ -57,10 +61,10 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             new("#8D6F64"),
             new("#CC6CE7")
         });
-
+        TrySetAndLoadLocalization("uk-UA");
         MarkerColorList = new();
-        MarkerColorList.AddRange(new ColorKind[] 
-        { 
+        MarkerColorList.AddRange(new ColorKind[]
+        {
             new("#98F5F9"),
             new("#EFC3CA"),
             new("#FFECA1")
@@ -69,14 +73,43 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         simpleBrush = new SimpleBrush(CanvasItems);
         markerBrush = new MarkerBrush(CanvasItems);
         eraseBrush = new EraseBrush(CanvasItems);
-       
+
         DrawingStrokeThickness = 1;
         MarkerStrokeThickness = 0.5;
+        IsSnapshotTaken = false;
+    }
+
+    protected override void TrySetAndLoadLocalization(string bcpTag)
+    {
+        base.TrySetAndLoadLocalization(bcpTag);
+        TakePhotoButtonName = resourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
     }
 
     public void OnPointerPressed(Point value) => drawBrush?.OnPointerPressed(value);
-    public void OnPointerMoved(Point value) => drawBrush?.OnPointerMoved(value);
-    public void OnPointerReleased(Point value) => drawBrush?.OnPointerReleased(value);
+
+    public void OnPointerMoved(Point value)
+    {
+        if (drawBrush is not null
+            && value.X > 0 
+            && value.Y > 0
+            && value.X < CanvasWidth
+            && value.Y < CanvasHeight) 
+        {
+            drawBrush.OnPointerMoved(value);
+        }
+    }
+    public void OnPointerReleased(Point value) 
+    {
+        if (drawBrush is not null)
+        {
+            drawBrush.OnPointerReleased(value);
+            if(drawBrush is EraseBrush)
+            {
+                GlobalRedoCommand.NotifyCanExecuteChanged();
+            }
+            GlobalUndoCommand.NotifyCanExecuteChanged();
+        }
+    } 
 
     public Size GetActualImageSize() => transformManager.ActualSize;
 
@@ -86,17 +119,34 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         drawBrush = eraseBrush;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanUndo))]
     private void GlobalUndo()
     {
         drawBrush.UndoGlobal();
+        if(CanvasItems.Count == 1)
+        {
+            GlobalUndoCommand.NotifyCanExecuteChanged();
+        }
+
+        GlobalRedoCommand.NotifyCanExecuteChanged();
     }
 
-    [RelayCommand]
+    private bool CanUndo() => drawBrush is not null && CanvasItems.Count > 1;
+
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     private void GlobalRedo()
     {
         drawBrush.RedoGlobal();
+
+        if (!drawBrush.CanRedo())
+        {
+            GlobalRedoCommand.NotifyCanExecuteChanged();
+        }
+
+        GlobalUndoCommand.NotifyCanExecuteChanged();
     }
+
+    private bool CanRedo() => drawBrush is not null && drawBrush.CanRedo();
 
     [RelayCommand]
     private void SetSimpleBrush()
@@ -113,7 +163,9 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     [RelayCommand]
     private void ResetCanvas()
     {
-        drawBrush.Clear();
+        drawBrush?.Clear();
+        GlobalUndoCommand.NotifyCanExecuteChanged();
+        GlobalRedoCommand.NotifyCanExecuteChanged();
     }
 
     public async Task SaveBmpToFileAsync(RenderTargetBitmap renderBitmap)
@@ -124,17 +176,21 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         if (file is not null)
         {
             await FileExtensions.SaveBmpBufferAsync(
-                file,
-                (uint)renderBitmap.PixelWidth,
-                (uint)renderBitmap.PixelHeight,
-                pixelBuffer.ToArray());
+            file,
+            (uint)renderBitmap.PixelWidth,
+            (uint)renderBitmap.PixelHeight,
+            pixelBuffer.ToArray());
         }
     }
 
     public async Task SaveBmpToClipboardAsync(RenderTargetBitmap renderBitmap)
     {
         var pixelBuffer = await renderBitmap.GetPixelsAsync();
-        await ClipboardExtensions.CopyAsync((uint)renderBitmap.PixelWidth, (uint)renderBitmap.PixelHeight, pixelBuffer.ToArray());
+
+        await ClipboardExtensions.CopyAsync(
+            (uint)renderBitmap.PixelWidth, 
+            (uint)renderBitmap.PixelHeight, 
+            pixelBuffer.ToArray());
     }
 
     public ScaleTransform TransformSource => transformManager.TransfromSource;
@@ -170,6 +226,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
                 SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
                 SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
 
+                IsSnapshotTaken = true;
                 sizeChangedCallback?.Invoke();
             }
         };
@@ -284,7 +341,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         get => drawingStrokeThickness;
         set
         {
-            if(drawingStrokeThickness != value)
+            if (drawingStrokeThickness != value)
             {
                 drawingStrokeThickness = value;
                 NotifyOfPropertyChange();
@@ -316,16 +373,55 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     #endregion
 
 
+    #region Is in cropping mode
+
+    private bool isInCroppingMode;
+    public bool IsInCroppingMode
+    {
+        get => isInCroppingMode;
+        set
+        {
+            isInCroppingMode = value;
+            NotifyOfPropertyChange();
+        }
+    }
+
+    #endregion
+
+    #region Is snapshot taken
+
+    private bool isSnapshotTaken;
+    public bool IsSnapshotTaken
+    {
+        get => isSnapshotTaken;
+
+        set
+        {
+            if(isSnapshotTaken != value)
+            {
+                isSnapshotTaken = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    #endregion
+
+
     private ImageCropper imageCropper;
 
     public async Task EnterCroppingMode(RenderTargetBitmap renderTargetBitmap)
     {
+        tempBrush = drawBrush;
+        drawBrush = null;
+
         imageCropper = new ImageCropper()
         {
-            Height = renderTargetBitmap.PixelHeight,
-            Width = renderTargetBitmap.PixelWidth,
             Padding = new Microsoft.UI.Xaml.Thickness(10),
-            Margin = new Microsoft.UI.Xaml.Thickness(0)
+            ThumbPlacement = ThumbPlacement.Corners,
+            SecondaryThumbStyle = null,
+            MinCroppedPixelLength = 20,
+            MinSelectedLength = 20,
         };
 
         var pixels = await renderTargetBitmap.GetPixelsAsync();
@@ -339,13 +435,31 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
         imageCropper.Source = writeableBitmap;
         CanvasItems.Add(imageCropper);
+        IsInCroppingMode = true;
+    }
+
+    public void CommitCrop()
+    {
+        IsInCroppingMode = false;
+        var region = imageCropper.CroppedRegion;
+        var image = (Image)CanvasItems[0];
+        image.Clip = new RectangleGeometry
+        {
+            Rect = region
+        };
+        
+
+        CanvasItems.Remove(imageCropper);
+        drawBrush = tempBrush;
+        tempBrush = null;
     }
 
     public void ExitCroppingMode()
     {
-        //imageCropper.Reset();
-        //imageCropper.CancelDirectManipulations();
-        imageCropper.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        IsInCroppingMode = false;
         CanvasItems.Remove(imageCropper);
+
+        drawBrush = tempBrush;
+        tempBrush = null;
     }
 }

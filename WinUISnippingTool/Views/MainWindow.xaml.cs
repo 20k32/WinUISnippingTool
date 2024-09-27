@@ -11,6 +11,11 @@ using WinRT.Interop;
 using CommunityToolkit.WinUI.UI.Controls;
 using WinUISnippingTool.Views.Pages;
 using WinUISnippingTool.Models.PageParameters;
+using System.Diagnostics;
+using Windows.UI.ViewManagement;
+using System.Runtime.InteropServices;
+using Microsoft.UI;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -35,11 +40,12 @@ namespace WinUISnippingTool.Views
 
             nint windowHandle = WindowNative.GetWindowHandle(this);
             FilePickerExtensions.SetWindowHandle(windowHandle);
+           
         }
 
         private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
         {
-            
+            Debug.WriteLine($"Window: {args.Size.Width} {args.Size.Height}");
         }
     }
 }

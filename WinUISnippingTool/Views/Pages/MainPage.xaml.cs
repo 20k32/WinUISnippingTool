@@ -1,3 +1,7 @@
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.UI.Composition;
+using Microsoft.UI;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -9,12 +13,18 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Graphics.Imaging;
+using Windows.Services.Maps;
 using WinRT.Interop;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
@@ -36,13 +46,14 @@ internal sealed partial class MainPage : Page
     private bool isScreenTinySized;
     private bool isScreenSmallSized;
     private bool isScreenMiddleSized;
-    private bool contentLoaded;
     private Canvas parentCanvas;
     private double PageWidth;
     private double PageHeight;
-
+    private DispatcherTimer timer;
+    private bool contentLoaded;
     private OverlappedPresenter appWindowPersenter;
 
+    public bool SizeChanginRequested;
 
     public MainPage()
     {
@@ -58,10 +69,24 @@ internal sealed partial class MainPage : Page
             ViewModel = new();
             appWindowPersenter = mainPageParameter.appWindowPresenter;
             ViewModel = new();
-            contentLoaded = true;
             mainGrid.DataContext = ViewModel;
             display = mainPageParameter.displayArea;
+            contentLoaded = true;
             ViewModel.SetWindowSize(new(display.OuterBounds.Width, display.OuterBounds.Height));
+            timer = new();
+            timer.Interval = TimeSpan.FromMilliseconds(500);
+            timer.Tick += Timer_Tick;
+            timer.Start();
+        }
+    }
+
+
+    private void Timer_Tick(object sender, object e)
+    {
+        if (SizeChanginRequested)
+        {
+            PART_Canvas_SizeChanged();
+            SizeChanginRequested = false;
         }
     }
 
@@ -80,10 +105,15 @@ internal sealed partial class MainPage : Page
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs args)
     {
-        if (contentLoaded)
+        if(contentLoaded)
         {
             PageWidth = args.NewSize.Width;
-            PageHeight = args.NewSize.Height - 54;
+            PageHeight = args.NewSize.Height;
+
+            if (isScreenSmallSized)
+            {
+                PageHeight -= 32;
+            }
 
             if (!isScreenMiddleSized
                  && args.NewSize.Width < CoreConstants.MinLargeWidth)
@@ -128,9 +158,8 @@ internal sealed partial class MainPage : Page
                     isScreenTinySized = false;
                 }
             }
-            
-            
-            PART_Canvas_SizeChanged();
+            Debug.WriteLine($"Page: {args.NewSize.Width} {args.NewSize.Height}");
+            SizeChanginRequested = true;
         }
     }
 
@@ -156,10 +185,12 @@ internal sealed partial class MainPage : Page
 
     private void PART_Canvas_SizeChanged()
     {
-        if (PageWidth <= ViewModel.CanvasWidth
-            || PageHeight - 54 <= ViewModel.CanvasHeight)
+        if (PageWidth + 32 <= ViewModel.CanvasWidth
+            || PageHeight - 64 <= ViewModel.CanvasHeight)
         {
-            ViewModel.Transform(new(PageWidth, PageHeight - 54));
+            var difWidth = ViewModel.CanvasWidth - PageWidth;
+            var difHeight = ViewModel.CanvasHeight - PageHeight;
+            ViewModel.Transform(new(PageWidth - 32, PageHeight - 64));
         }
         else
         {
@@ -184,22 +215,24 @@ internal sealed partial class MainPage : Page
         ViewModel.GlobalRedoCommand?.Execute(null);
     }
 
-    private async void SaveToClipboardShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+    private async Task<RenderTargetBitmap> SaveBmpCoreAsync()
     {
         var renderBitmap = new RenderTargetBitmap();
-        var size = ViewModel.GetActualImageSize();
-        await renderBitmap.RenderAsync(PART_Canvas, (int)size.Width, (int)size.Height);
+        await renderBitmap.RenderAsync(PART_Canvas, (int)ViewModel.CanvasWidth, (int)ViewModel.CanvasHeight);
+        return renderBitmap;
+    }
+
+    private async void SaveToClipboardShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+    {
+        args.Handled = true;
+        var renderBitmap = await SaveBmpCoreAsync();
         await ViewModel.SaveBmpToClipboardAsync(renderBitmap);
     }
 
     private async void SaveFileDialogShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
     {
         args.Handled = true;
-
-        var renderBitmap = new RenderTargetBitmap();
-        var size = ViewModel.GetActualImageSize();
-        await renderBitmap.RenderAsync(PART_Canvas, (int)size.Width, (int)size.Height);
-
+        var renderBitmap = await SaveBmpCoreAsync();
         await ViewModel.SaveBmpToFileAsync(renderBitmap);
     }
 
@@ -225,18 +258,34 @@ internal sealed partial class MainPage : Page
 
     private async void CropButton_Click(object sender, RoutedEventArgs e)
     {
-        var renderBitmap = new RenderTargetBitmap();
-        var size = ViewModel.GetActualImageSize();
-        await renderBitmap.RenderAsync(PART_Canvas, (int)size.Width, (int)size.Height);
+        var renderBitmap = await SaveBmpCoreAsync();
         await ViewModel.EnterCroppingMode(renderBitmap);
     }
+
     private void DecropButton_Click(object sender, RoutedEventArgs e)
     {
         ViewModel.ExitCroppingMode();
     }
 
+    private void CommitCropButton_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CommitCrop();
+    }
+
     private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
     {
 
+    }
+
+    private async void SaveBmpToClipboard_Click(object sender, RoutedEventArgs e)
+    { 
+        var renderBitmap = await SaveBmpCoreAsync();
+        await ViewModel.SaveBmpToClipboardAsync(renderBitmap);
+    }
+
+    private async void SaveBmpToFile_Click(object sender, RoutedEventArgs e)
+    {
+        var renderBitmap = await SaveBmpCoreAsync();
+        await ViewModel.SaveBmpToFileAsync(renderBitmap);
     }
 }

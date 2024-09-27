@@ -15,11 +15,11 @@ namespace WinUISnippingTool.Models.Extensions
             using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
             {
 
-                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
 
                 encoder.SetPixelData(
                      BitmapPixelFormat.Bgra8,
-                     BitmapAlphaMode.Straight,
+                     BitmapAlphaMode.Premultiplied,
                      pixelWidth,
                      pixelHeight,
                      BitmapSavingConstants.DpiX,

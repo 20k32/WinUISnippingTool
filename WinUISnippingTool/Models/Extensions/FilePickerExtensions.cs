@@ -25,7 +25,7 @@ internal static class FilePickerExtensions
             CommitButtonText = "Save",
         };
 
-        fileSavePicker.FileTypeChoices.Add(".jpeg", new[] { ".jpeg" } );
+        fileSavePicker.FileTypeChoices.Add(".png", new[] { ".png" } );
     }
 
     public static void SetWindowHandle(nint windowHandle)

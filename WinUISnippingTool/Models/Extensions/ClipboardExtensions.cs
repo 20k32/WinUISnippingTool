@@ -22,7 +22,7 @@ namespace WinUISnippingTool.Models.Extensions
 
                 encoder.SetPixelData(
                     BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
+                    BitmapAlphaMode.Premultiplied,
                     pixelWidth,
                     pixelHeight,
                     BitmapSavingConstants.DpiX,

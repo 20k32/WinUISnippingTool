@@ -45,7 +45,8 @@
             <StackPanel Grid.Column="0"
                         Margin="20, 0, 0, 0"
                         Orientation="Horizontal"
-                        VerticalAlignment="Center">
+                        VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
 
                 <Button Margin="0, 0, 15, 0"
                         Click="myButton_Click">
@@ -60,10 +61,6 @@
                     </StackPanel>
                 </Button>
 
-                <Button Content="imgage crop" Click="CropButton_Click"/>
-                <Button Content="imgage decrop" Click="DecropButton_Click"/>
-
-
                 <userControl:SnapControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
                                          SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"/>
             </StackPanel>
@@ -76,7 +73,9 @@
                         x:Name="PART_RedactPicturePane">
 
                 <Button Style="{StaticResource TransparentButton}"
-                        Command="{x:Bind ViewModel.SetSimpleBrushCommand}">
+                        Command="{x:Bind ViewModel.SetSimpleBrushCommand}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
                     <Button.Content>
                         <FontIcon Glyph="&#xED63;" />
                     </Button.Content>
@@ -86,6 +85,8 @@
                             <userControl:ColorPicker SelectedColor="{x:Bind ViewModel.SelectedDrawingColor, Mode=TwoWay}"
                                                      ColorList="{x:Bind ViewModel.DrawingColorList}"
                                                      StrokeThickness="{x:Bind ViewModel.DrawingStrokeThickness, Mode=TwoWay}"
+                                                     PathStrokeStartLine="Round"
+                                                     PathStrokeEndLine="Round"
                                                      Width="300"
                                                      Height="300"
                                                      MinThickness="1"
@@ -96,7 +97,9 @@
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
-                        Command="{x:Bind ViewModel.SetMarkerBrushCommand}">
+                        Command="{x:Bind ViewModel.SetMarkerBrushCommand}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
                     <Button.Content>
                         <FontIcon Glyph="&#xED64;" />
                     </Button.Content>
@@ -106,6 +109,8 @@
                             <userControl:ColorPicker SelectedColor="{x:Bind ViewModel.SelectedMarkerColor, Mode=TwoWay}"
                                                      ColorList="{x:Bind ViewModel.MarkerColorList}"
                                                      StrokeThickness="{x:Bind ViewModel.MarkerStrokeThickness, Mode=TwoWay}"
+                                                     PathStrokeStartLine="Square"
+                                                     PathStrokeEndLine="Square"
                                                      Width="300"
                                                      Height="300"
                                                      MinThickness="10"
@@ -116,22 +121,17 @@
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
-                        Command="{x:Bind ViewModel.SetEraseBrushCommand}">
+                        Command="{x:Bind ViewModel.SetEraseBrushCommand}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
                     <FontIcon Glyph="&#xED60;" />
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
                         Content="ClearCanvas"
-                        Command="{x:Bind ViewModel.ResetCanvasCommand}">
-                </Button>
-
-                <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                        Width="1"
-                        Height="27"
-                        HorizontalAlignment="Stretch"/>
-
-                <Button Style="{StaticResource TransparentButton}">
-                    <FontIcon Glyph="&#xE7A8;" />
+                        Command="{x:Bind ViewModel.ResetCanvasCommand}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
                 </Button>
 
                 <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
@@ -140,12 +140,39 @@
                         HorizontalAlignment="Stretch"/>
 
                 <Button Style="{StaticResource TransparentButton}"
-                        Command="{x:Bind ViewModel.GlobalUndoCommand}">
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}"
+                        Click="CropButton_Click">
+                    <FontIcon Glyph="&#xE7A8;" />
+                </Button>
+
+                <Button Style="{StaticResource TransparentButton}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=True, Mode=OneWay}"
+                        Click="CommitCropButton_Click">
+                    <FontIcon Glyph="&#xE73E;" />
+                </Button>
+
+
+                <Button Style="{StaticResource TransparentButton}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=True, Mode=OneWay}"
+                        Click="DecropButton_Click">
+                    <FontIcon Glyph="&#xE8BB;" />
+                </Button>
+
+                <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        Width="1"
+                        Height="27"
+                        HorizontalAlignment="Stretch"/>
+
+                <Button Style="{StaticResource TransparentButton}"
+                        Command="{x:Bind ViewModel.GlobalUndoCommand}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
                     <FontIcon Glyph="&#xE7A7;" />
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
-                        Command="{x:Bind ViewModel.GlobalRedoCommand}">
+                        Command="{x:Bind ViewModel.GlobalRedoCommand}"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
                     <FontIcon Glyph="&#xE7A6;" />
                 </Button>
             </StackPanel>
@@ -154,13 +181,18 @@
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         Grid.Column="2"
-                        Spacing="5">
+                        Spacing="5"
+                        Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
 
-                <Button Style="{StaticResource TransparentButton}">
+                <Button Style="{StaticResource TransparentButton}"
+                        Click="SaveBmpToFile_Click"
+                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
                     <FontIcon Glyph="&#xE792;" />
                 </Button>
 
-                <Button Style="{StaticResource TransparentButton}">
+                <Button Style="{StaticResource TransparentButton}"
+                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}"
+                        Click="SaveBmpToClipboard_Click">
                     <FontIcon Glyph="&#xE8C8;" />
                 </Button>
 
@@ -208,7 +240,7 @@
 
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <Canvas Background="Blue"
+                        <Canvas Background="Transparent"
                                 RenderTransform="{Binding TransformSource, Mode=OneWay}"
                                 PointerPressed="Canvas_PointerPressed"
                                 PointerMoved="Canvas_PointerMoved"

@@ -11,12 +11,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Services.Maps;
 
 namespace WinUISnippingTool.Models.Paint
 {
     internal class CustomShapePaint : PaintBase
     {
-        private Point firstPosition;
         private Point previousPosition;
         private Size windowSize;
         private SolidColorBrush strokeColor;
@@ -30,9 +30,9 @@ namespace WinUISnippingTool.Models.Paint
             {
                 ImageSource = source,
                 Stretch = Stretch.None,
-                AlignmentX = AlignmentX.Center,
-                AlignmentY = AlignmentY.Center,
-                Opacity = 1
+                AlignmentX = AlignmentX.Left,
+                AlignmentY = AlignmentY.Top,
+                Opacity = 1,
             };
 
             polyline = new()
@@ -86,9 +86,9 @@ namespace WinUISnippingTool.Models.Paint
                         break;
                 }
 
-
                 fillColor.AlignmentX = alignmentX;
                 fillColor.AlignmentY = alignmentY;
+
 
                 Shapes.Add(polyline);
             }
@@ -96,7 +96,7 @@ namespace WinUISnippingTool.Models.Paint
 
         public override void OnPointerMoved(Point position)
         {
-            if (IsDrawing /*&& CalculateDistance(previousPosition, position) > MinRenderDistance*/)
+            if (IsDrawing && CalculateDistance(previousPosition, position) > MinRenderDistance)
             {
                 polyline.Points.Add(position);
             }

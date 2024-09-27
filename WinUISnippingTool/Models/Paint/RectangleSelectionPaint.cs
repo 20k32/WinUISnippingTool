@@ -92,6 +92,7 @@ namespace WinUISnippingTool.Models.Paint
                 else if(firstPosition.X < position.X
                         && firstPosition.Y > position.Y)
                 {
+                    translateTransform.X = -firstPosition.X; 
                     translateTransform.Y = -position.Y + 1;
                 }
                 else if(firstPosition.X > position.X

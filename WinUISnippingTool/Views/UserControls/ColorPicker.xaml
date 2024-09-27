@@ -32,7 +32,9 @@
             <Path Stroke="{x:Bind SelectedColor.Hex, Mode=OneWay}"
                   StrokeThickness="{x:Bind StrokeThickness, Mode=OneWay}"
                   Opacity="{x:Bind ShapeOpacity, Mode=OneWay}"
-                  Data="M 20,100 C 100,0 200,200 270,90"/>
+                  Data="M 20,100 C 100,0 200,200 270,90"
+                  StrokeStartLineCap="{x:Bind PathStrokeStartLine}"
+                  StrokeEndLineCap="{x:Bind PathStrokeEndLine}"/>
             <Slider Minimum="{x:Bind MinThickness, Mode=OneWay}" Maximum="{x:Bind MaxThickness, Mode=OneWay}"
                     Value="{x:Bind StrokeThickness, Mode=TwoWay}"
                     Margin="0, 20, 0, 0"/>

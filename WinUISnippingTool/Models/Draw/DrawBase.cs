@@ -115,4 +115,6 @@ internal abstract class DrawBase : PaintBase
     {
         line.PointerMoved -= Line_PointerMoved;
     }
+
+    public bool CanRedo() => shapeStack.Count > 0;
 }

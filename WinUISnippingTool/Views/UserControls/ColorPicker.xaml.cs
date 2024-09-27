@@ -95,6 +95,32 @@ namespace WinUISnippingTool.Views.UserControls
             set => SetValue(ShapeOpacityProperty, value);
         }
 
+        public static readonly DependencyProperty PathStrokeStartLineProperty =
+            DependencyProperty.Register(
+                nameof(PathStrokeStartLine),
+                typeof(PenLineCap),
+                typeof(ColorPicker),
+                new(default));
+
+        public PenLineCap PathStrokeStartLine
+        {
+            get => (PenLineCap)GetValue(PathStrokeStartLineProperty);
+            set => SetValue (PathStrokeStartLineProperty, value);
+        }
+
+        public static readonly DependencyProperty PathStrokeEndLineProperty =
+            DependencyProperty.Register(
+                nameof(PathStrokeEndLine),
+                typeof(PenLineCap),
+                typeof(ColorPicker),
+                new(default));
+
+        public PenLineCap PathStrokeEndLine
+        {
+            get => (PenLineCap)GetValue(PathStrokeEndLineProperty);
+            set => SetValue(PathStrokeEndLineProperty, value);
+        }
+
 
         public ColorPicker()
         {

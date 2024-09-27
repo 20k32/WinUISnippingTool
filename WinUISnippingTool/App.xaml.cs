@@ -55,11 +55,9 @@ namespace WinUISnippingTool
             {
                 HandleNotification((AppNotificationActivatedEventArgs)activatedArgs.Data);
             }
-
-
             //m_window.Activate();
         }
-
+            
         private void LaunchAndBringToForegroundIfNeeded(LaunchActivatedEventArgs args)
         {
             if (m_window == null)

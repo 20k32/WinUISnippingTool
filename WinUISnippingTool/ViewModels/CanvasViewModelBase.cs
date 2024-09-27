@@ -13,7 +13,10 @@ namespace WinUISnippingTool.ViewModels;
 internal abstract class CanvasViewModelBase : INotifyPropertyChanged
 {
     protected Size defaultWindowSize = new(500, 500);
+    protected ResourceMap resourceMap;
     public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; private set; }
+
+
 
     protected CanvasViewModelBase()
     {
@@ -28,7 +31,7 @@ internal abstract class CanvasViewModelBase : INotifyPropertyChanged
        });
     }
 
-    protected void TrySetAndLoadLocalization(string bcpTag)
+    protected virtual void TrySetAndLoadLocalization(string bcpTag)
     {
         if (Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride != bcpTag)
         {
@@ -36,7 +39,7 @@ internal abstract class CanvasViewModelBase : INotifyPropertyChanged
         }
         var languages = Windows.Globalization.ApplicationLanguages.Languages;
 
-        var resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
+        resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
         SnipShapeKinds[0].Name = resourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipShapeKinds[1].Name = resourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipShapeKinds[2].Name = resourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
