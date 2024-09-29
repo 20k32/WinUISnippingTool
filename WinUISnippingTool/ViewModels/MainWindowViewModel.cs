@@ -15,7 +15,119 @@ using WinUISnippingTool.Models.Extensions;
 using System.Runtime.InteropServices.WindowsRuntime;
 using CommunityToolkit.WinUI.UI.Controls;
 using System.IO;
+using System.Diagnostics;
+using Windows.ApplicationModel.Resources.Core;
+using Windows.Devices.Display;
+using Windows.Devices.Enumeration;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using Windows.Graphics;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Windowing;
 namespace WinUISnippingTool.ViewModels;
+
+
+public sealed class Monitor
+{
+    private Monitor(IntPtr handle)
+    {
+        Handle = handle;
+        var mi = new MONITORINFOEX();
+        mi.cbSize = Marshal.SizeOf(mi);
+        if (!GetMonitorInfo(handle, ref mi))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+
+        DeviceName = mi.szDevice.ToString();
+        Bounds = new RectInt32(mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top);
+        WorkingArea = new RectInt32(mi.rcWork.left, mi.rcWork.top, mi.rcWork.right - mi.rcWork.left, mi.rcWork.bottom - mi.rcWork.top);
+        IsPrimary = mi.dwFlags.HasFlag(MONITORINFOF.MONITORINFOF_PRIMARY);
+    }
+
+    public IntPtr Handle { get; }
+    public bool IsPrimary { get; }
+    public RectInt32 WorkingArea { get; }
+    public RectInt32 Bounds { get; }
+    public string DeviceName { get; }
+
+    public static IEnumerable<Monitor> All
+    {
+        get
+        {
+            var all = new List<Monitor>();
+            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (m, h, rc, p) =>
+            {
+                all.Add(new Monitor(m));
+                return true;
+            }, IntPtr.Zero);
+            return all;
+        }
+    }
+
+    public override string ToString() => DeviceName;
+    public static IntPtr GetNearestFromWindow(IntPtr hwnd) => MonitorFromWindow(hwnd, MFW.MONITOR_DEFAULTTONEAREST);
+    public static IntPtr GetDesktopMonitorHandle() => GetNearestFromWindow(GetDesktopWindow());
+    public static IntPtr GetShellMonitorHandle() => GetNearestFromWindow(GetShellWindow());
+    public static Monitor FromWindow(IntPtr hwnd, MFW flags = MFW.MONITOR_DEFAULTTONULL)
+    {
+        var h = MonitorFromWindow(hwnd, flags);
+        return h != IntPtr.Zero ? new Monitor(h) : null;
+    }
+
+    [Flags]
+    public enum MFW
+    {
+        MONITOR_DEFAULTTONULL = 0x00000000,
+        MONITOR_DEFAULTTOPRIMARY = 0x00000001,
+        MONITOR_DEFAULTTONEAREST = 0x00000002,
+    }
+
+    [Flags]
+    public enum MONITORINFOF
+    {
+        MONITORINFOF_NONE = 0x00000000,
+        MONITORINFOF_PRIMARY = 0x00000001,
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct MONITORINFOEX
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public MONITORINFOF dwFlags;
+
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szDevice;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int left;
+        public int top;
+        public int right;
+        public int bottom;
+    }
+
+    private delegate bool MonitorEnumProc(IntPtr monitor, IntPtr hdc, IntPtr lprcMonitor, IntPtr lParam);
+
+    [DllImport("user32")]
+    private static extern IntPtr GetDesktopWindow();
+
+    [DllImport("user32")]
+    private static extern IntPtr GetShellWindow();
+
+    [DllImport("user32")]
+    private static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+
+    [DllImport("user32")]
+    private static extern IntPtr MonitorFromWindow(IntPtr hwnd, MFW flags);
+
+    [DllImport("user32", CharSet = CharSet.Unicode)]
+    private static extern bool GetMonitorInfo(IntPtr hmonitor, ref MONITORINFOEX info);
+}
+
 
 internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 {
@@ -28,6 +140,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private bool previousImageExists;
     private readonly ScaleTransformManager transformManager;
 
+    public string BcpTag { get; private set; }
 
     public MainWindowViewModel() : base()
     {
@@ -60,7 +173,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
         simpleBrush = new SimpleBrush(CanvasItems);
         markerBrush = new MarkerBrush(CanvasItems);
-        eraseBrush = new EraseBrush(CanvasItems);
+        eraseBrush = new EraseBrush(CanvasItems, GlobalUndoCommand.NotifyCanExecuteChanged);
 
         DrawingStrokeThickness = 1;
         MarkerStrokeThickness = 0.5;
@@ -69,8 +182,17 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     protected override void TrySetAndLoadLocalization(string bcpTag)
     {
-        base.TrySetAndLoadLocalization(bcpTag);
-        TakePhotoButtonName = resourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
+        if(bcpTag != BcpTag)
+        {
+            base.TrySetAndLoadLocalization(bcpTag);
+            BcpTag = bcpTag;
+            TakePhotoButtonName = resourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
+        }
+    }
+
+    public void TrySetAndLoadLocalizationWrapper(string bcpTag)
+    {
+        TrySetAndLoadLocalization(bcpTag);
     }
 
     public void OnPointerPressed(Point value) => drawBrush?.OnPointerPressed(value);
@@ -183,44 +305,47 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     public ScaleTransform TransformSource => transformManager.TransfromSource;
 
+
+    public void AddImageCore(Action sizeChangedCallback)
+    {
+        if (!snipScreen.ViewModel.ExitRequested)
+        {
+            drawBrush?.Clear();
+
+            var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
+            if (CanvasItems.Count > 0)
+            {
+                var image = (Image)CanvasItems[0];
+                image.Source = vm.CurrentShapeBmp;
+            }
+            else
+            {
+                CanvasItems.Add(new Image { Source = vm.CurrentShapeBmp });
+            }
+
+            CanvasWidth = vm.CurrentShapeBmp.PixelWidth;
+            CanvasHeight = vm.CurrentShapeBmp.PixelHeight;
+
+            SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+            SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+
+            IsSnapshotTaken = true;
+            sizeChangedCallback?.Invoke();
+        }
+    }
+
     public void EnterSnippingMode(bool byShortcut, Action sizeChangedCallback = null)
     {
-        var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(defaultWindowSize);
         snipScreen = new();
-        snipScreen.ViewModel.SetWindowSize(defaultWindowSize);
-        snipScreen.ViewModel.SetBitmapImage(bitmapImage);
-        snipScreen.ViewModel.SetResponceType(byShortcut);
-        snipScreen.ViewModel.SetSelectedItem(SelectedSnipKind.Kind);
-
-        snipScreen.Closed += async (x, args) =>
+        
+        if (!byShortcut)
         {
-            if (!snipScreen.ViewModel.ExitRequested)
-            {
-                drawBrush?.Clear();
-                CanvasItems.Clear();
-                var vm = ((SnipScreenWindowViewModel)snipScreen.ViewModel);
-                var content = Clipboard.GetContent();
-                var bitmap = await content.GetBitmapAsync();
-                using (var stream = await bitmap.OpenReadAsync())
-                {
-                    var bitmapImage = new BitmapImage();
-                    bitmapImage.SetSource(stream);
-                    CanvasItems.Add(new Image { Source = bitmapImage });
-                }
-
-                CanvasWidth = vm.ResultFigureActualWidth;
-                CanvasHeight = vm.ResultFigureActualHeight;
-
-                SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
-                SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
-
-                IsSnapshotTaken = true;
-                sizeChangedCallback?.Invoke();
-            }
-        };
+            snipScreen.Closed += (x, args) => AddImageCore(sizeChangedCallback);
+        }
 
         snipScreen.PrepareWindow();
         snipScreen.Activate();
+
     }
 
     public void AddImage(Image image, int width, int height)

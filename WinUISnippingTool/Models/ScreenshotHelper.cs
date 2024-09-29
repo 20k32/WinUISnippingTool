@@ -2,14 +2,13 @@
 using System.Drawing.Imaging;
 using System.Drawing;
 using System.IO;
-using Windows.Foundation;
 
 
 namespace WinUISnippingTool.Models;
 
 internal static class ScreenshotHelper
 {
-    public static BitmapImage GetBitmapImageScreenshotForArea(Windows.Foundation.Size size)
+    public static BitmapImage GetBitmapImageScreenshotForArea(Point upperLeftSource, Point upperLeftDestination, Windows.Foundation.Size size)
     {
         var bitmapImage = new BitmapImage();
 
@@ -18,7 +17,7 @@ internal static class ScreenshotHelper
             using (var g = Graphics.FromImage(bmpScreenshot))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
-                g.CopyFromScreen(0, 0, 0, 0, bmpScreenshot.Size);
+                g.CopyFromScreen(upperLeftSource, upperLeftDestination, bmpScreenshot.Size);
 
                 using (var stream = new MemoryStream())
                 {

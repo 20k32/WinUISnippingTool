@@ -9,7 +9,26 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
-        <TextBlock Text="Settings"/>
-    </Grid>
+    <StackPanel Spacing="5"
+                Orientation="Vertical"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="400">
+        <ListBox ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
+                 SelectedItem="{x:Bind ViewModel.SelectedLanguageKind, Mode=TwoWay}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding DisplayName}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Text="{x:Bind ViewModel.SaveImageLocation.Path, Mode=OneWay}"
+                   TextWrapping="Wrap"/>
+
+        <Button Content="Change location"
+                Command="{x:Bind ViewModel.PickFolderCommand}"/>
+        <Button Content="Back"
+                Click="Back_Click"/>
+    </StackPanel>
 </Page>

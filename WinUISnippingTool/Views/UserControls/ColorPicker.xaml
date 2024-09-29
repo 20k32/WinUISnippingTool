@@ -16,6 +16,7 @@
 
         <GridView ItemsSource="{x:Bind ColorList}"
                   SelectedItem="{x:Bind SelectedColor, Mode=TwoWay}"
+                  SelectedIndex="0"
                   Grid.Row="0">
             <GridView.ItemTemplate>
                 <DataTemplate>

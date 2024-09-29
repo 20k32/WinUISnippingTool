@@ -28,6 +28,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     public Shape ResultFigure { get; private set; }
     public int ResultFigureActualWidth;
     public int ResultFigureActualHeight;
+    public RenderTargetBitmap CurrentShapeBmp;
 
     public void SetResponceType(bool isShortcut)
     {
@@ -98,16 +99,16 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         }
 
         ResultFigure = paintSnipKind.OnPointerReleased(position);
-        var renderBitmap = new RenderTargetBitmap();
+        CurrentShapeBmp = new RenderTargetBitmap();
         
-        await renderBitmap.RenderAsync(ResultFigure);
+        await CurrentShapeBmp.RenderAsync(ResultFigure);
         paintSnipKind.Clear();
-        var pixelBuffer = await renderBitmap.GetPixelsAsync();
-        ResultFigureActualWidth = renderBitmap.PixelWidth;
-        ResultFigureActualHeight = renderBitmap.PixelHeight;
+        var pixelBuffer = await CurrentShapeBmp.GetPixelsAsync();
+        ResultFigureActualWidth = CurrentShapeBmp.PixelWidth;
+        ResultFigureActualHeight = CurrentShapeBmp.PixelHeight;
         var pixels = pixelBuffer.ToArray();
 
-        var task1 = PicturesLibraryExtensions.SaveAsync((uint)renderBitmap.PixelWidth, (uint)renderBitmap.PixelHeight, pixels).ContinueWith(t =>
+        var task1 = PicturesFolderExtensions.SaveAsync((uint)CurrentShapeBmp.PixelWidth, (uint)CurrentShapeBmp.PixelHeight, pixels).ContinueWith(t =>
         {
             if (shortcutResponce)
             {
@@ -119,12 +120,13 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
                     .AddArgument("snapshotWidth", ResultFigureActualWidth.ToString())
                     .AddArgument("snapshotHeight", ResultFigureActualHeight.ToString());
 
+
                 var notificationManager = AppNotificationManager.Default;
                 notificationManager.Show(builder.BuildNotification());
             }
         });
 
-        var task2 = ClipboardExtensions.CopyAsync((uint)renderBitmap.PixelWidth, (uint)renderBitmap.PixelHeight, pixels);
+        var task2 = ClipboardExtensions.CopyAsync((uint)CurrentShapeBmp.PixelWidth, (uint)CurrentShapeBmp.PixelHeight, pixels);
 
         await Task.WhenAll(task1, task2);
     }

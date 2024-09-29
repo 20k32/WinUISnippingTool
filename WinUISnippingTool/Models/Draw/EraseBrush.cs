@@ -13,8 +13,12 @@ namespace WinUISnippingTool.Models.Draw
 {
     internal sealed class EraseBrush : DrawBase
     {
-        public EraseBrush(NotifyOnCompletionCollection<UIElement> shapes) : base(shapes)
-        { }
+        public Action NotifyUndoChanged;
+
+        public EraseBrush(NotifyOnCompletionCollection<UIElement> shapes, Action notifyUndoChanged) : base(shapes)
+        {
+            NotifyUndoChanged = notifyUndoChanged;
+        }
 
         public override void OnPointerPressed(Point position)
         {

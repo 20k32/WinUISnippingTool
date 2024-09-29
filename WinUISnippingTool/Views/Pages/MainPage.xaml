@@ -57,7 +57,7 @@
                                   VerticalAlignment="Center"/>
                         <TextBlock x:Name="PART_TakePictureButtonName"
                                    RelativePanel.RightOf="NewPictureIcon"
-                                   Text="{x:Bind ViewModel.TakePhotoButtonName}"/>
+                                   Text="{x:Bind ViewModel.TakePhotoButtonName, Mode=OneWay}"/>
                     </StackPanel>
                 </Button>
 
@@ -205,10 +205,11 @@
                         Style="{StaticResource TransparentButton}">
                     <Button.Flyout>
                         <MenuFlyout  Placement="Bottom">
-                            <MenuFlyoutItem Text="Settings" Click="MenuFlyoutItem_Click"/>
-                            <MenuFlyoutSeparator/>
-                            <ToggleMenuFlyoutItem Text="Repeat" IsChecked="True"/>
-                            <ToggleMenuFlyoutItem Text="Shuffle" IsChecked="True"/>
+                            <MenuFlyoutItem Text="Settings" Click="MenuFlyoutItem_Click" >
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE713;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>

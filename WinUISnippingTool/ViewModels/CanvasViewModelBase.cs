@@ -7,16 +7,15 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Items;
+using System.Diagnostics;
 
 namespace WinUISnippingTool.ViewModels;
 
-internal abstract class CanvasViewModelBase : INotifyPropertyChanged
+internal abstract class CanvasViewModelBase : ViewModelBase
 {
+    protected static ResourceMap resourceMap;
     protected Size defaultWindowSize = new(500, 500);
-    protected ResourceMap resourceMap;
     public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; private set; }
-
-
 
     protected CanvasViewModelBase()
     {
@@ -37,9 +36,8 @@ internal abstract class CanvasViewModelBase : INotifyPropertyChanged
         {
             Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = bcpTag;
         }
-        var languages = Windows.Globalization.ApplicationLanguages.Languages;
 
-        resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
+        resourceMap ??= ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
         SnipShapeKinds[0].Name = resourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipShapeKinds[1].Name = resourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipShapeKinds[2].Name = resourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
@@ -71,12 +69,6 @@ internal abstract class CanvasViewModelBase : INotifyPropertyChanged
     public virtual void SetWindowSize(Size newSize)
     {
         defaultWindowSize = newSize;
-    }
-
-    public event PropertyChangedEventHandler PropertyChanged;
-    protected void NotifyOfPropertyChange([CallerMemberName] string propertyName = "")
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     protected Microsoft.UI.Xaml.Controls.Image currentImage;

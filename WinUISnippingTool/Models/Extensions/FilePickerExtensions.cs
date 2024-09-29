@@ -14,6 +14,7 @@ namespace WinUISnippingTool.Models.Extensions;
 internal static class FilePickerExtensions
 {
     private static readonly FileSavePicker fileSavePicker;
+    private static readonly FolderPicker folderPicker;
 
     static FilePickerExtensions()
     {
@@ -25,14 +26,26 @@ internal static class FilePickerExtensions
             CommitButtonText = "Save",
         };
 
+        folderPicker = new FolderPicker()
+        {
+            CommitButtonText = "Ok",
+            ViewMode = PickerViewMode.List,
+            SuggestedStartLocation = PickerLocationId.Desktop,
+        };
+
         fileSavePicker.FileTypeChoices.Add(".png", new[] { ".png" } );
+        folderPicker.FileTypeFilter.Add(".png");
     }
 
     public static void SetWindowHandle(nint windowHandle)
     {
         InitializeWithWindow.Initialize(fileSavePicker, windowHandle);
+        InitializeWithWindow.Initialize(folderPicker, windowHandle);
     }
 
     public static IAsyncOperation<StorageFile> ShowSaveAsync() 
         => fileSavePicker.PickSaveFileAsync();
+
+    public static IAsyncOperation<StorageFolder> ShowFolderPickerAsync()
+        => folderPicker.PickSingleFolderAsync();
 }

@@ -3,7 +3,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.Drawing;
+using System.Linq;
 using Windows.Foundation;
+using Windows.Graphics;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.ViewModels;
@@ -30,6 +33,23 @@ namespace WinUISnippingTool.Views
 
         public void PrepareWindow()
         {
+            var monitors = Monitor.All.ToArray();
+            var thisMonitor = Monitor.FromWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
+            var otherMonitor = monitors.First(m => m.DeviceName != thisMonitor.DeviceName);
+            var location = new System.Drawing.Point(otherMonitor.WorkingArea.X, otherMonitor.Bounds.Y);
+
+
+            var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(
+                location,
+                System.Drawing.Point.Empty,
+                new(otherMonitor.Bounds.Width, otherMonitor.Bounds.Height));
+
+            ViewModel.SetWindowSize(new(otherMonitor.Bounds.Width, otherMonitor.Bounds.Height));
+            ViewModel.SetBitmapImage(bitmapImage);
+            ViewModel.SetResponceType(false);
+            ViewModel.SetSelectedItem(SnipKinds.Recntangular);
+
+            AppWindow.Move(new PointInt32(otherMonitor.WorkingArea.X, otherMonitor.WorkingArea.Y));
             var presenter = ((OverlappedPresenter)AppWindow.Presenter);
             presenter.Maximize();
             presenter.IsMinimizable = false;
@@ -47,18 +67,19 @@ namespace WinUISnippingTool.Views
 
         private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas((Canvas)sender));
             e.Handled = true;
+            ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas((Canvas)sender));
         }
 
         private void Canvas_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas((Canvas)sender));
             e.Handled = true;
+            ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas((Canvas)sender));
         }
 
         private async void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
+            e.Handled = true;
             if (!isPointerReleased)
             {
                 isPointerReleased = true;

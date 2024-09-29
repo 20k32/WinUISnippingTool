@@ -1,32 +1,12 @@
-using ABI.System;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI.Composition;
-using Microsoft.UI;
-using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.AppNotifications;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Graphics.Imaging;
-using Windows.Services.Maps;
-using WinRT.Interop;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.PageParameters;
@@ -42,6 +22,9 @@ namespace WinUISnippingTool.Views.Pages;
 /// </summary>
 internal sealed partial class MainPage : Page
 {
+    private static bool contentLoaded;
+
+    private Frame mainFrame;
     private DisplayArea display;
     private bool isScreenTinySized;
     private bool isScreenSmallSized;
@@ -50,7 +33,6 @@ internal sealed partial class MainPage : Page
     private double PageWidth;
     private double PageHeight;
     private DispatcherTimer timer;
-    private bool contentLoaded;
     private OverlappedPresenter appWindowPersenter;
 
     public bool SizeChanginRequested;
@@ -58,6 +40,50 @@ internal sealed partial class MainPage : Page
     public MainPage()
     {
         this.InitializeComponent();
+        NavigationCacheMode = NavigationCacheMode.Enabled;
+
+        AppNotificationManager notificationManager = AppNotificationManager.Default;
+        notificationManager.NotificationInvoked += NotificationManager_NotificationInvoked;
+        notificationManager.Register();
+    }
+
+    private void NotificationManager_NotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
+    {
+        HandleNotification(args);
+    }
+
+    private void HandleNotification(AppNotificationActivatedEventArgs args)
+    {
+        DispatcherQueue.TryEnqueue(delegate
+        {
+            try
+            {
+                switch (args.Arguments["snapshotStatus"])
+                {
+                    case "snapshotTaken":
+                        {
+                            string uriStr = args.Arguments["snapshotUri"];
+                            var uri = new Uri(uriStr);
+                            var image = new Image()
+                            {
+                                Source = new BitmapImage
+                                {
+                                    UriSource = uri,
+                                }
+                            };
+                            var width = int.Parse(args.Arguments["snapshotWidth"]);
+                            var height = int.Parse(args.Arguments["snapshotHeight"]);
+
+
+                            ViewModel.AddImageCore(PART_Canvas_SizeChanged);
+                            appWindowPersenter.Restore();
+                        }
+                        break;
+                }
+            }
+            catch
+            { }
+        });
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -67,12 +93,17 @@ internal sealed partial class MainPage : Page
         if (e.Parameter is MainPageParameter mainPageParameter)
         {
             ViewModel = new();
-            appWindowPersenter = mainPageParameter.appWindowPresenter;
-            ViewModel = new();
+
+            appWindowPersenter = mainPageParameter.AppWindowPresenter;
+            display = mainPageParameter.CurrentDisplayArea;
+            mainFrame = mainPageParameter.MainFrame;
+
             mainGrid.DataContext = ViewModel;
-            display = mainPageParameter.displayArea;
+
             contentLoaded = true;
+
             ViewModel.SetWindowSize(new(display.OuterBounds.Width, display.OuterBounds.Height));
+
             timer = new()
             {
                 Interval = System.TimeSpan.FromMilliseconds(500),
@@ -80,8 +111,13 @@ internal sealed partial class MainPage : Page
             timer.Tick += Timer_Tick;
             timer.Start();
         }
-    }
 
+        if (e.Parameter is SettingsPageParameter settingsPageParameter)
+        {
+            ViewModel.TrySetAndLoadLocalizationWrapper(settingsPageParameter.BcpTag);
+            PicturesFolderExtensions.NewSavingFolder = settingsPageParameter.SaveImageLocation;
+        }
+    }
 
     private void Timer_Tick(object sender, object e)
     {
@@ -107,7 +143,7 @@ internal sealed partial class MainPage : Page
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs args)
     {
-        if(contentLoaded)
+        if (contentLoaded)
         {
             PageWidth = args.NewSize.Width;
             PageHeight = args.NewSize.Height;
@@ -263,11 +299,16 @@ internal sealed partial class MainPage : Page
 
     private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
     {
-
+        mainFrame.Navigate(typeof(Settings), new SettingsPageParameter()
+        {
+            BcpTag = ViewModel.BcpTag,
+            SaveImageLocation = PicturesFolderExtensions.NewSavingFolder,
+            MainFrame = mainFrame
+        });
     }
 
     private async void SaveBmpToClipboard_Click(object sender, RoutedEventArgs e)
-    { 
+    {
         var renderBitmap = await SaveBmpCoreAsync();
         await ViewModel.SaveBmpToClipboardAsync(renderBitmap);
     }

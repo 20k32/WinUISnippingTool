@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Linq;
@@ -19,17 +20,22 @@ namespace WinUISnippingTool.Models.Draw;
 
 internal abstract class DrawBase : PaintBase
 {
-    private readonly Dictionary<string, SolidColorBrush> usedBrushes;
-    private readonly Stack<UIElement> shapeStack;
+    private static readonly Dictionary<string, SolidColorBrush> usedBrushes;
+    private static readonly Stack<UIElement> shapeStack;
     protected SolidColorBrush DrawingColor;
     protected double DrawingThickness;
     protected Polyline Line;
 
-    protected DrawBase(NotifyOnCompletionCollection<UIElement> shapes) : base(shapes)
+    static DrawBase()
     {
         shapeStack = new();
         usedBrushes = new();
     }
+
+    protected DrawBase(NotifyOnCompletionCollection<UIElement> shapes) : base(shapes)
+    {}
+    
+   
 
     public void UndoGlobal()
     {
@@ -100,12 +106,19 @@ internal abstract class DrawBase : PaintBase
     {
         var element = (UIElement)sender;
 
-        if (this is EraseBrush
+        if (this is EraseBrush eraseBrush
             && IsDrawing
             && Shapes.Contains(element))
         {
             Shapes.Remove(element);
             shapeStack.Push(element);
+
+            if(Shapes.Count == 1)
+            {
+                eraseBrush.NotifyUndoChanged();
+            }
+
+            Debug.WriteLine("Erased");
         }
     }
 
@@ -114,5 +127,6 @@ internal abstract class DrawBase : PaintBase
         line.PointerMoved -= Line_PointerMoved;
     }
 
+    public bool CanUndo() => Shapes.Count > 0;
     public bool CanRedo() => shapeStack.Count > 0;
 }

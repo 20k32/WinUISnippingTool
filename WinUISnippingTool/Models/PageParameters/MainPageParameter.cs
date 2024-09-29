@@ -1,4 +1,5 @@
 ﻿using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace WinUISnippingTool.Models.PageParameters
 {
-    internal sealed class MainPageParameter
+    internal sealed class MainPageParameter : PageParameterBase
     {
-        public OverlappedPresenter appWindowPresenter;
-        public DisplayArea displayArea;
+        public OverlappedPresenter AppWindowPresenter;
+        public DisplayArea CurrentDisplayArea;
     }
 }
