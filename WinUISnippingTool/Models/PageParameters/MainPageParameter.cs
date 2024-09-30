@@ -5,12 +5,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Devices.Geolocation.Geofencing;
 
 namespace WinUISnippingTool.Models.PageParameters
 {
-    internal sealed class MainPageParameter : PageParameterBase
+    internal sealed class MainPageParameter
     {
-        public OverlappedPresenter AppWindowPresenter;
-        public DisplayArea CurrentDisplayArea;
+        public readonly OverlappedPresenter AppWindowPresenter;
+        public readonly DisplayArea CurrentDisplayArea;
+        public readonly Monitor[] Monitors;
+
+
+        public MainPageParameter(OverlappedPresenter appPresenter, DisplayArea currentDisplayArea, Monitor[] monitors)
+            => (AppWindowPresenter, CurrentDisplayArea, Monitors) = (appPresenter, currentDisplayArea, monitors);
     }
 }

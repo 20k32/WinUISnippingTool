@@ -39,7 +39,7 @@ namespace WinUISnippingTool.Models.Extensions
         public static async Task<StorageFile> SaveAsync(uint pixelWidth, uint pixelHeight, byte[] buffer)
         {
             var currDate = DateTime.Now;
-            var fileName = $"Screenshot {currDate:yyyy-dd-MM} {currDate.Hour}{currDate.Minute}{currDate.Second}.jpg";
+            var fileName = $"Screenshot {currDate:yyyy-dd-MM} {currDate.Hour}{currDate.Minute}{currDate.Second}{BitmapSavingConstants.FileExtension}";
             var screenshotsFolder = await DefineFolderAsync();
             
             var file = await screenshotsFolder.CreateFileAsync(fileName);

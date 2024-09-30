@@ -7,47 +7,48 @@ using Windows.Foundation;
 
 namespace WinUISnippingTool.Models.Paint
 {
-    internal sealed class WindowPaint : PaintBase
+    internal sealed class WindowPaint : SnipPaintBase
     {
+        Point firstPosition;
+        Point endWindow;
         private bool isSelected;
         private Rectangle rect;
-        private Size windowSize;
-        public WindowPaint(NotifyOnCompletionCollection<UIElement> shapes, Size windowSize, ImageSource source) : base(shapes)
+        private ImageBrush fill;
+
+        public WindowPaint() : base()
         {
-            this.windowSize = windowSize;
-            rect = new()
-            {
-                Width = windowSize.Width,
-                Height = windowSize.Height,
-                StrokeThickness = 0,
-                Fill = new ImageBrush
-                {
-                    ImageSource = source
-                }
-            };
             isSelected = false;
         }
 
         public override void OnPointerPressed(Point position)
         {
-            if (position.X <= windowSize.Width
-                && position.Y <= windowSize.Height)
+            if (position.X <= WindowSize.Width
+                && position.Y <= WindowSize.Height)
             {
-                if (!isSelected)
+                rect = new()
                 {
-                    Shapes.Add(rect);
-                    isSelected = true;
-                }
+                    StrokeThickness = 0,
+                    Fill = fill,
+                    Width = WindowSize.Width,
+                    Height = WindowSize.Height
+                };
+
+                Shapes.Add(rect);
+
+                isSelected = true;
+
+                firstPosition = position;
+                endWindow = new(WindowSize.Width, WindowSize.Height);
             }
         }
 
         public override void OnPointerMoved(Point position)
         {
-            if (isSelected && (position.X == windowSize.Width
-                || position.Y == windowSize.Height))
+            if (isSelected 
+                && CalculateDistance(firstPosition, position) > MinRenderDistance)
             {
-                Shapes.Remove(rect);
                 isSelected = false;
+                Shapes.Remove(rect);
             }
         }
 
@@ -66,6 +67,14 @@ namespace WinUISnippingTool.Models.Paint
         public override void Clear()
         {
             Shapes.Clear();
+        }
+
+        public override void SetImageFill(ImageSource source)
+        {
+            fill = new ImageBrush
+            {
+                ImageSource = source
+            };
         }
     }
 }

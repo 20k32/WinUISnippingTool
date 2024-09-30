@@ -12,16 +12,16 @@
     mc:Ignorable="d"
     Title="SnipScreenWindow">
 
-    <Grid>
-        <ItemsControl ItemsSource="{x:Bind ViewModel.CanvasItems}"
-                          x:Name="PART_Canvas"
-                          HorizontalContentAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          VerticalAlignment="Top"
-                          HorizontalAlignment="Left"
-                          Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
-                          Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
-                          Background="{ThemeResource SystemChromeMediumColor}">
+    <Grid x:Name="mainGrid">
+        <ItemsControl x:Name="PART_Canvas"
+                      HorizontalContentAlignment="Center"
+                      VerticalContentAlignment="Center"
+                      VerticalAlignment="Top"
+                      HorizontalAlignment="Left"
+                      Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
+                      Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
+                      Background="{ThemeResource SystemChromeMediumColor}">
+
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <Canvas Background="Transparent"
@@ -36,13 +36,15 @@
                     VerticalAlignment="Top"
                     Background="{ThemeResource SystemChromeMediumColor}"
                     Orientation="Horizontal"
-                    Visibility="{x:Bind ViewModel.IsOverlayVisible, Mode=OneWay}">
+                    x:Name="PART_TrayPanel"
+                    Spacing="5"
+                    Margin="0, 40, 0, 0">
             <userControl:SnapControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
                                      SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"/>
             <Button Content="Exit"
                     Click="ExitButton_Click"/>
         </StackPanel>
-            
+
     </Grid>
 
 </Window>

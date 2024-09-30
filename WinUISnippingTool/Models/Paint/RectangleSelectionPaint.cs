@@ -16,7 +16,7 @@ using Windows.Foundation;
 
 namespace WinUISnippingTool.Models.Paint
 {
-    internal sealed class RectangleSelectionPaint : PaintBase
+    internal sealed class RectangleSelectionPaint : SnipPaintBase
     {
         Point firstPosition;
         Point previousPosition;
@@ -26,22 +26,11 @@ namespace WinUISnippingTool.Models.Paint
         private ImageBrush fillColor;
         private Path rect;
 
-        public RectangleSelectionPaint(NotifyOnCompletionCollection<UIElement> shapes, ImageSource source) : base(shapes)
+        public RectangleSelectionPaint() : base()
         {
             scaleTransform = new();
             strokeColor = new SolidColorBrush(Colors.White);
             translateTransform = new();
-
-            fillColor = new ImageBrush()
-            {
-                ImageSource = source,
-                Stretch = Stretch.None,
-                AlignmentX = AlignmentX.Left,
-                AlignmentY = AlignmentY.Top,
-                Transform = translateTransform
-            };
-
-            fillColor.Opacity = 1;
         }
 
         public override void OnPointerPressed(Point position)
@@ -49,6 +38,9 @@ namespace WinUISnippingTool.Models.Paint
             if(!IsDrawing)
             {
                 IsDrawing = true;
+                
+                scaleTransform.ScaleX = 0;
+                scaleTransform.ScaleY = 0;
 
                 rect = new Path()
                 {
@@ -72,10 +64,11 @@ namespace WinUISnippingTool.Models.Paint
 
         public override void OnPointerMoved(Point position)
         {
-            if (IsDrawing)
+            if (IsDrawing
+                && CalculateDistance(previousPosition, position) > MinRenderDistance)
             {
-                double distanceX = position.X - previousPosition.X;
-                double distanceY = position.Y - previousPosition.Y;
+                double distanceX = position.X - firstPosition.X;
+                double distanceY = position.Y - firstPosition.Y;
 
                 double scaleX = 1 + (distanceX / 1);
                 double scaleY = 1 + (distanceY / 1); // 1 <- can be presented in settings
@@ -107,19 +100,51 @@ namespace WinUISnippingTool.Models.Paint
                     translateTransform.X = -position.X + 1;
                     translateTransform.Y = -position.Y + 1;
                 }
+
+                previousPosition = position;
             }
         }
 
         public override Shape OnPointerReleased(Point position)
         {
+            Path result = null;
+            var absX = Math.Abs(position.X - firstPosition.X);
+            var absY = Math.Abs(position.Y - firstPosition.Y);
+
+            if(absX > MinRenderDistance
+                && absY > MinRenderDistance)
+            {
+                rect.StrokeThickness = 0;
+                result = rect;
+            }
+            else
+            {
+                Shapes.Remove(rect);
+                
+            }
+
             IsDrawing = false;
-            rect.StrokeThickness = 0;
-            return rect;
+
+            return result;
         }
 
         public override void Clear()
         {
             Shapes.Clear();
+        }
+
+        public override void SetImageFill(ImageSource source)
+        {
+            fillColor = new ImageBrush()
+            {
+                ImageSource = source,
+                Stretch = Stretch.None,
+                AlignmentX = AlignmentX.Left,
+                AlignmentY = AlignmentY.Top,
+                Transform = translateTransform
+            };
+
+            fillColor.Opacity = 1;
         }
     }
 }

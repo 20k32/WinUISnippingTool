@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Windows.Graphics.Display;
 using Windows.Devices.Display;
 using Windows.Devices.Enumeration;
+using WinUISnippingTool.Models;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,20 +31,19 @@ namespace WinUISnippingTool.Views
     /// </summary>
     internal sealed partial class MainWindow : Window
     {
-        public MainWindow()
+        public MainWindow(Monitor[] monitors)
         {
             this.InitializeComponent();
             this.ExtendsContentIntoTitleBar = true;
 
-            mainFrame.Navigate(typeof(MainPage), new MainPageParameter()
-            {
-                AppWindowPresenter = (OverlappedPresenter)AppWindow.Presenter,
-                CurrentDisplayArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest),
-                MainFrame = mainFrame,
-            });
-
             nint windowHandle = WindowNative.GetWindowHandle(this);
             FilePickerExtensions.SetWindowHandle(windowHandle);
+
+            var appPresenter = (OverlappedPresenter)AppWindow.Presenter;
+            var displayArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
+
+            mainFrame.Navigate(typeof(MainPage),
+                new MainPageParameter(appPresenter, displayArea, monitors));
         }
 
         private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs args)

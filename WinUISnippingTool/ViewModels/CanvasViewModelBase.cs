@@ -13,7 +13,7 @@ namespace WinUISnippingTool.ViewModels;
 
 internal abstract class CanvasViewModelBase : ViewModelBase
 {
-    protected static ResourceMap resourceMap;
+    protected ResourceMap resourceMap;
     protected Size defaultWindowSize = new(500, 500);
     public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; private set; }
 

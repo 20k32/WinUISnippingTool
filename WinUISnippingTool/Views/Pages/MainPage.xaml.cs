@@ -23,8 +23,6 @@ namespace WinUISnippingTool.Views.Pages;
 internal sealed partial class MainPage : Page
 {
     private static bool contentLoaded;
-
-    private Frame mainFrame;
     private DisplayArea display;
     private bool isScreenTinySized;
     private bool isScreenSmallSized;
@@ -34,8 +32,10 @@ internal sealed partial class MainPage : Page
     private double PageHeight;
     private DispatcherTimer timer;
     private OverlappedPresenter appWindowPersenter;
-
+    
     public bool SizeChanginRequested;
+
+    public MainWindowViewModel ViewModel { get; private set; }
 
     public MainPage()
     {
@@ -75,7 +75,7 @@ internal sealed partial class MainPage : Page
                             var height = int.Parse(args.Arguments["snapshotHeight"]);
 
 
-                            ViewModel.AddImageCore(PART_Canvas_SizeChanged);
+                            ViewModel.AddImageCore();
                             appWindowPersenter.Restore();
                         }
                         break;
@@ -92,15 +92,22 @@ internal sealed partial class MainPage : Page
 
         if (e.Parameter is MainPageParameter mainPageParameter)
         {
+            contentLoaded = true;
+            
             ViewModel = new();
+            ViewModel.OnNewImageAdded += PART_Canvas_SizeChanged;
 
             appWindowPersenter = mainPageParameter.AppWindowPresenter;
             display = mainPageParameter.CurrentDisplayArea;
-            mainFrame = mainPageParameter.MainFrame;
 
             mainGrid.DataContext = ViewModel;
 
-            contentLoaded = true;
+
+            foreach(var monitor in mainPageParameter.Monitors)
+            {
+                var monitorLocation = new MonitorLocation(monitor.Bounds, monitor.IsPrimary, monitor.DeviceName);
+                ViewModel.AddMonitorLocation(monitorLocation);
+            }
 
             ViewModel.SetWindowSize(new(display.OuterBounds.Width, display.OuterBounds.Height));
 
@@ -128,8 +135,6 @@ internal sealed partial class MainPage : Page
         }
     }
 
-    public MainWindowViewModel ViewModel { get; private set; }
-
     private void ThemeChanged(FrameworkElement sender, object args)
     {
         //throw new NotImplementedException();
@@ -138,7 +143,7 @@ internal sealed partial class MainPage : Page
     private void myButton_Click(object sender, RoutedEventArgs e)
     {
         appWindowPersenter.Minimize(false);
-        ViewModel.EnterSnippingMode(false, PART_Canvas_SizeChanged);
+        ViewModel.EnterSnippingMode(false);
     }
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs args)
@@ -299,11 +304,10 @@ internal sealed partial class MainPage : Page
 
     private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
     {
-        mainFrame.Navigate(typeof(Settings), new SettingsPageParameter()
+        Frame.Navigate(typeof(Settings), new SettingsPageParameter()
         {
             BcpTag = ViewModel.BcpTag,
-            SaveImageLocation = PicturesFolderExtensions.NewSavingFolder,
-            MainFrame = mainFrame
+            SaveImageLocation = PicturesFolderExtensions.NewSavingFolder
         });
     }
 

@@ -1,8 +1,11 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using Windows.Foundation;
@@ -21,35 +24,48 @@ namespace WinUISnippingTool.Views
     /// </summary>
     internal sealed partial class SnipScreenWindow : Window
     {
-        private bool isPointerReleased;
-        public SnipScreenWindowViewModel ViewModel { get; }
+        private MonitorLocation currentWindowLocation; // because window is maximized
+
+        public SnipScreenWindowViewModel ViewModel { get; private set; }
 
         public SnipScreenWindow()
         {
             this.InitializeComponent();
-            ViewModel = new();
-            isPointerReleased = false;
         }
 
-        public void PrepareWindow()
+        public void PrepareWindow(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind)
         {
-            var monitors = Monitor.All.ToArray();
-            var thisMonitor = Monitor.FromWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));
-            var otherMonitor = monitors.First(m => m.DeviceName != thisMonitor.DeviceName);
-            var location = new System.Drawing.Point(otherMonitor.WorkingArea.X, otherMonitor.Bounds.Y);
-
+            currentWindowLocation = location;
+            mainGrid.DataContext = viewModel;
+            ViewModel = viewModel;
+            ViewModel.SetCurrentMonitor(location.DeviceName);
+            PART_Canvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
             var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(
-                location,
+                location.StartPoint,
                 System.Drawing.Point.Empty,
-                new(otherMonitor.Bounds.Width, otherMonitor.Bounds.Height));
+                location.MonitorSize);
 
-            ViewModel.SetWindowSize(new(otherMonitor.Bounds.Width, otherMonitor.Bounds.Height));
-            ViewModel.SetBitmapImage(bitmapImage);
+            ViewModel.AddImageSourceAndBrushFillForCurentMonitor(bitmapImage);
+            ViewModel.AddShapeSourceForCurrentMonitor();
+            ViewModel.SetWindowSize(location.MonitorSize);
             ViewModel.SetResponceType(false);
-            ViewModel.SetSelectedItem(SnipKinds.Recntangular);
+            ViewModel.SetSelectedItem(snipKind);
 
-            AppWindow.Move(new PointInt32(otherMonitor.WorkingArea.X, otherMonitor.WorkingArea.Y));
+            if (!location.IsPrimary)
+            {
+                PART_TrayPanel.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                var binding = new Binding();
+                binding.Path = new(nameof(ViewModel.IsOverlayVisible));
+                binding.Source = ViewModel;
+                PART_TrayPanel.SetBinding(StackPanel.VisibilityProperty, binding);
+            }
+
+            AppWindow.Move(new PointInt32(location.StartPoint.X, location.StartPoint.Y));
+
             var presenter = ((OverlappedPresenter)AppWindow.Presenter);
             presenter.Maximize();
             presenter.IsMinimizable = false;
@@ -61,13 +77,24 @@ namespace WinUISnippingTool.Views
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
-            ViewModel.Exit();
-            this.Close();
+            ViewModel.Exit(true);
         }
 
         private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
             e.Handled = true;
+
+            if(currentWindowLocation.DeviceName != ViewModel.CurrentMonitorName)
+            {
+                ViewModel.SetCurrentMonitor(currentWindowLocation.DeviceName);
+                
+                ViewModel.SetImageSourceForCurrentMonitor();
+                ViewModel.AddShapeSourceForCurrentMonitor();
+
+                ViewModel.SetWindowSize(currentWindowLocation.MonitorSize);
+            }
+           
+
             ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas((Canvas)sender));
         }
 
@@ -80,12 +107,16 @@ namespace WinUISnippingTool.Views
         private async void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
             e.Handled = true;
-            if (!isPointerReleased)
+
+            await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
+
+            if(ViewModel.ResultFigure is not null)
             {
-                isPointerReleased = true;
-                await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
-                this.Close();
-                isPointerReleased = false;
+                ViewModel.Exit(false);
+            }
+            else
+            {
+                ViewModel.IsOverlayVisible = true;
             }
         }
     }

@@ -7,7 +7,7 @@ using Windows.Storage;
 
 namespace WinUISnippingTool.Models.PageParameters
 {
-    internal sealed class SettingsPageParameter : PageParameterBase
+    internal sealed class SettingsPageParameter
     {
         public string BcpTag;
         public StorageFolder SaveImageLocation;

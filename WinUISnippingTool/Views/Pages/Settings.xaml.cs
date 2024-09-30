@@ -26,9 +26,6 @@ namespace WinUISnippingTool.Views.Pages;
 /// </summary>
 internal sealed partial class Settings : Page
 {
-    private Frame mainFrame;
-
-
     public SettingsWindowViewModel ViewModel { get; }
     public Settings()
     {
@@ -43,7 +40,6 @@ internal sealed partial class Settings : Page
         
         if(e.Parameter is SettingsPageParameter settingsParameter)
         {
-            mainFrame = settingsParameter.MainFrame;
             await ViewModel.LoadState(settingsParameter.BcpTag, settingsParameter.SaveImageLocation);
         }
     }
@@ -52,12 +48,11 @@ internal sealed partial class Settings : Page
     {
 
         Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = ViewModel.SelectedLanguageKind.BcpTag;
-        mainFrame.BackStack.Clear();
+        Frame.BackStack.Clear();
 
-        mainFrame.Navigate(typeof(MainPage), new SettingsPageParameter()
+        Frame.Navigate(typeof(MainPage), new SettingsPageParameter()
         {
             BcpTag = ViewModel.SelectedLanguageKind.BcpTag,
-            MainFrame = mainFrame,
             SaveImageLocation = ViewModel.SaveImageLocation
         });
     }

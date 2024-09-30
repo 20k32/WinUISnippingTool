@@ -11,5 +11,6 @@ internal static class BitmapSavingConstants
 {
     public const int DpiX = 0;
     public const int DpiY = 0;
-    public static readonly Guid EncoderId = BitmapEncoder.JpegEncoderId;
+    public static readonly Guid EncoderId = BitmapEncoder.PngEncoderId;
+    public const string FileExtension = ".png";
 }

@@ -15,43 +15,35 @@ using Windows.Services.Maps;
 
 namespace WinUISnippingTool.Models.Paint
 {
-    internal class CustomShapePaint : PaintBase
+    internal class CustomShapePaint : SnipPaintBase
     {
+        private Point firstPosition;
         private Point previousPosition;
-        private Size windowSize;
         private readonly SolidColorBrush strokeColor;
-        private readonly ImageBrush fillColor;
-        private readonly Polyline polyline;
+        private ImageBrush fillColor;
+        private Polyline polyline;
 
-        public CustomShapePaint(NotifyOnCompletionCollection<UIElement> shapes, ImageSource source) : base(shapes)
+        public CustomShapePaint() : base()
         {
             strokeColor = new SolidColorBrush(Colors.White);
-            fillColor = new ImageBrush()
-            {
-                ImageSource = source,
-                Stretch = Stretch.None,
-                AlignmentX = AlignmentX.Left,
-                AlignmentY = AlignmentY.Top,
-                Opacity = 1,
-            };
-
-            polyline = new()
-            {
-                Stroke = strokeColor,
-                Fill = fillColor,
-                StrokeThickness = 4,
-                FillRule = FillRule.Nonzero
-            };
-
-            windowSize = new(2560, 1440);
         }
+
         public override void OnPointerPressed(Point position)
         {
             if (!IsDrawing)
             {
                 IsDrawing = true;
-                var widthCoeff = windowSize.Width / 3;
-                var heightCoeff = windowSize.Height / 3;
+
+                polyline = new()
+                {
+                    Stroke = strokeColor,
+                    Fill = fillColor,
+                    StrokeThickness = 4,
+                    FillRule = FillRule.Nonzero
+                };
+
+                var widthCoeff = WindowSize.Width / 3;
+                var heightCoeff = WindowSize.Height / 3;
                 int column = (int)(position.X / widthCoeff); 
                 int row = (int)(position.Y / heightCoeff); 
 
@@ -90,13 +82,16 @@ namespace WinUISnippingTool.Models.Paint
                 fillColor.AlignmentY = alignmentY;
 
                 previousPosition = position;
+                firstPosition = position;
+
                 Shapes.Add(polyline);
             }
         }
 
         public override void OnPointerMoved(Point position)
         {
-            if (IsDrawing && CalculateDistance(previousPosition, position) > MinRenderDistance)
+            if (IsDrawing 
+                && CalculateDistance(previousPosition, position) > MinRenderDistance)
             {
                 polyline.Points.Add(position);
                 previousPosition = position;
@@ -105,14 +100,38 @@ namespace WinUISnippingTool.Models.Paint
 
         public override Shape OnPointerReleased(Point position)
         {
+            Polyline result = null;
+
+            if (polyline.Points.Count > 0)
+            {
+                polyline.StrokeThickness = 0;
+                result = polyline;
+            }
+            else
+            {
+                Shapes.Remove(polyline);
+            }
+
             IsDrawing = false;
-            polyline.StrokeThickness = 0;
-            return polyline;
+
+            return result;
         }
 
         public override void Clear()
         {
             Shapes.Clear();
+        }
+
+        public override void SetImageFill(ImageSource source)
+        {
+            fillColor = new ImageBrush()
+            {
+                ImageSource = source,
+                Stretch = Stretch.None,
+                AlignmentX = AlignmentX.Left,
+                AlignmentY = AlignmentY.Top,
+                Opacity = 1,
+            };
         }
     }
 }

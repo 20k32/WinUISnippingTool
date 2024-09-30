@@ -2,6 +2,8 @@
 using System.Runtime.InteropServices;
 using System;
 using WinUISnippingTool.Views;
+using WinUISnippingTool.Models;
+using System.Linq;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -36,7 +38,8 @@ namespace WinUISnippingTool
         {
             if (m_window == null)
             {
-                m_window = new MainWindow();
+                var monitors = Monitor.All.ToArray();
+                m_window = new MainWindow(monitors);
                 //Frame rootFrame = new Frame();
 
                 // rootFrame.NavigationFailed += RootFrame_NavigationFailed;
