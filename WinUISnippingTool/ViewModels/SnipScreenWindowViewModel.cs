@@ -23,12 +23,12 @@ namespace WinUISnippingTool.ViewModels;
 internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 {
     private string currentMonitorName;
-    private Dictionary<string, NotifyOnCompletionCollection<UIElement>> shapesDictionary;
-    private Dictionary<string, Image> imagesDictionary;
-    private SnipPaintBase windowPaint;
-    private SnipPaintBase customShapePaint;
-    private SnipPaintBase rectangleSelectionPaint;
-    private WindowPaint windowPaintSource;
+    private readonly Dictionary<string, NotifyOnCompletionCollection<UIElement>> shapesDictionary;
+    private readonly Dictionary<string, Image> imagesDictionary;
+    private readonly SnipPaintBase windowPaint;
+    private readonly SnipPaintBase customShapePaint;
+    private readonly SnipPaintBase rectangleSelectionPaint;
+    private readonly WindowPaint windowPaintSource;
     private SnipPaintBase paintSnipKind;
     private bool shortcutResponce;
     public event Action OnExitFromWindow;
@@ -114,11 +114,11 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public NotifyOnCompletionCollection<UIElement> GetOrAddCollectionForCurrentMonitor()
     {
-        NotifyOnCompletionCollection<UIElement> result = null;
+        NotifyOnCompletionCollection<UIElement> result;
 
-        if (shapesDictionary.ContainsKey(currentMonitorName))
+        if (shapesDictionary.TryGetValue(currentMonitorName, out NotifyOnCompletionCollection<UIElement> value))
         {
-            result = shapesDictionary[currentMonitorName];
+            result = value;
         }
         else
         {
@@ -166,10 +166,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public async Task OnPointerReleased(Point position)
     {
-        if(paintSnipKind is null)
-        {
-            throw new ArgumentNullException(nameof(paintSnipKind));
-        }
+        ArgumentNullException.ThrowIfNull(paintSnipKind);
 
         ResultFigure = paintSnipKind.OnPointerReleased(position);
         if(ResultFigure is not null)

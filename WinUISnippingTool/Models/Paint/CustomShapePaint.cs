@@ -17,7 +17,6 @@ namespace WinUISnippingTool.Models.Paint
 {
     internal class CustomShapePaint : SnipPaintBase
     {
-        private Point firstPosition;
         private Point previousPosition;
         private readonly SolidColorBrush strokeColor;
         private ImageBrush fillColor;
@@ -82,7 +81,6 @@ namespace WinUISnippingTool.Models.Paint
                 fillColor.AlignmentY = alignmentY;
 
                 previousPosition = position;
-                firstPosition = position;
 
                 Shapes.Add(polyline);
             }
@@ -102,7 +100,7 @@ namespace WinUISnippingTool.Models.Paint
         {
             Polyline result = null;
 
-            if (polyline.Points.Count > 0)
+            if (polyline.Points.Count > 1)
             {
                 polyline.StrokeThickness = 0;
                 result = polyline;

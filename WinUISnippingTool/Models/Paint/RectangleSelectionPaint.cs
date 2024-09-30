@@ -18,12 +18,13 @@ namespace WinUISnippingTool.Models.Paint
 {
     internal sealed class RectangleSelectionPaint : SnipPaintBase
     {
-        Point firstPosition;
-        Point previousPosition;
-        private TranslateTransform translateTransform;
-        private ScaleTransform scaleTransform;
-        private SolidColorBrush strokeColor;
+        private readonly TranslateTransform translateTransform;
+        private readonly ScaleTransform scaleTransform;
+        private readonly SolidColorBrush strokeColor;
         private ImageBrush fillColor;
+
+        private Point firstPosition;
+        private Point previousPosition;
         private Path rect;
 
         public RectangleSelectionPaint() : base()

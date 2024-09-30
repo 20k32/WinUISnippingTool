@@ -19,7 +19,6 @@ internal abstract class CanvasViewModelBase : ViewModelBase
 
     protected CanvasViewModelBase()
     {
-        CanvasItems = new();
         SnipShapeKinds = new();
         SnipShapeKinds.AddRange(new SnipShapeKind[]
        {
@@ -70,9 +69,6 @@ internal abstract class CanvasViewModelBase : ViewModelBase
     {
         defaultWindowSize = newSize;
     }
-
-    protected Microsoft.UI.Xaml.Controls.Image currentImage;
-    public NotifyOnCompletionCollection<UIElement> CanvasItems { get; protected set; }
 
     private double canvasWidth;
     public double CanvasWidth

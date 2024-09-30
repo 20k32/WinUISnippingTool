@@ -10,7 +10,6 @@ namespace WinUISnippingTool.Models.Paint
     internal sealed class WindowPaint : SnipPaintBase
     {
         Point firstPosition;
-        Point endWindow;
         private bool isSelected;
         private Rectangle rect;
         private ImageBrush fill;
@@ -38,7 +37,6 @@ namespace WinUISnippingTool.Models.Paint
                 isSelected = true;
 
                 firstPosition = position;
-                endWindow = new(WindowSize.Width, WindowSize.Height);
             }
         }
 

@@ -35,18 +35,21 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private readonly DrawBase markerBrush;
     private readonly SnipScreenWindowViewModel snipScreenWindowViewModel;
     private readonly ScaleTransformManager transformManager;
+    private readonly List<MonitorLocation> monitorLocations;
+    private readonly List<SnipScreenWindow> snipScreenWindows;
 
+    public NotifyOnCompletionCollection<UIElement> CanvasItems { get; private set; }
     private bool previousImageExists;
     private DrawBase tempBrush;
     private DrawBase drawBrush;
-    private List<MonitorLocation> monitorLocations;
-    private List<SnipScreenWindow> snipScreenWindows;
+   
 
     public string BcpTag { get; private set; }
     public event Action OnNewImageAdded;
 
     public MainWindowViewModel() : base()
     {
+        CanvasItems = new();
         monitorLocations = new();
         transformManager = new();
         CanvasWidth = 100;
