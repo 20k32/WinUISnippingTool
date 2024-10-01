@@ -15,7 +15,8 @@ namespace WinUISnippingTool
     /// </summary>
     public partial class App : Application
     {
-        private Window m_window;
+        public static Window MainWindow { get; private set; }
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -36,10 +37,10 @@ namespace WinUISnippingTool
             
         private void LaunchAndBringToForegroundIfNeeded(LaunchActivatedEventArgs args)
         {
-            if (m_window == null)
+            if (MainWindow == null)
             {
                 var monitors = Monitor.All.ToArray();
-                m_window = new MainWindow(monitors);
+                MainWindow = new MainWindow(monitors);
                 //Frame rootFrame = new Frame();
 
                 // rootFrame.NavigationFailed += RootFrame_NavigationFailed;
@@ -50,15 +51,15 @@ namespace WinUISnippingTool
                 // Place the frame in the current Window
                 //m_window.Content = rootFrame;
                 // Ensure the MainWindow is active
-                m_window.Activate();
+                MainWindow.Activate();
 
                 // Additionally we show using our helper, since if activated via a app notification, it doesn't
                 // activate the window correctly
-                WindowHelper.ShowWindow(m_window);
+                WindowHelper.ShowWindow(MainWindow);
             }
             else
             {
-                m_window.Activate();
+                MainWindow.Activate();
                 //WindowHelper.ShowWindow(m_window);
             }
         }

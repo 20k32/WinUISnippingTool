@@ -72,7 +72,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             new("#CC6CE7")
         });
 
-        TrySetAndLoadLocalization("uk-UA");
+        LoadLocalization("uk-UA");
         
         MarkerColorList = new();
         MarkerColorList.AddRange(new ColorKind[]
@@ -95,6 +95,11 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         snipScreenWindowViewModel.OnExitFromWindow += OnExitFromWindow;
     }
 
+    public void UnregisterHandlers()
+    {
+        snipScreenWindowViewModel.OnExitFromWindow -= OnExitFromWindow;
+
+    }
 
     private void OnExitFromWindow()
     {
@@ -111,19 +116,20 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     public void AddMonitorLocation(MonitorLocation location) 
         => monitorLocations.Add(location);
 
-    protected override void TrySetAndLoadLocalization(string bcpTag)
+    protected override void LoadLocalization(string bcpTag)
     {
         if(bcpTag != BcpTag)
         {
-            base.TrySetAndLoadLocalization(bcpTag);
+            base.LoadLocalization(bcpTag);
             BcpTag = bcpTag;
             TakePhotoButtonName = resourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
+            SettingsButtonName = resourceMap.GetValue("Settings/Text")?.ValueAsString ?? "empty_value";
         }
     }
 
     public void TrySetAndLoadLocalizationWrapper(string bcpTag)
     {
-        TrySetAndLoadLocalization(bcpTag);
+        LoadLocalization(bcpTag);
     }
 
     public void OnPointerPressed(Point value) => drawBrush?.OnPointerPressed(value);
@@ -237,37 +243,40 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     public ScaleTransform TransformSource => transformManager.TransfromSource;
 
 
-    public void AddImageCore()
+    public void AddImageFromSource(ImageSource source, double width, double height)
     {
-        if (!snipScreenWindowViewModel.ExitRequested)
+        drawBrush?.Clear();
+
+        if (CanvasItems.Count > 0)
         {
-            if(snipScreenWindowViewModel.CurrentShapeBmp is not null)
-            {
-                drawBrush?.Clear();
-
-                if (CanvasItems.Count > 0)
-                {
-                    var image = (Image)CanvasItems[0];
-                    image.Source = snipScreenWindowViewModel.CurrentShapeBmp;
-                }
-                else
-                {
-                    CanvasItems.Add(new Image { Source = snipScreenWindowViewModel.CurrentShapeBmp });
-                }
-
-                CanvasWidth = snipScreenWindowViewModel.CurrentShapeBmp.PixelWidth;
-                CanvasHeight = snipScreenWindowViewModel.CurrentShapeBmp.PixelHeight;
-
-                SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
-                SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
-
-                IsSnapshotTaken = true;
-
-                OnNewImageAdded?.Invoke();
-            }
+            var image = (Image)CanvasItems[0];
+            image.Source = source;
         }
+        else
+        {
+            CanvasItems.Add(new Image { Source = source });
+        }
+
+        CanvasWidth = width;
+        CanvasHeight = height;
+
+        SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+        SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+
+        IsSnapshotTaken = true;
+
+        OnNewImageAdded?.Invoke();
     }
 
+    public void AddImageCore()
+    {
+        if (snipScreenWindowViewModel.CurrentShapeBmp is not null)
+        {
+            AddImageFromSource(snipScreenWindowViewModel.CurrentShapeBmp,
+                snipScreenWindowViewModel.CurrentShapeBmp.PixelWidth,
+                snipScreenWindowViewModel.CurrentShapeBmp.PixelHeight);
+        }
+    }
 
     private void SnipScreenWindowOnClosed(object sender, WindowEventArgs args)
     {
@@ -281,7 +290,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         foreach (var location in monitorLocations)
         {
             var window = new SnipScreenWindow();
-            window.PrepareWindow(snipScreenWindowViewModel, location, SelectedSnipKind.Kind);
+            window.PrepareWindow(snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
             snipScreenWindows.Add(window);
         }
 
@@ -429,7 +438,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     #endregion
 
-
     #region Is in cropping mode
 
     private bool isInCroppingMode;
@@ -464,6 +472,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     #endregion
 
+#region Image cropper
 
     private ImageCropper imageCropper;
 
@@ -487,7 +496,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         var writeableBitmap = new WriteableBitmap(renderTargetBitmap.PixelWidth, renderTargetBitmap.PixelHeight);
         using (Stream stream = writeableBitmap.PixelBuffer.AsStream())
         {
-            await stream.WriteAsync(pixelsArr, 0, pixelsArr.Length);
+            await stream.WriteAsync(pixelsArr);
         }
 
         imageCropper.Source = writeableBitmap;
@@ -519,4 +528,24 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         drawBrush = tempBrush;
         tempBrush = null;
     }
+
+    #endregion
+
+    #region Settings button name
+
+    private string settingsButtonName;
+    public string SettingsButtonName
+    {
+        get => settingsButtonName;
+        set
+        {
+            if (settingsButtonName != value)
+            {
+                settingsButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    #endregion
 }

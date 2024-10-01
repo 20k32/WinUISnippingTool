@@ -37,16 +37,15 @@ internal sealed partial class Settings : Page
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        
         if(e.Parameter is SettingsPageParameter settingsParameter)
         {
             await ViewModel.LoadState(settingsParameter.BcpTag, settingsParameter.SaveImageLocation);
         }
     }
 
+
     private void Back_Click(object sender, RoutedEventArgs e)
     {
-
         Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = ViewModel.SelectedLanguageKind.BcpTag;
         Frame.BackStack.Clear();
 

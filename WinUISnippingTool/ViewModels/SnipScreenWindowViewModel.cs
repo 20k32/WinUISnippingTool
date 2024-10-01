@@ -16,6 +16,11 @@ using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using System.Diagnostics;
+using Microsoft.UI;
+using Microsoft.Graphics.Canvas.Text;
+using Microsoft.Graphics.Canvas;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
 
 
 namespace WinUISnippingTool.ViewModels;
@@ -31,8 +36,8 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     private readonly WindowPaint windowPaintSource;
     private SnipPaintBase paintSnipKind;
     private bool shortcutResponce;
+    
     public event Action OnExitFromWindow;
-
     public bool ExitRequested;
     public Shape ResultFigure { get; private set; }
     public int ResultFigureActualWidth;
@@ -55,7 +60,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public SnipScreenWindowViewModel() : base()
     {
-        TrySetAndLoadLocalization("uk-UA");
+        LoadLocalization("uk-UA");
 
         IsOverlayVisible = true;
         shapesDictionary = new();
@@ -87,6 +92,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         var image = imagesDictionary[currentMonitorName];
         image.Source = source;
         image.Opacity = 0.3;
+        
         canvasItem.Add(image);
 
         rectangleSelectionPaint.SetImageFill(source);
@@ -149,59 +155,71 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
             case SnipKinds.Recntangular: paintSnipKind = rectangleSelectionPaint; break;
             case SnipKinds.Window: paintSnipKind = windowPaint; break;
             case SnipKinds.CustomShape: paintSnipKind = customShapePaint; break;
-            case SnipKinds.AllWindows: throw new NotImplementedException();
+            case SnipKinds.AllWindows: break;
         }
     }
 
     public void OnPointerPressed(Point position)
     {
-        paintSnipKind.OnPointerPressed(position);
+        paintSnipKind?.OnPointerPressed(position);
         IsOverlayVisible = false;
     }
 
     public void OnPointerMoved(Point position)
     {
-        paintSnipKind.OnPointerMoved(position);
+        paintSnipKind?.OnPointerMoved(position);
     }
 
     public async Task OnPointerReleased(Point position)
     {
-        ArgumentNullException.ThrowIfNull(paintSnipKind);
-
-        ResultFigure = paintSnipKind.OnPointerReleased(position);
-        if(ResultFigure is not null)
+        if(paintSnipKind is not null 
+            && SelectedSnipKind.Kind != SnipKinds.AllWindows )
         {
-            CurrentShapeBmp = new RenderTargetBitmap();
+            ResultFigure = paintSnipKind.OnPointerReleased(position);
+            if (ResultFigure is not null)
+            {
+                CurrentShapeBmp = new RenderTargetBitmap();
 
-            await CurrentShapeBmp.RenderAsync(ResultFigure);
-            paintSnipKind.Clear();
-            var pixelBuffer = await CurrentShapeBmp.GetPixelsAsync();
-            ResultFigureActualWidth = CurrentShapeBmp.PixelWidth;
-            ResultFigureActualHeight = CurrentShapeBmp.PixelHeight;
-            var pixels = pixelBuffer.ToArray();
+                await CurrentShapeBmp.RenderAsync(ResultFigure);
+                paintSnipKind.Clear();
 
-            var saveToFileTask = PicturesFolderExtensions.SaveAsync((uint)CurrentShapeBmp.PixelWidth, (uint)CurrentShapeBmp.PixelHeight, pixels)
-                .ContinueWith(t =>
-                {
-                    if (shortcutResponce)
+                var pixelBuffer = await CurrentShapeBmp.GetPixelsAsync();
+                ResultFigureActualWidth = CurrentShapeBmp.PixelWidth;
+                ResultFigureActualHeight = CurrentShapeBmp.PixelHeight;
+                var pixels = pixelBuffer.ToArray();
+
+                var saveToFileTask = PicturesFolderExtensions.SaveAsync((uint)CurrentShapeBmp.PixelWidth, (uint)CurrentShapeBmp.PixelHeight, pixels)
+                    .ContinueWith(t =>
                     {
-                        var imageUri = new Uri("file:///" + t.Result.Path);
-                        var builder = new AppNotificationBuilder()
-                        .SetInlineImage(imageUri)
-                        .AddArgument("snapshotStatus", "snapshotTaken")
-                        .AddArgument("snapshotUri", imageUri.ToString())
-                        .AddArgument("snapshotWidth", ResultFigureActualWidth.ToString())
-                        .AddArgument("snapshotHeight", ResultFigureActualHeight.ToString());
+                        if (shortcutResponce)
+                        {
+                            var imageUri = new Uri("file:///" + t.Result.Path);
+                            var builder = new AppNotificationBuilder()
+                            .SetInlineImage(imageUri)
+                            .AddArgument("snapshotStatus", "snapshotTaken")
+                            .AddArgument("snapshotUri", imageUri.ToString())
+                            .AddArgument("snapshotWidth", ResultFigureActualWidth.ToString())
+                            .AddArgument("snapshotHeight", ResultFigureActualHeight.ToString());
 
+                            var notification = builder.BuildNotification();
+                            var notificationManager = AppNotificationManager.Default;
+                            notificationManager.Show(notification);
+                        }
+                    });
 
-                        var notificationManager = AppNotificationManager.Default;
-                        notificationManager.Show(builder.BuildNotification());
-                    }
-                });
+                var saveToClipboardTask = ClipboardExtensions.CopyAsync((uint)CurrentShapeBmp.PixelWidth, (uint)CurrentShapeBmp.PixelHeight, pixels);
 
-            var saveToClipboardTask = ClipboardExtensions.CopyAsync((uint)CurrentShapeBmp.PixelWidth, (uint)CurrentShapeBmp.PixelHeight, pixels);
+                await Task.WhenAll(saveToFileTask, saveToClipboardTask);
 
-            await Task.WhenAll(saveToFileTask, saveToClipboardTask);
+                if (shortcutResponce)
+                {
+                    CurrentShapeBmp = null;
+                }
+            }
+        }
+        else
+        {
+            GetScreenshotOfAllMonitors();
         }
     }
 
@@ -235,5 +253,11 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         }
 
         OnExitFromWindow?.Invoke();
+    }
+
+
+    public void GetScreenshotOfAllMonitors()
+    {
+
     }
 }

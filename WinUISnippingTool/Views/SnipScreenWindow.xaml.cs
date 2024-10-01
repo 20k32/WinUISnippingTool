@@ -33,7 +33,7 @@ namespace WinUISnippingTool.Views
             this.InitializeComponent();
         }
 
-        public void PrepareWindow(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind)
+        public void PrepareWindow(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
         {
             currentWindowLocation = location;
             mainGrid.DataContext = viewModel;
@@ -49,7 +49,7 @@ namespace WinUISnippingTool.Views
             ViewModel.AddImageSourceAndBrushFillForCurentMonitor(bitmapImage);
             ViewModel.AddShapeSourceForCurrentMonitor();
             ViewModel.SetWindowSize(location.MonitorSize);
-            ViewModel.SetResponceType(false);
+            ViewModel.SetResponceType(byShortcut);
             ViewModel.SetSelectedItem(snipKind);
 
             if (!location.IsPrimary)

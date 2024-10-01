@@ -1,3 +1,4 @@
+using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -41,10 +42,25 @@ internal sealed partial class MainPage : Page
     {
         this.InitializeComponent();
         NavigationCacheMode = NavigationCacheMode.Enabled;
+        AppNotificationManager.Default.NotificationInvoked += NotificationManager_NotificationInvoked;
+        AppNotificationManager.Default.Register();
+    }
 
-        AppNotificationManager notificationManager = AppNotificationManager.Default;
-        notificationManager.NotificationInvoked += NotificationManager_NotificationInvoked;
-        notificationManager.Register();
+    private void MainPage_Unloaded(object sender, RoutedEventArgs e)
+    {
+        App.MainWindow.Closed -= MainWindow_Closed;
+    }
+
+    private void MainPage_Loaded(object sender, RoutedEventArgs e)
+    {
+        App.MainWindow.Closed += MainWindow_Closed;
+    }
+
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    {
+        ViewModel.UnregisterHandlers();
+        AppNotificationManager.Default.NotificationInvoked -= NotificationManager_NotificationInvoked;
+        AppNotificationManager.Default.Unregister();
     }
 
     private void NotificationManager_NotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
@@ -64,18 +80,15 @@ internal sealed partial class MainPage : Page
                         {
                             string uriStr = args.Arguments["snapshotUri"];
                             var uri = new Uri(uriStr);
-                            var image = new Image()
+                            var bmpImage = new BitmapImage
                             {
-                                Source = new BitmapImage
-                                {
-                                    UriSource = uri,
-                                }
+                                UriSource = uri,
                             };
+
                             var width = int.Parse(args.Arguments["snapshotWidth"]);
                             var height = int.Parse(args.Arguments["snapshotHeight"]);
 
-
-                            ViewModel.AddImageCore();
+                            ViewModel.AddImageFromSource(bmpImage, width, height);
                             appWindowPersenter.Restore();
                         }
                         break;

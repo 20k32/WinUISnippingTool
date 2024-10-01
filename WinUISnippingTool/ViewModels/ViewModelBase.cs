@@ -1,10 +1,21 @@
-﻿using System.ComponentModel;
+﻿
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Windows.ApplicationModel.Resources.Core;
 
 namespace WinUISnippingTool.ViewModels
 {
-    internal class ViewModelBase : INotifyPropertyChanged
+    internal abstract class ViewModelBase : INotifyPropertyChanged
     {
+        protected static readonly ResourceMap resourceMap;
+
+        static ViewModelBase()
+        {
+            resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
+        }
+
+        protected abstract void LoadLocalization(string bcpTag);
+
         public event PropertyChangedEventHandler PropertyChanged;
         protected void NotifyOfPropertyChange([CallerMemberName] string propertyName = "")
         {

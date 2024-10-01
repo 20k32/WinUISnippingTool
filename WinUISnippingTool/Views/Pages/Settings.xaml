@@ -15,7 +15,7 @@
                 VerticalAlignment="Center"
                 Width="400">
         <ListBox ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
-                 SelectedItem="{x:Bind ViewModel.SelectedLanguageKind, Mode=TwoWay}">
+                 SelectedItem="{x:Bind ViewModel.SelectedLanguageKind, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding DisplayName}"/>
@@ -26,9 +26,9 @@
         <TextBlock Text="{x:Bind ViewModel.SaveImageLocation.Path, Mode=OneWay}"
                    TextWrapping="Wrap"/>
 
-        <Button Content="Change location"
+        <Button Content="{x:Bind ViewModel.ChangeLocationButtonName, Mode=OneWay}"
                 Command="{x:Bind ViewModel.PickFolderCommand}"/>
-        <Button Content="Back"
+        <Button Content="{x:Bind ViewModel.BackButtonName, Mode=OneWay}"
                 Click="Back_Click"/>
     </StackPanel>
 </Page>

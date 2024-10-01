@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,35 @@ namespace WinUISnippingTool.ViewModels
 {
     internal sealed partial class SettingsWindowViewModel : ViewModelBase
     {
+        private string backButtonName;
+        public string BackButtonName
+        {
+            get => backButtonName;
+            set
+            {
+                if (backButtonName != value)
+                {
+                    backButtonName = value;
+                    NotifyOfPropertyChange();
+                }
+            }
+        }
+
+        private string changeLocationButtonName;
+        public string ChangeLocationButtonName
+        {
+            get => changeLocationButtonName;
+            set
+            {
+                if (changeLocationButtonName != value)
+                {
+                    changeLocationButtonName = value;
+                    NotifyOfPropertyChange();
+                }
+            }
+        }
+
+
         private LanguageKind selectedLanguageKind;
         public LanguageKind SelectedLanguageKind
         {
@@ -34,8 +64,8 @@ namespace WinUISnippingTool.ViewModels
             Languages = new();
             Languages.AddRange(new LanguageKind[]
             {
-                new("Ukraininan", "uk-UA"),
-                new("English", "en-US")
+                new(string.Empty, "uk-UA"),
+                new(string.Empty, "en-US")
             });
         }
 
@@ -57,6 +87,8 @@ namespace WinUISnippingTool.ViewModels
 
         public async Task LoadState(string bcpTag, StorageFolder saveImageLocation)
         {
+            LoadLocalization(bcpTag);
+
             SelectedLanguageKind = Languages.FirstOrDefault(lang => lang.BcpTag == bcpTag);
 
             if(saveImageLocation is null)
@@ -69,7 +101,6 @@ namespace WinUISnippingTool.ViewModels
             }
         }
 
-
         [RelayCommand]
         private async Task PickFolderAsync()
         {
@@ -79,6 +110,14 @@ namespace WinUISnippingTool.ViewModels
             {
                 SaveImageLocation = storageFolder;
             }
+        }
+
+        protected override void LoadLocalization(string bcpTag)
+        {
+            BackButtonName = resourceMap.GetValue("BackButton/Text")?.ValueAsString ?? "empty_value";
+            ChangeLocationButtonName = resourceMap.GetValue("ChangeLocationButton/Text")?.ValueAsString ?? "empty_value";
+            Languages[1].DisplayName = resourceMap.GetValue("EnglishLangMenuItem/Text")?.ValueAsString ?? "empty_value";
+            Languages[0].DisplayName = resourceMap.GetValue("UkrainianLangMenuItem/Text")?.ValueAsString ?? "empty_value";
         }
     }
 }

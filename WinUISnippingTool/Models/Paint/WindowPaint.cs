@@ -69,6 +69,7 @@ namespace WinUISnippingTool.Models.Paint
 
         public override void SetImageFill(ImageSource source)
         {
+            rect = null;
             fill = new ImageBrush
             {
                 ImageSource = source

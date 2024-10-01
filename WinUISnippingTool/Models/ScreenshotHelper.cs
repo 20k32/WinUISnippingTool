@@ -23,7 +23,11 @@ internal static class ScreenshotHelper
                 {
                     bmpScreenshot.Save(stream, ImageFormat.Jpeg);
                     stream.Position = 0;
-                    bitmapImage.SetSource(stream.AsRandomAccessStream());
+
+                    using(var randomStream = stream.AsRandomAccessStream())
+                    {
+                        bitmapImage.SetSource(randomStream);
+                    }
                 }
             }
         }

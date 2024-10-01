@@ -10,7 +10,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    SizeChanged="Window_SizeChanged">
+    SizeChanged="Window_SizeChanged"
+    Loaded="MainPage_Loaded"
+    Unloaded="MainPage_Unloaded">
 
     <Grid x:Name="mainGrid">
         <Grid.KeyboardAccelerators>
@@ -205,7 +207,8 @@
                         Style="{StaticResource TransparentButton}">
                     <Button.Flyout>
                         <MenuFlyout  Placement="Bottom">
-                            <MenuFlyoutItem Text="Settings" Click="MenuFlyoutItem_Click" >
+                            <MenuFlyoutItem Text="{x:Bind ViewModel.SettingsButtonName, Mode=OneWay}" 
+                                            Click="MenuFlyoutItem_Click" >
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE713;" />
                                 </MenuFlyoutItem.Icon>

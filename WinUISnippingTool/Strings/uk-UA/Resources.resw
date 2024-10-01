@@ -132,4 +132,19 @@
   <data name="FullScreenAreaName.Text" xml:space="preserve">
     <value>Всі вікна</value>
   </data>
+  <data name="BackButton.Text" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="ChangeLocationButton.Text" xml:space="preserve">
+    <value>Обрати місце</value>
+  </data>
+  <data name="Settings.Text" xml:space="preserve">
+    <value>Налаштування</value>
+  </data>
+  <data name="EnglishLangMenuItem.Text" xml:space="preserve">
+    <value>Англійська</value>
+  </data>
+  <data name="UkrainianLangMenuItem.Text" xml:space="preserve">
+    <value>Україньска</value>
+  </data>
 </root>

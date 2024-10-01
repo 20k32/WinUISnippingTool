@@ -135,4 +135,19 @@
   <data name="FreeformAreaName.Text" xml:space="preserve">
     <value>Freeform</value>
   </data>
+  <data name="Settings.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="UkrainianLangMenuItem.Text" xml:space="preserve">
+    <value>Ukrainian</value>
+  </data>
+  <data name="EnglishLangMenuItem.Text" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="ChangeLocationButton.Text" xml:space="preserve">
+    <value>Change location</value>
+  </data>
+  <data name="BackButton.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
 </root>

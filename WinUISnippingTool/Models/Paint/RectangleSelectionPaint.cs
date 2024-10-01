@@ -131,6 +131,7 @@ namespace WinUISnippingTool.Models.Paint
 
         public override void Clear()
         {
+            rect = null;
             Shapes.Clear();
         }
 

@@ -8,9 +8,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing.Printing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Security.Credentials;
 using Windows.Services.Maps;
 
 namespace WinUISnippingTool.Models.Paint
@@ -38,7 +40,10 @@ namespace WinUISnippingTool.Models.Paint
                     Stroke = strokeColor,
                     Fill = fillColor,
                     StrokeThickness = 4,
-                    FillRule = FillRule.Nonzero
+                    FillRule = FillRule.EvenOdd,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round
                 };
 
                 var widthCoeff = WindowSize.Width / 3;
@@ -111,12 +116,13 @@ namespace WinUISnippingTool.Models.Paint
             }
 
             IsDrawing = false;
-
+            
             return result;
         }
 
         public override void Clear()
         {
+            polyline = null;
             Shapes.Clear();
         }
 
@@ -124,12 +130,13 @@ namespace WinUISnippingTool.Models.Paint
         {
             fillColor = new ImageBrush()
             {
-                ImageSource = source,
                 Stretch = Stretch.None,
                 AlignmentX = AlignmentX.Left,
                 AlignmentY = AlignmentY.Top,
                 Opacity = 1,
             };
+
+            fillColor.ImageSource = source;
         }
     }
 }
