@@ -104,15 +104,18 @@ namespace WinUISnippingTool.Models.Paint
         public override Shape OnPointerReleased(Point position)
         {
             Polyline result = null;
-
-            if (polyline.Points.Count > 1)
+            
+            if(polyline is not null)
             {
-                polyline.StrokeThickness = 0;
-                result = polyline;
-            }
-            else
-            {
-                Shapes.Remove(polyline);
+                if (polyline.Points.Count > 1)
+                {
+                    polyline.StrokeThickness = 0;
+                    result = polyline;
+                }
+                else
+                {
+                    Shapes.Remove(polyline);
+                }
             }
 
             IsDrawing = false;

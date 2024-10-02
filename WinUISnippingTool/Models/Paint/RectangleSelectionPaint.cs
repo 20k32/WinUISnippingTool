@@ -109,19 +109,23 @@ namespace WinUISnippingTool.Models.Paint
         public override Shape OnPointerReleased(Point position)
         {
             Path result = null;
-            var absX = Math.Abs(position.X - firstPosition.X);
-            var absY = Math.Abs(position.Y - firstPosition.Y);
+            
+            if(rect is not null)
+            {
+                var absX = Math.Abs(previousPosition.X - firstPosition.X);
+                var absY = Math.Abs(previousPosition.Y - firstPosition.Y);
 
-            if(absX > MinRenderDistance
+                if (absX > MinRenderDistance
                 && absY > MinRenderDistance)
-            {
-                rect.StrokeThickness = 0;
-                result = rect;
-            }
-            else
-            {
-                Shapes.Remove(rect);
-                
+                {
+                    rect.StrokeThickness = 0;
+                    result = rect;
+                }
+                else
+                {
+                    Shapes.Remove(rect);
+                    rect = null;
+                }
             }
 
             IsDrawing = false;

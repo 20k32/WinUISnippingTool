@@ -8,11 +8,16 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Graphics;
+using Windows.Graphics.Imaging;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
+using WinUISnippingTool.Models.Items;
 using WinUISnippingTool.ViewModels;
+using WinUISnippingTool.Views.UserControls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -33,7 +38,7 @@ namespace WinUISnippingTool.Views
             this.InitializeComponent();
         }
 
-        public void PrepareWindow(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
+        public async Task PrepareWindow(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
         {
             currentWindowLocation = location;
             mainGrid.DataContext = viewModel;
@@ -41,15 +46,20 @@ namespace WinUISnippingTool.Views
             ViewModel.SetCurrentMonitor(location.DeviceName);
             PART_Canvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
-            var bitmapImage = ScreenshotHelper.GetBitmapImageScreenshotForArea(
+            var softwareBitmap = await ScreenshotHelper.GetSoftwareBitmapImageScreenshotForAreaAsync(
                 location.StartPoint,
                 System.Drawing.Point.Empty,
-                location.MonitorSize);
+                location.MonitorSize);            
 
-            ViewModel.AddImageSourceAndBrushFillForCurentMonitor(bitmapImage);
+            var softwareBitmapSource = new SoftwareBitmapSource();
+            await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
+
+            ViewModel.AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
+            ViewModel.AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
             ViewModel.AddShapeSourceForCurrentMonitor();
             ViewModel.SetWindowSize(location.MonitorSize);
             ViewModel.SetResponceType(byShortcut);
+            ViewModel.SetImageSourceForCurrentMonitor();
             ViewModel.SetSelectedItem(snipKind);
 
             if (!location.IsPrimary)
@@ -58,6 +68,8 @@ namespace WinUISnippingTool.Views
             }
             else
             {
+                ViewModel.SetPrimaryMonitor(location);
+
                 var binding = new Binding();
                 binding.Path = new(nameof(ViewModel.IsOverlayVisible));
                 binding.Source = ViewModel;
@@ -107,10 +119,10 @@ namespace WinUISnippingTool.Views
         private async void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
             e.Handled = true;
-
+            
             await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
 
-            if(ViewModel.ResultFigure is not null)
+            if(ViewModel.CurrentShapeBmp is not null)
             {
                 ViewModel.Exit(false);
             }

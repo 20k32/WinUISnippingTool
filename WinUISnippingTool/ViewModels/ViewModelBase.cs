@@ -1,4 +1,5 @@
-﻿
+﻿using Microsoft.UI.Xaml;
+using Microsoft.Windows.System.Power;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.ApplicationModel.Resources.Core;
@@ -8,7 +9,7 @@ namespace WinUISnippingTool.ViewModels
     internal abstract class ViewModelBase : INotifyPropertyChanged
     {
         protected static readonly ResourceMap resourceMap;
-
+        
         static ViewModelBase()
         {
             resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");

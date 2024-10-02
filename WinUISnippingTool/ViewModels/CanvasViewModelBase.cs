@@ -14,18 +14,19 @@ namespace WinUISnippingTool.ViewModels;
 internal abstract class CanvasViewModelBase : ViewModelBase
 {
     protected Size defaultWindowSize = new(500, 500);
-    public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; private set; }
+    public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; protected set; }
 
     protected CanvasViewModelBase()
     {
         SnipShapeKinds = new();
+
         SnipShapeKinds.AddRange(new SnipShapeKind[]
-       {
+        {
             new(string.Empty, "\uF407", SnipKinds.Recntangular),
             new(string.Empty, "\uF7ED", SnipKinds.Window),
             new(string.Empty, "\uE7F4", SnipKinds.AllWindows),
             new(string.Empty, "\uF408", SnipKinds.CustomShape)
-       });
+        });
     }
 
     protected override void LoadLocalization(string bcpTag)
@@ -50,7 +51,8 @@ internal abstract class CanvasViewModelBase : ViewModelBase
         get => selectedSnipKind;
         set
         {
-            if (selectedSnipKind != value)
+            if (selectedSnipKind != value
+                && value is not null)
             {
                 selectedSnipKind = value;
                 SelectionChangedCallback();

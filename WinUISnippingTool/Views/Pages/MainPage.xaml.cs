@@ -153,10 +153,10 @@ internal sealed partial class MainPage : Page
         //throw new NotImplementedException();
     }
 
-    private void myButton_Click(object sender, RoutedEventArgs e)
+    private async void myButton_Click(object sender, RoutedEventArgs e)
     {
         appWindowPersenter.Minimize(false);
-        ViewModel.EnterSnippingMode(false);
+        await ViewModel.EnterSnippingModeAsync(false);
     }
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs args)
@@ -241,11 +241,11 @@ internal sealed partial class MainPage : Page
         }
     }
 
-    private void EnterSnippingModeByShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+    private async void EnterSnippingModeByShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
     {
-        appWindowPersenter.Minimize(false);
-        ViewModel.EnterSnippingMode(true);
         args.Handled = true;
+        appWindowPersenter.Minimize(false);
+        await ViewModel.EnterSnippingModeAsync(true);
     }
 
     private void GlobalUndoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)

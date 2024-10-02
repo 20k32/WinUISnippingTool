@@ -98,7 +98,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     public void UnregisterHandlers()
     {
         snipScreenWindowViewModel.OnExitFromWindow -= OnExitFromWindow;
-
     }
 
     private void OnExitFromWindow()
@@ -110,6 +109,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             window.Close();
         }
 
+        snipScreenWindowViewModel.CurrentShapeBmp = null;
         snipScreenWindows.Clear();
     }
 
@@ -273,8 +273,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         if (snipScreenWindowViewModel.CurrentShapeBmp is not null)
         {
             AddImageFromSource(snipScreenWindowViewModel.CurrentShapeBmp,
-                snipScreenWindowViewModel.CurrentShapeBmp.PixelWidth,
-                snipScreenWindowViewModel.CurrentShapeBmp.PixelHeight);
+                snipScreenWindowViewModel.ResultFigureActualWidth,
+                snipScreenWindowViewModel.ResultFigureActualHeight);
         }
     }
 
@@ -283,14 +283,14 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         AddImageCore();
     }
 
-    public void EnterSnippingMode(bool byShortcut)
+    public async Task EnterSnippingModeAsync(bool byShortcut)
     {
         snipScreenWindowViewModel.ResetModel();
 
         foreach (var location in monitorLocations)
         {
             var window = new SnipScreenWindow();
-            window.PrepareWindow(snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
+            await window.PrepareWindow(snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
             snipScreenWindows.Add(window);
         }
 
@@ -472,7 +472,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     #endregion
 
-#region Image cropper
+    #region Image cropper
 
     private ImageCropper imageCropper;
 

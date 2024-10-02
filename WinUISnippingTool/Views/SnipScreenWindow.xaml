@@ -39,8 +39,9 @@
                     x:Name="PART_TrayPanel"
                     Spacing="5"
                     Margin="0, 40, 0, 0">
-            <userControl:SnapControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
-                                     SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"/>
+
+            <userControl:SnapControl SnipKinds="{Binding SnipShapeKinds}"
+                                     SelectedSnipKind="{Binding SelectedSnipKind, Mode=TwoWay}"/>
             <Button Content="Exit"
                     Click="ExitButton_Click"/>
         </StackPanel>
