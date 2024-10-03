@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Geolocation.Geofencing;
+using WinUISnippingTool.Models.MonitorInfo;
 
 namespace WinUISnippingTool.Models.PageParameters
 {

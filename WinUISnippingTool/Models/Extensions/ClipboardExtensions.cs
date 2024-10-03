@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -36,6 +37,32 @@ namespace WinUISnippingTool.Models.Extensions
                 dataPackage.RequestedOperation = DataPackageOperation.Copy;
                 Clipboard.SetContent(dataPackage);
                 Clipboard.Flush();
+            }
+        }
+
+        public static async Task CopyAsync(SoftwareBitmap softwareBitmap)
+        {
+            using (var stream = new InMemoryRandomAccessStream())
+            {
+                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+
+                encoder.SetSoftwareBitmap(softwareBitmap);
+                await encoder.FlushAsync();
+
+                var dataPackage = new DataPackage();
+                dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
+                dataPackage.RequestedOperation = DataPackageOperation.Copy;
+                
+                try
+                {
+                    Clipboard.SetContent(dataPackage);
+                    Clipboard.Flush();
+                }
+                catch (Exception e)
+                {
+                    var ex = e;
+                    Debug.WriteLine(ex.Message);
+                }
             }
         }
     }

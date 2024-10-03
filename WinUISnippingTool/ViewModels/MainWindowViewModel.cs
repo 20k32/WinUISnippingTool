@@ -25,6 +25,8 @@ using System.Runtime.InteropServices;
 using Windows.Graphics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Windowing;
+using System.Numerics;
+using WinUISnippingTool.Views.UserControls;
 namespace WinUISnippingTool.ViewModels;
 
 
@@ -102,14 +104,20 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     private void OnExitFromWindow()
     {
-        AddImageCore();
+        if(SnipControl.CaptureKind == CaptureType.Photo)
+        {
+            AddImageCore();
+        }
+        else
+        {
+            ShowVideoCaptureScreen();
+        }
 
-        foreach(var window in snipScreenWindows)
+        foreach (var window in snipScreenWindows)
         {
             window.Close();
         }
 
-        snipScreenWindowViewModel.CurrentShapeBmp = null;
         snipScreenWindows.Clear();
     }
 
@@ -242,7 +250,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     public ScaleTransform TransformSource => transformManager.TransfromSource;
 
-
     public void AddImageFromSource(ImageSource source, double width, double height)
     {
         drawBrush?.Clear();
@@ -268,9 +275,18 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         OnNewImageAdded?.Invoke();
     }
 
+    private void ShowVideoCaptureScreen()
+    {
+        var windowLocation = snipScreenWindowViewModel.WindowPosition;
+
+        var videoCaptureWindow = new VideoCaptureWindow();
+        videoCaptureWindow.PrepareWindow(windowLocation);
+        videoCaptureWindow.Activate();
+    }
+
     public void AddImageCore()
     {
-        if (snipScreenWindowViewModel.CurrentShapeBmp is not null)
+        if (!snipScreenWindowViewModel.IsShortcutResponce)
         {
             AddImageFromSource(snipScreenWindowViewModel.CurrentShapeBmp,
                 snipScreenWindowViewModel.ResultFigureActualWidth,
@@ -283,20 +299,25 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         AddImageCore();
     }
 
-    public async Task EnterSnippingModeAsync(bool byShortcut)
+    public async Task EnterSnippingModeAsync(CaptureType captureType, bool byShortcut)
     {
-        snipScreenWindowViewModel.ResetModel();
-
-        foreach (var location in monitorLocations)
+        if(SnipControl.CaptureKind == CaptureType.Photo)
         {
-            var window = new SnipScreenWindow();
-            await window.PrepareWindow(snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
-            snipScreenWindows.Add(window);
+            foreach (var location in monitorLocations)
+            {
+                var window = new SnipScreenWindow();
+                await window.PrepareWindow(captureType, snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
+                snipScreenWindows.Add(window);
+            }
+
+            foreach (var item in snipScreenWindows)
+            {
+                item.Activate();
+            }
         }
-
-        foreach(var item in snipScreenWindows)
+        else
         {
-            item.Activate();
+            ShowVideoCaptureScreen();
         }
     }
 
@@ -501,6 +522,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
         imageCropper.Source = writeableBitmap;
         CanvasItems.Add(imageCropper);
+
         IsInCroppingMode = true;
     }
 

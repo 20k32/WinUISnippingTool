@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 using Windows.Graphics.Display;
 using Windows.Devices.Display;
 using Windows.Devices.Enumeration;
-using WinUISnippingTool.Models;
+using WinUISnippingTool.Models.MonitorInfo;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

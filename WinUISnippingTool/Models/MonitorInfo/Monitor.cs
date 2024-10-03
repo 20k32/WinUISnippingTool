@@ -7,11 +7,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics;
 
-namespace WinUISnippingTool.Models;
+namespace WinUISnippingTool.Models.MonitorInfo;
 
 public sealed class Monitor
 {
-    private Monitor(IntPtr handle)
+    private Monitor(nint handle)
     {
         Handle = handle;
         var mi = new MONITORINFOEX();
@@ -25,7 +25,7 @@ public sealed class Monitor
         IsPrimary = mi.dwFlags.HasFlag(MONITORINFOF.MONITORINFOF_PRIMARY);
     }
 
-    public IntPtr Handle { get; }
+    public nint Handle { get; }
     public bool IsPrimary { get; }
     public RectInt32 WorkingArea { get; }
     public RectInt32 Bounds { get; }
@@ -36,23 +36,23 @@ public sealed class Monitor
         get
         {
             var all = new List<Monitor>();
-            EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, (m, h, rc, p) =>
+            EnumDisplayMonitors(nint.Zero, nint.Zero, (m, h, rc, p) =>
             {
                 all.Add(new Monitor(m));
                 return true;
-            }, IntPtr.Zero);
+            }, nint.Zero);
             return all;
         }
     }
 
     public override string ToString() => DeviceName;
-    public static IntPtr GetNearestFromWindow(IntPtr hwnd) => MonitorFromWindow(hwnd, MFW.MONITOR_DEFAULTTONEAREST);
-    public static IntPtr GetDesktopMonitorHandle() => GetNearestFromWindow(GetDesktopWindow());
-    public static IntPtr GetShellMonitorHandle() => GetNearestFromWindow(GetShellWindow());
-    public static Monitor FromWindow(IntPtr hwnd, MFW flags = MFW.MONITOR_DEFAULTTONULL)
+    public static nint GetNearestFromWindow(nint hwnd) => MonitorFromWindow(hwnd, MFW.MONITOR_DEFAULTTONEAREST);
+    public static nint GetDesktopMonitorHandle() => GetNearestFromWindow(GetDesktopWindow());
+    public static nint GetShellMonitorHandle() => GetNearestFromWindow(GetShellWindow());
+    public static Monitor FromWindow(nint hwnd, MFW flags = MFW.MONITOR_DEFAULTTONULL)
     {
         var h = MonitorFromWindow(hwnd, flags);
-        return h != IntPtr.Zero ? new Monitor(h) : null;
+        return h != nint.Zero ? new Monitor(h) : null;
     }
 
     [Flags]
@@ -91,20 +91,20 @@ public sealed class Monitor
         public int bottom;
     }
 
-    private delegate bool MonitorEnumProc(IntPtr monitor, IntPtr hdc, IntPtr lprcMonitor, IntPtr lParam);
+    private delegate bool MonitorEnumProc(nint monitor, nint hdc, nint lprcMonitor, nint lParam);
 
     [DllImport("user32")]
-    private static extern IntPtr GetDesktopWindow();
+    private static extern nint GetDesktopWindow();
 
     [DllImport("user32")]
-    private static extern IntPtr GetShellWindow();
+    private static extern nint GetShellWindow();
 
     [DllImport("user32")]
-    private static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+    private static extern bool EnumDisplayMonitors(nint hdc, nint lprcClip, MonitorEnumProc lpfnEnum, nint dwData);
 
     [DllImport("user32")]
-    private static extern IntPtr MonitorFromWindow(IntPtr hwnd, MFW flags);
+    private static extern nint MonitorFromWindow(nint hwnd, MFW flags);
 
     [DllImport("user32", CharSet = CharSet.Unicode)]
-    private static extern bool GetMonitorInfo(IntPtr hmonitor, ref MONITORINFOEX info);
+    private static extern bool GetMonitorInfo(nint hmonitor, ref MONITORINFOEX info);
 }

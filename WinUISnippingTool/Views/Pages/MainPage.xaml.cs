@@ -12,6 +12,7 @@ using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.PageParameters;
 using WinUISnippingTool.ViewModels;
+using WinUISnippingTool.Views.UserControls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -156,7 +157,7 @@ internal sealed partial class MainPage : Page
     private async void myButton_Click(object sender, RoutedEventArgs e)
     {
         appWindowPersenter.Minimize(false);
-        await ViewModel.EnterSnippingModeAsync(false);
+        await ViewModel.EnterSnippingModeAsync(SnipControl.CaptureKind, false);
     }
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs args)
@@ -245,7 +246,7 @@ internal sealed partial class MainPage : Page
     {
         args.Handled = true;
         appWindowPersenter.Minimize(false);
-        await ViewModel.EnterSnippingModeAsync(true);
+        await ViewModel.EnterSnippingModeAsync(SnipControl.CaptureKind, true);
     }
 
     private void GlobalUndoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)

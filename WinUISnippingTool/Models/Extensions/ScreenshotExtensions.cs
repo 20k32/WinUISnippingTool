@@ -7,15 +7,15 @@ using System;
 using System.Threading.Tasks;
 
 
-namespace WinUISnippingTool.Models;
+namespace WinUISnippingTool.Models.Extensions;
 
-internal static class ScreenshotHelper
+internal static class ScreenshotExtensions
 {
     public static BitmapImage GetBitmapImageScreenshotForArea
         (Point upperLeftSource, Point upperLeftDestination, Windows.Foundation.Size size)
     {
         var bitmapImage = new BitmapImage();
-        
+
         using (var bmpScreenshot = new Bitmap((int)size.Width, (int)size.Height))
         {
             using (var g = Graphics.FromImage(bmpScreenshot))
@@ -28,7 +28,7 @@ internal static class ScreenshotHelper
                     bmpScreenshot.Save(stream, ImageFormat.Jpeg);
                     stream.Position = 0;
 
-                    using(var randomStream = stream.AsRandomAccessStream())
+                    using (var randomStream = stream.AsRandomAccessStream())
                     {
                         bitmapImage.SetSource(randomStream);
                     }
@@ -50,7 +50,7 @@ internal static class ScreenshotHelper
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
                 g.CopyFromScreen(upperLeftSource, upperLeftDestination, bmpScreenshot.Size);
-                
+
 
                 using (var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream())
                 {
@@ -60,7 +60,7 @@ internal static class ScreenshotHelper
                 }
             }
         }
-        
+
         return softwareBitmap;
     }
 }

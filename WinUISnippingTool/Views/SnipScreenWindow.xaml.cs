@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.Windows.Widgets.Feeds.Providers;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -29,8 +30,8 @@ namespace WinUISnippingTool.Views
     /// </summary>
     internal sealed partial class SnipScreenWindow : Window
     {
-        private MonitorLocation currentWindowLocation; // because window is maximized
-
+        private MonitorLocation currentWindowLocation;
+        private bool isPointerReleased;
         public SnipScreenWindowViewModel ViewModel { get; private set; }
 
         public SnipScreenWindow()
@@ -38,29 +39,32 @@ namespace WinUISnippingTool.Views
             this.InitializeComponent();
         }
 
-        public async Task PrepareWindow(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
+        public async Task PrepareWindow(CaptureType captureType, SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
         {
+            isPointerReleased = false;
             currentWindowLocation = location;
             mainGrid.DataContext = viewModel;
             ViewModel = viewModel;
+            ViewModel.ResetModel();
             ViewModel.SetCurrentMonitor(location.DeviceName);
             PART_Canvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
-            var softwareBitmap = await ScreenshotHelper.GetSoftwareBitmapImageScreenshotForAreaAsync(
+            var softwareBitmap = await ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
                 location.StartPoint,
                 System.Drawing.Point.Empty,
-                location.MonitorSize);            
+                location.MonitorSize);
 
             var softwareBitmapSource = new SoftwareBitmapSource();
             await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
 
-            ViewModel.AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
-            ViewModel.AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
-            ViewModel.AddShapeSourceForCurrentMonitor();
-            ViewModel.SetWindowSize(location.MonitorSize);
-            ViewModel.SetResponceType(byShortcut);
-            ViewModel.SetImageSourceForCurrentMonitor();
-            ViewModel.SetSelectedItem(snipKind);
+            if (captureType == CaptureType.Photo)
+            {
+                PrepareWindowForPhoto(location, softwareBitmapSource, softwareBitmap, byShortcut, snipKind);
+            }
+            else
+            {
+                PrepareWindowForVideo(location, softwareBitmapSource, softwareBitmap, byShortcut, snipKind);
+            }
 
             if (!location.IsPrimary)
             {
@@ -87,25 +91,58 @@ namespace WinUISnippingTool.Views
             presenter.SetBorderAndTitleBar(false, false);
         }
 
+        private void PrepareWindowForPhoto(
+            MonitorLocation location,
+            SoftwareBitmapSource softwareBitmapSource,
+            SoftwareBitmap softwareBitmap,
+            bool byShortcut,
+            SnipKinds snipKind)
+        {
+            ViewModel.AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
+            ViewModel.AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
+            ViewModel.AddShapeSourceForCurrentMonitor();
+            ViewModel.SetWindowSize(location.MonitorSize);
+            ViewModel.SetResponceType(byShortcut);
+            ViewModel.SetImageSourceForCurrentMonitor();
+            ViewModel.SetSelectedItem(snipKind);
+        }
+
+        //todo: prepare window for video
+        private void PrepareWindowForVideo(
+            MonitorLocation location,
+            SoftwareBitmapSource softwareBitmapSource,
+            SoftwareBitmap softwareBitmap,
+            bool byShortcut,
+            SnipKinds snipKind)
+        {
+            ViewModel.AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
+            ViewModel.AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
+            ViewModel.AddShapeSourceForCurrentMonitor();
+            ViewModel.SetWindowSize(location.MonitorSize);
+            ViewModel.SetResponceType(byShortcut);
+            ViewModel.SetImageSourceForCurrentMonitor();
+            ViewModel.SetSelectedItem(snipKind);
+        }
+
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
-            ViewModel.Exit(true);
+            ViewModel.Exit();
         }
 
         private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
             e.Handled = true;
 
-            if(currentWindowLocation.DeviceName != ViewModel.CurrentMonitorName)
+            if (currentWindowLocation.DeviceName != ViewModel.CurrentMonitorName)
             {
                 ViewModel.SetCurrentMonitor(currentWindowLocation.DeviceName);
-                
+
                 ViewModel.SetImageSourceForCurrentMonitor();
                 ViewModel.AddShapeSourceForCurrentMonitor();
 
                 ViewModel.SetWindowSize(currentWindowLocation.MonitorSize);
             }
-           
+
 
             ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas((Canvas)sender));
         }
@@ -119,16 +156,23 @@ namespace WinUISnippingTool.Views
         private async void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
             e.Handled = true;
-            
-            await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
 
-            if(ViewModel.CurrentShapeBmp is not null)
+            if (!isPointerReleased)
             {
-                ViewModel.Exit(false);
-            }
-            else
-            {
-                ViewModel.IsOverlayVisible = true;
+                isPointerReleased = true;
+
+                await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
+
+                if (ViewModel.CurrentShapeBmp is not null
+                    || SnipControl.CaptureKind == CaptureType.Video)
+                {
+                    ViewModel.Exit();
+                }
+                else
+                {
+                    isPointerReleased = false;
+                    ViewModel.IsOverlayVisible = true;
+                }
             }
         }
     }

@@ -54,7 +54,7 @@
                         Click="myButton_Click">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="5">
-                        <FontIcon Glyph="&#xE10F;"
+                        <FontIcon Glyph="&#xE710;"
                                   x:Name="NewPictureIcon"
                                   VerticalAlignment="Center"/>
                         <TextBlock x:Name="PART_TakePictureButtonName"
@@ -63,7 +63,7 @@
                     </StackPanel>
                 </Button>
 
-                <userControl:SnapControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
+                <userControl:SnipControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
                                          SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"/>
             </StackPanel>
 

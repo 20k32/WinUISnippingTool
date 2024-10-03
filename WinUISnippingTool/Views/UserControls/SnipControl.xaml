@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UserControl
-    x:Class="WinUISnippingTool.Views.UserControls.SnapControl"
+    x:Class="WinUISnippingTool.Views.UserControls.SnipControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:WinUISnippingTool.Views.UserControls"
@@ -30,11 +30,18 @@
     </UserControl.Resources>
 
     <StackPanel Orientation="Horizontal" 
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center">
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="5">
 
-        <Button Margin="0, 0, 15, 0">
+        <Button IsEnabled="{x:Bind IsPhotoButtonEnabled, Mode=OneWay}"
+                Command="{x:Bind PhotoButtonClickCommand}">
             <FontIcon Glyph="&#xE722;"/>
+        </Button>
+
+        <Button IsEnabled="{x:Bind IsVideoButtonEnabled, Mode=OneWay}"
+                Command="{x:Bind VideoButtonClickCommand}">
+            <FontIcon Glyph="&#xE714;" />
         </Button>
 
         <ComboBox VerticalAlignment="Center"

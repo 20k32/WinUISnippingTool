@@ -22,7 +22,9 @@
     <None Remove="Views\Pages\Settings.xaml" />
     <None Remove="Views\SnipScreenWindow.xaml" />
     <None Remove="Views\UserControls\ColorPicker.xaml" />
-    <None Remove="Views\UserControls\SnapControl.xaml" />
+    <None Remove="Views\UserControls\SnipControl.xaml" />
+    <None Remove="Views\UserControls\VideoCaptureControl.xaml" />
+    <None Remove="Views\VideoCaptureWindow.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,6 +62,16 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Views\UserControls\VideoCaptureControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\VideoCaptureWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
     <Page Update="Views\Pages\MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -80,7 +92,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="Views\UserControls\SnapControl.xaml">
+    <Page Update="Views\UserControls\SnipControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.ComponentModel;using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using Windows.Storage.Streams;
 
 namespace WinUISnippingTool.Models.Extensions
 {
@@ -57,6 +59,27 @@ namespace WinUISnippingTool.Models.Extensions
                      BitmapSavingConstants.DpiX,
                      BitmapSavingConstants.DpiY,
                      buffer);
+
+                await encoder.FlushAsync();
+            }
+
+            return file;
+        }
+
+        public static async Task<StorageFile> SaveAsync(SoftwareBitmap softwareBitmap)
+        {
+            var currDate = DateTime.Now;
+            var fileName = $"Screenshot {currDate:yyyy-dd-MM} {currDate.Hour}{currDate.Minute}{currDate.Second}{BitmapSavingConstants.FileExtension}";
+            var screenshotsFolder = await DefineFolderAsync();
+
+            var file = await screenshotsFolder.CreateFileAsync(fileName);
+
+            using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+            {
+
+                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+
+                encoder.SetSoftwareBitmap(softwareBitmap);
 
                 await encoder.FlushAsync();
             }
