@@ -275,13 +275,15 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         OnNewImageAdded?.Invoke();
     }
 
-    private void ShowVideoCaptureScreen()
+    private async void ShowVideoCaptureScreen()
     {
         var windowLocation = snipScreenWindowViewModel.WindowPosition;
 
         var videoCaptureWindow = new VideoCaptureWindow();
         videoCaptureWindow.PrepareWindow(windowLocation);
         videoCaptureWindow.Activate();
+        await Task.Delay(1000);
+        videoCaptureWindow.StartScreenCapture(monitorLocations[1]);
     }
 
     public void AddImageCore()

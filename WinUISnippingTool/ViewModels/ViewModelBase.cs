@@ -3,6 +3,7 @@ using Microsoft.Windows.System.Power;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.ApplicationModel.Resources.Core;
+using Windows.Graphics.DirectX.Direct3D11;
 
 namespace WinUISnippingTool.ViewModels
 {

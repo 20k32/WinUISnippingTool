@@ -119,7 +119,7 @@ internal sealed partial class MainPage : Page
 
             foreach(var monitor in mainPageParameter.Monitors)
             {
-                var monitorLocation = new MonitorLocation(monitor.Bounds, monitor.IsPrimary, monitor.DeviceName);
+                var monitorLocation = new MonitorLocation(monitor.Bounds, monitor.IsPrimary, monitor.DeviceName, monitor.Handle);
                 ViewModel.AddMonitorLocation(monitorLocation);
             }
 
