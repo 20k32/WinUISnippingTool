@@ -13,16 +13,31 @@ using Windows.Media.Transcoding;
 using Windows.Storage.Streams;
 using Microsoft.UI.Composition;
 using System.Linq.Expressions;
+using Windows.Graphics;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
-public sealed class Encoder : IDisposable
+internal sealed class Encoder : IDisposable
 {
-    public Encoder(IDirect3DDevice device, GraphicsCaptureItem item)
+    private readonly IDirect3DDevice device;
+
+    private readonly GraphicsCaptureItem captureItem;
+    private CaptureFrameWait frameGenerator;
+    private RectInt32 frameSize;
+    private VideoCaptureOptions options;
+    private VideoStreamDescriptor videoDescriptor;
+    private MediaStreamSource mediaStreamSource;
+    private MediaTranscoder transcoder;
+    private bool isRecording;
+    private bool closed = false;
+
+    public Encoder(IDirect3DDevice device, GraphicsCaptureItem item, RectInt32 frameSize, VideoCaptureOptions options)
     {
-        _device = device;
-        _captureItem = item;
-        _isRecording = false;
+        this.device = device;
+        captureItem = item;
+        isRecording = false;
+        this.frameSize = frameSize;
+        this.options = options;
 
         CreateMediaObjects();
     }
@@ -34,29 +49,30 @@ public sealed class Encoder : IDisposable
 
     private async Task EncodeInternalAsync(IRandomAccessStream stream, uint width, uint height, uint bitrateInBps, uint frameRate)
     {
-        if (!_isRecording)
+        if (!isRecording)
         {
-            _isRecording = true;
+            isRecording = true;
+           
+            frameGenerator = new CaptureFrameWait(
+                device,
+                captureItem,
+                captureItem.Size,
+                frameSize);
 
-            _frameGenerator = new CaptureFrameWait(
-                _device,
-                _captureItem,
-                _captureItem.Size);
-
-            using (_frameGenerator)
+            using (frameGenerator)
             {
                 var encodingProfile = new MediaEncodingProfile();
                 encodingProfile.Container.Subtype = "MPEG4";
                 encodingProfile.Video.Subtype = "H264";
-                encodingProfile.Video.Width = width;
-                encodingProfile.Video.Height = height;
-                encodingProfile.Video.Bitrate = 18000000;
-                encodingProfile.Video.FrameRate.Numerator = frameRate;
+                encodingProfile.Video.Width = options.Width;
+                encodingProfile.Video.Height = options.Height;
+                encodingProfile.Video.Bitrate = options.Bitrate;
+                encodingProfile.Video.FrameRate.Numerator = options.Framerate;
                 encodingProfile.Video.FrameRate.Denominator = 1;
                 encodingProfile.Video.PixelAspectRatio.Numerator = 1;
                 encodingProfile.Video.PixelAspectRatio.Denominator = 1;
-                var transcode = await _transcoder.PrepareMediaStreamSourceTranscodeAsync(_mediaStreamSource, stream, encodingProfile);
-
+                var transcode = await transcoder.PrepareMediaStreamSourceTranscodeAsync(mediaStreamSource, stream, encodingProfile);
+                
                 try
                 {
                     await transcode.TranscodeAsync(); 
@@ -71,53 +87,53 @@ public sealed class Encoder : IDisposable
 
     public void Dispose()
     {
-        if (_closed)
+        if (closed)
         {
             return;
         }
-        _closed = true;
+        closed = true;
 
-        if (!_isRecording)
+        if (!isRecording)
         {
             DisposeInternal();
         }
 
-        _isRecording = false;
+        isRecording = false;
     }
 
     private void DisposeInternal()
     {
-        _frameGenerator.Dispose();
+        frameGenerator.Dispose();
     }
 
     private void CreateMediaObjects()
     {
         // Create our encoding profile based on the size of the item
-        int width = _captureItem.Size.Width;
-        int height = _captureItem.Size.Height;
+        int width = captureItem.Size.Width;
+        int height = captureItem.Size.Height;
 
         // Describe our input: uncompressed BGRA8 buffers
         var videoProperties = VideoEncodingProperties.CreateUncompressed(MediaEncodingSubtypes.Bgra8, (uint)width, (uint)height);
-        _videoDescriptor = new VideoStreamDescriptor(videoProperties);
+        videoDescriptor = new VideoStreamDescriptor(videoProperties);
 
         // Create our MediaStreamSource
-        _mediaStreamSource = new MediaStreamSource(_videoDescriptor);
-        _mediaStreamSource.BufferTime = TimeSpan.FromSeconds(0);
-        _mediaStreamSource.Starting += OnMediaStreamSourceStarting;
-        _mediaStreamSource.SampleRequested += OnMediaStreamSourceSampleRequested;
+        mediaStreamSource = new MediaStreamSource(videoDescriptor);
+        mediaStreamSource.BufferTime = TimeSpan.FromSeconds(0);
+        mediaStreamSource.Starting += OnMediaStreamSourceStarting;
+        mediaStreamSource.SampleRequested += OnMediaStreamSourceSampleRequested;
 
         // Create our transcoder
-        _transcoder = new MediaTranscoder();
-        //_transcoder.HardwareAccelerationEnabled = true;
+        transcoder = new MediaTranscoder();
+        transcoder.HardwareAccelerationEnabled = true;
     }
 
     private void OnMediaStreamSourceSampleRequested(MediaStreamSource sender, MediaStreamSourceSampleRequestedEventArgs args)
     {
-        if (_isRecording && !_closed)
+        if (isRecording && !closed)
         {
             try
             {
-                using (var frame = _frameGenerator.WaitForNewFrame())
+                using (var frame = frameGenerator.WaitForNewFrame())
                 {
                     if (frame == null)
                     {
@@ -150,20 +166,9 @@ public sealed class Encoder : IDisposable
 
     private void OnMediaStreamSourceStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args)
     {
-        using (var frame = _frameGenerator.WaitForNewFrame())
+        using (var frame = frameGenerator.WaitForNewFrame())
         {
             args.Request.SetActualStartPosition(frame.SystemRelativeTime);
         }
     }
-
-    private IDirect3DDevice _device;
-
-    private GraphicsCaptureItem _captureItem;
-    private CaptureFrameWait _frameGenerator;
-
-    private VideoStreamDescriptor _videoDescriptor;
-    private MediaStreamSource _mediaStreamSource;
-    private MediaTranscoder _transcoder;
-    private bool _isRecording;
-    private bool _closed = false;
 }

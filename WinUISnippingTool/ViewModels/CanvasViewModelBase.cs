@@ -36,10 +36,10 @@ internal abstract class CanvasViewModelBase : ViewModelBase
             Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = bcpTag;
         }
 
-        SnipShapeKinds[0].Name = resourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        SnipShapeKinds[1].Name = resourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        SnipShapeKinds[2].Name = resourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
-        SnipShapeKinds[3].Name = resourceMap.GetValue("FreeFormAreaName/Text")?.ValueAsString ?? "emtpy_value";
+        SnipShapeKinds[0].Name = ResourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
+        SnipShapeKinds[1].Name = ResourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
+        SnipShapeKinds[2].Name = ResourceMap.GetValue("FullScreenAreaName/Text")?.ValueAsString ?? "emtpy_value";
+        SnipShapeKinds[3].Name = ResourceMap.GetValue("FreeFormAreaName/Text")?.ValueAsString ?? "emtpy_value";
     }
 
     #region Selected snip kind

@@ -9,11 +9,11 @@ namespace WinUISnippingTool.ViewModels
 {
     internal abstract class ViewModelBase : INotifyPropertyChanged
     {
-        protected static readonly ResourceMap resourceMap;
+        protected static readonly ResourceMap ResourceMap;
         
         static ViewModelBase()
         {
-            resourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
+            ResourceMap = ResourceManager.Current.MainResourceMap.GetSubtree("Resources");
         }
 
         protected abstract void LoadLocalization(string bcpTag);

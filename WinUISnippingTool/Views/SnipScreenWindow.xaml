@@ -42,8 +42,6 @@
 
             <userControl:SnipControl SnipKinds="{Binding SnipShapeKinds}"
                                      SelectedSnipKind="{Binding SelectedSnipKind, Mode=TwoWay}"/>
-            <userControl:VideoCaptureControl IsStartButtonEnabled="False"
-                                             TimeString="00:00:00"/>
             <Button Content="Exit"
                     Click="ExitButton_Click"/>
         </StackPanel>

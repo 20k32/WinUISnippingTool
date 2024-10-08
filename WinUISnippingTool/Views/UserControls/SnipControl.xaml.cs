@@ -25,14 +25,13 @@ namespace WinUISnippingTool.Views.UserControls
 {
     internal sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     {
+        private SnipShapeKind tempSelectedSnipKind;
+
         public static CaptureType CaptureKind;
 
         public SnipControl()
         {
-            isPhotoButtonEnabled = true;
-            isVideoButtonEnabled = true;
             this.InitializeComponent();
-            PhotoButtonClick();
         }
 
         private static bool isPhotoButtonEnabled;
@@ -42,11 +41,8 @@ namespace WinUISnippingTool.Views.UserControls
             get => isPhotoButtonEnabled;
             set
             {
-                if(isPhotoButtonEnabled != value)
-                {
-                    isPhotoButtonEnabled = value;
-                    OnPropertyChanged();
-                }
+                isPhotoButtonEnabled = value;
+                OnPropertyChanged();
             }
         }
 
@@ -57,9 +53,35 @@ namespace WinUISnippingTool.Views.UserControls
             get => isVideoButtonEnabled;
             set
             {
-                if (isVideoButtonEnabled != value)
+                isVideoButtonEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool isPaintListEnabled;
+
+        public bool IsPaintListEnabled
+        {
+            get => isPaintListEnabled;
+            set
+            {
+                if (isPaintListEnabled != value)
                 {
-                    isVideoButtonEnabled = value;
+                    isPaintListEnabled = value;
+
+                    if (isPaintListEnabled)
+                    {
+                        if(tempSelectedSnipKind is not null)
+                        {
+                            SelectedSnipKind = tempSelectedSnipKind;
+                        }
+                    }
+                    else
+                    {
+                        tempSelectedSnipKind = SelectedSnipKind;
+                        SelectedSnipKind = SnipKinds.First();
+                    }
+
                     OnPropertyChanged();
                 }
             }
@@ -72,6 +94,7 @@ namespace WinUISnippingTool.Views.UserControls
             CaptureKind = CaptureType.Photo;
             IsPhotoButtonEnabled = false;
             IsVideoButtonEnabled = true;
+            IsPaintListEnabled = true;
         }
 
 
@@ -81,6 +104,7 @@ namespace WinUISnippingTool.Views.UserControls
             CaptureKind = CaptureType.Video;
             IsPhotoButtonEnabled = true;
             IsVideoButtonEnabled = false;
+            IsPaintListEnabled = false;
         }
 
         public readonly static DependencyProperty SnipKindsProperty = DependencyProperty.Register(
@@ -107,6 +131,8 @@ namespace WinUISnippingTool.Views.UserControls
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

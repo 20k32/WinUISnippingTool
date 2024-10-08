@@ -3,82 +3,69 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX.Direct3D11;
 using Windows.Graphics;
 using Windows.Graphics.DirectX;
-using WinRT;
+using SharpDX.Direct3D11;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
-public sealed class SurfaceWithInfo : IDisposable
+internal sealed class CaptureFrameWait : IDisposable
 {
-    public IDirect3DSurface Surface { get; internal set; }
-    public TimeSpan SystemRelativeTime { get; internal set; }
+    private IDirect3DDevice device;
+    private Device d3dDevice;
+    private readonly Multithread multithread;
+    private Texture2D blankTexture;
 
-    public void Dispose()
-    {
-        Surface?.Dispose();
+    private readonly ManualResetEvent[] events;
+    private readonly ManualResetEvent frameEvent;
+    private readonly ManualResetEvent closedEvent;
+    private Direct3D11CaptureFrame currentFrame;
 
-        var disposable = Surface?.As<IDisposable>();
-        if (disposable != null)
-        {
-            disposable.Dispose();
-        }
+    private GraphicsCaptureItem item;
+    private GraphicsCaptureSession session;
+    private Direct3D11CaptureFramePool framePool;
 
-        Surface = null;
-    }
-}
+    private RectInt32 frameRect;
+    private PointInt32 centerFrameCoords;
 
-class MultithreadLock : IDisposable
-{
-    public MultithreadLock(SharpDX.Direct3D11.Multithread multithread)
-    {
-        _multithread = multithread;
-        _multithread?.Enter();
-    }
-
-    public void Dispose()
-    {
-        _multithread?.Leave();
-        _multithread = null;
-    }
-
-    private SharpDX.Direct3D11.Multithread _multithread;
-}
-
-public sealed class CaptureFrameWait : IDisposable
-{
     public CaptureFrameWait(
         IDirect3DDevice device,
         GraphicsCaptureItem item,
-        SizeInt32 size)
+        SizeInt32 size,
+        RectInt32 frameRect)
     {
-        _device = device;
-        _d3dDevice = Direct3D11Helpers.CreateSharpDXDevice(device);
-        _multithread = _d3dDevice.QueryInterface<SharpDX.Direct3D11.Multithread>();
-        _multithread.SetMultithreadProtected(true);
-        _item = item;
-        _frameEvent = new ManualResetEvent(false);
-        _closedEvent = new ManualResetEvent(false);
-        _events = new[] { _closedEvent, _frameEvent };
+        this.device = device;
+        d3dDevice = Direct3D11Helpers.CreateSharpDXDevice(device);
+
+        multithread = d3dDevice.QueryInterface<Multithread>();
+        multithread.SetMultithreadProtected(true);
+        this.item = item;
+        frameEvent = new ManualResetEvent(false);
+        closedEvent = new ManualResetEvent(false);
+        events = new[] { closedEvent, frameEvent };
 
         InitializeBlankTexture(size);
         InitializeCapture(size);
+
+        this.frameRect = frameRect;
+        centerFrameCoords = new PointInt32();
+        centerFrameCoords.X = (size.Width - frameRect.Width) / 2;
+        centerFrameCoords.Y = (size.Height - frameRect.Height) / 2;
     }
 
     private void InitializeCapture(SizeInt32 size)
     {
-        _item.Closed += OnClosed;
-        _framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
-            _device,
+        item.Closed += OnClosed;
+        framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
+            device,
             DirectXPixelFormat.B8G8R8A8UIntNormalized,
             1,
             size);
-        _framePool.FrameArrived += OnFrameArrived;
-        _session = _framePool.CreateCaptureSession(_item);
-        _session.StartCapture();
+        framePool.FrameArrived += OnFrameArrived;
+        session = framePool.CreateCaptureSession(item);
+        session.StartCapture();
     }
 
     private void InitializeBlankTexture(SizeInt32 size)
@@ -95,28 +82,29 @@ public sealed class CaptureFrameWait : IDisposable
                 Count = 1,
                 Quality = 0
             },
-            Usage = SharpDX.Direct3D11.ResourceUsage.Default,
-            BindFlags = SharpDX.Direct3D11.BindFlags.ShaderResource | SharpDX.Direct3D11.BindFlags.RenderTarget,
-            CpuAccessFlags = SharpDX.Direct3D11.CpuAccessFlags.None,
-            OptionFlags = SharpDX.Direct3D11.ResourceOptionFlags.None
+            Usage = ResourceUsage.Default,
+            BindFlags = BindFlags.ShaderResource | BindFlags.RenderTarget,
+            CpuAccessFlags = CpuAccessFlags.None,
+            OptionFlags = ResourceOptionFlags.None
         };
-        _blankTexture = new SharpDX.Direct3D11.Texture2D(_d3dDevice, description);
 
-        using (var renderTargetView = new SharpDX.Direct3D11.RenderTargetView(_d3dDevice, _blankTexture))
+        blankTexture = new Texture2D(d3dDevice, description);
+
+        using (var renderTargetView = new RenderTargetView(d3dDevice, blankTexture))
         {
-            _d3dDevice.ImmediateContext.ClearRenderTargetView(renderTargetView, new SharpDX.Mathematics.Interop.RawColor4(0, 0, 0, 1));
+            d3dDevice.ImmediateContext.ClearRenderTargetView(renderTargetView, new SharpDX.Mathematics.Interop.RawColor4(0, 0, 0, 1));
         }
     }
 
     private void SetResult(Direct3D11CaptureFrame frame)
     {
-        _currentFrame = frame;
-        _frameEvent.Set();
+        currentFrame = frame;
+        frameEvent.Set();
     }
 
     private void Stop()
     {
-        _closedEvent.Set();
+        closedEvent.Set();
     }
 
     private void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
@@ -131,77 +119,78 @@ public sealed class CaptureFrameWait : IDisposable
 
     private void Cleanup()
     {
-        _framePool?.Dispose();
-        _session?.Dispose();
-        if (_item != null)
+        framePool?.Dispose();
+        session?.Dispose();
+        if (item != null)
         {
-            _item.Closed -= OnClosed;
+            item.Closed -= OnClosed;
         }
-        _item = null;
-        _device = null;
-        _d3dDevice = null;
-        _blankTexture?.Dispose();
-        _blankTexture = null;
-        _currentFrame?.Dispose();
+        item = null;
+        device = null;
+        d3dDevice = null;
+        blankTexture?.Dispose();
+        blankTexture = null;
+        currentFrame?.Dispose();
     }
 
     public SurfaceWithInfo WaitForNewFrame()
     {
-        // Let's get a fresh one.
-        _currentFrame?.Dispose();
-        _frameEvent.Reset();
+        currentFrame?.Dispose();
+        frameEvent.Reset();
 
-        var signaledEvent = _events[WaitHandle.WaitAny(_events)];
-        if (signaledEvent == _closedEvent)
+        var signaledEvent = events[WaitHandle.WaitAny(events)];
+        if (signaledEvent == closedEvent)
         {
             Cleanup();
             return null;
         }
 
         var result = new SurfaceWithInfo();
-        result.SystemRelativeTime = _currentFrame.SystemRelativeTime;
-        using (var multithreadLock = new MultithreadLock(_multithread))
-        using (var sourceTexture = Direct3D11Helpers.CreateSharpDXTexture2D(_currentFrame.Surface))
+        result.SystemRelativeTime = currentFrame.SystemRelativeTime;
+
+        using (var multithreadLock = new MultithreadLock(multithread))
+        using (var sourceTexture = Direct3D11Helpers.CreateSharpDXTexture2D(currentFrame.Surface))
         {
-            var description = sourceTexture.Description;
-            description.Usage = SharpDX.Direct3D11.ResourceUsage.Default;
-            description.BindFlags = SharpDX.Direct3D11.BindFlags.ShaderResource | SharpDX.Direct3D11.BindFlags.RenderTarget;
-            description.CpuAccessFlags = SharpDX.Direct3D11.CpuAccessFlags.None;
-            description.OptionFlags = SharpDX.Direct3D11.ResourceOptionFlags.None;
-
-            using (var copyTexture = new SharpDX.Direct3D11.Texture2D(_d3dDevice, description))
+            var croppedDescription = new Texture2DDescription
             {
-                var width = Math.Clamp(_currentFrame.ContentSize.Width, 0, _currentFrame.Surface.Description.Width);
-                var height = Math.Clamp(_currentFrame.ContentSize.Height, 0, _currentFrame.Surface.Description.Height);
+                Width = currentFrame.Surface.Description.Width,
+                Height = currentFrame.Surface.Description.Height,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = sourceTexture.Description.Format,
+                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
+                Usage = ResourceUsage.Default,
+                BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
+                CpuAccessFlags = CpuAccessFlags.None,
+                OptionFlags = ResourceOptionFlags.GenerateMipMaps,
+            };
 
-                var region = new SharpDX.Direct3D11.ResourceRegion(0, 0, 0, width, height, 1);
+            using (var croppedTexture = new SharpDX.Direct3D11.Texture2D(d3dDevice, croppedDescription))
+            {
 
-                _d3dDevice.ImmediateContext.CopyResource(_blankTexture, copyTexture);
-                _d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, copyTexture, 0);
-                result.Surface = Direct3D11Helpers.CreateDirect3DSurfaceFromSharpDXTexture(copyTexture);
+                var region = new ResourceRegion(
+                    frameRect.X,
+                    frameRect.Y,
+                    0,
+                    frameRect.Width + frameRect.X,
+                    frameRect.Height + frameRect.Y,
+                    1);
+
+                d3dDevice.ImmediateContext.CopyResource(blankTexture, croppedTexture);
+                d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, centerFrameCoords.X, centerFrameCoords.Y);
+
+                // Create the surface from the cropped texture
+                result.Surface = Direct3D11Helpers.CreateDirect3DSurfaceFromSharpDXTexture(croppedTexture);
             }
         }
 
         return result;
     }
 
+
     public void Dispose()
     {
         Stop();
         Cleanup();
     }
-
-    private IDirect3DDevice _device;
-    private SharpDX.Direct3D11.Device _d3dDevice;
-    private SharpDX.Direct3D11.Multithread _multithread;
-    private SharpDX.Direct3D11.Texture2D _blankTexture;
-
-    private ManualResetEvent[] _events;
-    private ManualResetEvent _frameEvent;
-    private ManualResetEvent _closedEvent;
-    private Direct3D11CaptureFrame _currentFrame;
-
-    private GraphicsCaptureItem _item;
-    private GraphicsCaptureSession _session;
-    private Direct3D11CaptureFramePool _framePool;
 }

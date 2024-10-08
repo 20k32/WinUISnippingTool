@@ -115,10 +115,10 @@ namespace WinUISnippingTool.ViewModels
 
         protected override void LoadLocalization(string bcpTag)
         {
-            BackButtonName = resourceMap.GetValue("BackButton/Text")?.ValueAsString ?? "empty_value";
-            ChangeLocationButtonName = resourceMap.GetValue("ChangeLocationButton/Text")?.ValueAsString ?? "empty_value";
-            Languages[1].DisplayName = resourceMap.GetValue("EnglishLangMenuItem/Text")?.ValueAsString ?? "empty_value";
-            Languages[0].DisplayName = resourceMap.GetValue("UkrainianLangMenuItem/Text")?.ValueAsString ?? "empty_value";
+            BackButtonName = ResourceMap.GetValue("BackButton/Text")?.ValueAsString ?? "empty_value";
+            ChangeLocationButtonName = ResourceMap.GetValue("ChangeLocationButton/Text")?.ValueAsString ?? "empty_value";
+            Languages[1].DisplayName = ResourceMap.GetValue("EnglishLangMenuItem/Text")?.ValueAsString ?? "empty_value";
+            Languages[0].DisplayName = ResourceMap.GetValue("UkrainianLangMenuItem/Text")?.ValueAsString ?? "empty_value";
         }
     }
 }

@@ -6,9 +6,18 @@
     xmlns:local="using:WinUISnippingTool.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControl="using:WinUISnippingTool.Views.UserControls"
     mc:Ignorable="d">
 
-    <Grid>
+    <StackPanel Orientation="Horizontal" 
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="5"
+                x:Name="mainPanel">
+        
+        <userControl:VideoCaptureControl IsStartButtonEnabled="False"
+                                             TimeString="00:00:00"/>
         <Button Content="Stop" Click="Button_Click"/>
-    </Grid>
+        <Button Content="Exit" Click="Exit_Click"/>
+    </StackPanel>
 </Window>

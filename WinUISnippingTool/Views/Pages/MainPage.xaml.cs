@@ -157,7 +157,7 @@ internal sealed partial class MainPage : Page
     private async void myButton_Click(object sender, RoutedEventArgs e)
     {
         appWindowPersenter.Minimize(false);
-        await ViewModel.EnterSnippingModeAsync(SnipControl.CaptureKind, false);
+        await ViewModel.EnterSnippingModeAsync(false);
     }
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs args)
@@ -246,7 +246,7 @@ internal sealed partial class MainPage : Page
     {
         args.Handled = true;
         appWindowPersenter.Minimize(false);
-        await ViewModel.EnterSnippingModeAsync(SnipControl.CaptureKind, true);
+        await ViewModel.EnterSnippingModeAsync(true);
     }
 
     private void GlobalUndoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
@@ -318,11 +318,7 @@ internal sealed partial class MainPage : Page
 
     private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
     {
-        Frame.Navigate(typeof(Settings), new SettingsPageParameter()
-        {
-            BcpTag = ViewModel.BcpTag,
-            SaveImageLocation = PicturesFolderExtensions.NewSavingFolder
-        });
+        Frame.Navigate(typeof(Settings), new SettingsPageParameter(ViewModel.BcpTag, PicturesFolderExtensions.NewSavingFolder));
     }
 
     private async void SaveBmpToClipboard_Click(object sender, RoutedEventArgs e)
@@ -335,5 +331,10 @@ internal sealed partial class MainPage : Page
     {
         var renderBitmap = await SaveBmpCoreAsync();
         await ViewModel.SaveBmpToFileAsync(renderBitmap);
+    }
+
+    private void MenuFlyoutItem_Click_1(object sender, RoutedEventArgs e)
+    {
+        Frame.Navigate(typeof(MediaPlayerPage), new MediaPlayerParameter(ViewModel.VideoUri));
     }
 }

@@ -32,6 +32,7 @@ namespace WinUISnippingTool.Views
     {
         private MonitorLocation currentWindowLocation;
         private bool isPointerReleased;
+
         public SnipScreenWindowViewModel ViewModel { get; private set; }
 
         public SnipScreenWindow()
@@ -39,7 +40,7 @@ namespace WinUISnippingTool.Views
             this.InitializeComponent();
         }
 
-        public async Task PrepareWindow(CaptureType captureType, SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
+        public async Task PrepareWindowAsync(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
         {
             isPointerReleased = false;
             currentWindowLocation = location;
@@ -57,14 +58,7 @@ namespace WinUISnippingTool.Views
             var softwareBitmapSource = new SoftwareBitmapSource();
             await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
 
-            if (captureType == CaptureType.Photo)
-            {
-                PrepareWindowForPhoto(location, softwareBitmapSource, softwareBitmap, byShortcut, snipKind);
-            }
-            else
-            {
-                PrepareWindowForVideo(location, softwareBitmapSource, softwareBitmap, byShortcut, snipKind);
-            }
+            PrepareWindow(location, softwareBitmapSource, softwareBitmap, byShortcut, snipKind);
 
             if (!location.IsPrimary)
             {
@@ -78,6 +72,7 @@ namespace WinUISnippingTool.Views
                 binding.Path = new(nameof(ViewModel.IsOverlayVisible));
                 binding.Source = ViewModel;
                 PART_TrayPanel.SetBinding(StackPanel.VisibilityProperty, binding);
+
             }
 
             AppWindow.Move(new PointInt32(location.StartPoint.X, location.StartPoint.Y));
@@ -91,24 +86,7 @@ namespace WinUISnippingTool.Views
             presenter.SetBorderAndTitleBar(false, false);
         }
 
-        private void PrepareWindowForPhoto(
-            MonitorLocation location,
-            SoftwareBitmapSource softwareBitmapSource,
-            SoftwareBitmap softwareBitmap,
-            bool byShortcut,
-            SnipKinds snipKind)
-        {
-            ViewModel.AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
-            ViewModel.AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
-            ViewModel.AddShapeSourceForCurrentMonitor();
-            ViewModel.SetWindowSize(location.MonitorSize);
-            ViewModel.SetResponceType(byShortcut);
-            ViewModel.SetImageSourceForCurrentMonitor();
-            ViewModel.SetSelectedItem(snipKind);
-        }
-
-        //todo: prepare window for video
-        private void PrepareWindowForVideo(
+        private void PrepareWindow(
             MonitorLocation location,
             SoftwareBitmapSource softwareBitmapSource,
             SoftwareBitmap softwareBitmap,
@@ -163,8 +141,7 @@ namespace WinUISnippingTool.Views
 
                 await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
 
-                if (ViewModel.CurrentShapeBmp is not null
-                    || SnipControl.CaptureKind == CaptureType.Video)
+                if (ViewModel.CanExit)
                 {
                     ViewModel.Exit();
                 }

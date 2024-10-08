@@ -35,10 +35,6 @@ internal sealed partial class Settings : Page
         Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = ViewModel.SelectedLanguageKind.BcpTag;
         Frame.BackStack.Clear();
 
-        Frame.Navigate(typeof(MainPage), new SettingsPageParameter()
-        {
-            BcpTag = ViewModel.SelectedLanguageKind.BcpTag,
-            SaveImageLocation = ViewModel.SaveImageLocation
-        });
+        Frame.Navigate(typeof(MainPage), new SettingsPageParameter(ViewModel.SelectedLanguageKind.BcpTag, ViewModel.SaveImageLocation));
     }
 }

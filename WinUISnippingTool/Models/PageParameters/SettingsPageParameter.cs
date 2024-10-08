@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.Storage;
+﻿using Windows.Storage;
 
-namespace WinUISnippingTool.Models.PageParameters
+namespace WinUISnippingTool.Models.PageParameters;
+
+internal sealed class SettingsPageParameter
 {
-    internal sealed class SettingsPageParameter
-    {
-        public string BcpTag;
-        public StorageFolder SaveImageLocation;
-    }
+    public readonly string BcpTag;
+    public readonly StorageFolder SaveImageLocation;
+
+    public SettingsPageParameter(string bcpTag, StorageFolder folder)
+        => (BcpTag, SaveImageLocation) = (bcpTag, folder);
 }

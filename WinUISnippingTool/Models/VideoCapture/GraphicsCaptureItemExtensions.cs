@@ -7,56 +7,55 @@ using Windows.Win32.System.WinRT.Graphics.Capture;
 using Windows.Win32.Foundation;
 
 
-namespace WinUISnippingTool.Models.VideoCapture
+namespace WinUISnippingTool.Models.VideoCapture;
+
+internal static class GraphicsCaptureItemExtensions
 {
-    internal static class GraphicsCaptureItemExtensions
+    public static readonly Guid GraphicsCaptureItemGuid = new("79C3F95B-31F7-4EC2-A464-632EF5D30760");
+
+    public static GraphicsCaptureItem CreateItemForWindow(HWND hwnd)
     {
-        public static readonly Guid GraphicsCaptureItemGuid = new Guid("79C3F95B-31F7-4EC2-A464-632EF5D30760");
-
-        public static GraphicsCaptureItem CreateItemForWindow(HWND hwnd)
+        GraphicsCaptureItem item = null;
+        
+        unsafe
         {
-            GraphicsCaptureItem item = null;
-            
-            unsafe
+            item = CreateItemForCallback((IGraphicsCaptureItemInterop interop, Guid* guid) =>
             {
-                item = CreateItemForCallback((IGraphicsCaptureItemInterop interop, Guid* guid) =>
-                {
-                    interop.CreateForWindow(hwnd, guid, out object raw);
-                    return raw;
-                });
-            }
-            return item;
+                interop.CreateForWindow(hwnd, guid, out object raw);
+                return raw;
+            });
         }
+        return item;
+    }
 
-        public static GraphicsCaptureItem CreateItemForMonitor(HMONITOR hmon)
+    public static GraphicsCaptureItem CreateItemForMonitor(HMONITOR hmon)
+    {
+        GraphicsCaptureItem item = null;
+        unsafe
         {
-            GraphicsCaptureItem item = null;
-            unsafe
+            item = CreateItemForCallback((IGraphicsCaptureItemInterop interop, Guid* guid) =>
             {
-                item = CreateItemForCallback((IGraphicsCaptureItemInterop interop, Guid* guid) =>
-                {
-                    interop.CreateForMonitor(hmon, guid, out object raw);
-                    return raw;
-                });
-            }
-            return item;
+                interop.CreateForMonitor(hmon, guid, out object raw);
+                return raw;
+            });
         }
+        return item;
+    }
 
-        private unsafe delegate object InteropCallback(IGraphicsCaptureItemInterop interop, Guid* guid);
+    private unsafe delegate object InteropCallback(IGraphicsCaptureItemInterop interop, Guid* guid);
 
-        private static GraphicsCaptureItem CreateItemForCallback(InteropCallback callback)
+    private static GraphicsCaptureItem CreateItemForCallback(InteropCallback callback)
+    {
+        var interop = GraphicsCaptureItem.As<IGraphicsCaptureItemInterop>();
+        GraphicsCaptureItem item = null;
+        unsafe
         {
-            var interop = GraphicsCaptureItem.As<IGraphicsCaptureItemInterop>();
-            GraphicsCaptureItem item = null;
-            unsafe
-            {
-                var guid = GraphicsCaptureItemGuid;
-                var guidPointer = (Guid*)Unsafe.AsPointer(ref guid);
-                var raw = Marshal.GetIUnknownForObject(callback(interop, guidPointer));
-                item = GraphicsCaptureItem.FromAbi(raw);
-                Marshal.Release(raw);
-            }
-            return item;
+            var guid = GraphicsCaptureItemGuid;
+            var guidPointer = (Guid*)Unsafe.AsPointer(ref guid);
+            var raw = Marshal.GetIUnknownForObject(callback(interop, guidPointer));
+            item = GraphicsCaptureItem.FromAbi(raw);
+            Marshal.Release(raw);
         }
+        return item;
     }
 }

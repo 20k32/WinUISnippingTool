@@ -20,19 +20,19 @@ namespace WinUISnippingTool.Models.VideoCapture;
 [Guid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 [ComVisible(true)]
-interface IDirect3DDxgiInterfaceAccess
+internal interface IDirect3DDxgiInterfaceAccess
 {
     IntPtr GetInterface([In] ref Guid iid);
 };
 
 internal static class Direct3D11Helpers
 {
-    internal static Guid IDXGIDevice = new Guid("54ec77fa-1377-44e6-8c32-88fd5f44c84c");
-    internal static Guid IInspectable = new Guid("AF86E2E0-B12D-4c6a-9C5A-D7AA65101E90");
-    internal static Guid ID3D11Resource = new Guid("dc8e63f3-d12b-4952-b47b-5e45026a862d");
-    internal static Guid IDXGIAdapter3 = new Guid("645967A4-1392-4310-A798-8053CE3E93FD");
-    internal static Guid ID3D11Device = new Guid("db6f6ddb-ac77-4e88-8253-819df9bbf140");
-    internal static Guid ID3D11Texture2D = new Guid("6f15aaf2-d208-4e89-9ab4-489535d34f9c");
+    internal static Guid IDXGIDevice = new("54ec77fa-1377-44e6-8c32-88fd5f44c84c");
+    internal static Guid IInspectable = new("AF86E2E0-B12D-4c6a-9C5A-D7AA65101E90");
+    internal static Guid ID3D11Resource = new("dc8e63f3-d12b-4952-b47b-5e45026a862d");
+    internal static Guid IDXGIAdapter3 = new("645967A4-1392-4310-A798-8053CE3E93FD");
+    internal static Guid ID3D11Device = new("db6f6ddb-ac77-4e88-8253-819df9bbf140");
+    internal static Guid ID3D11Texture2D = new("6f15aaf2-d208-4e89-9ab4-489535d34f9c");
 
     [DllImport(
         "d3d11.dll",

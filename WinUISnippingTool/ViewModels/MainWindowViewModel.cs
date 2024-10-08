@@ -6,7 +6,6 @@ using WinUISnippingTool.Views;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.ApplicationModel.DataTransfer;
 using System;
 using WinUISnippingTool.Models.Draw;
 using CommunityToolkit.Mvvm.Input;
@@ -15,18 +14,13 @@ using WinUISnippingTool.Models.Extensions;
 using System.Runtime.InteropServices.WindowsRuntime;
 using CommunityToolkit.WinUI.UI.Controls;
 using System.IO;
-using System.Diagnostics;
 using Windows.ApplicationModel.Resources.Core;
-using Windows.Devices.Display;
-using Windows.Devices.Enumeration;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
 using Windows.Graphics;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Windowing;
-using System.Numerics;
 using WinUISnippingTool.Views.UserControls;
+using WinUISnippingTool.Models.VideoCapture;
+using Windows.Media.Devices;
 namespace WinUISnippingTool.ViewModels;
 
 
@@ -36,17 +30,21 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private readonly DrawBase eraseBrush;
     private readonly DrawBase markerBrush;
     private readonly SnipScreenWindowViewModel snipScreenWindowViewModel;
+    private readonly MediaPlayerPageViewModel mediaPlayerPageViewModel;
+    private readonly VideoCaptureHelper captureHelper;
     private readonly ScaleTransformManager transformManager;
     private readonly List<MonitorLocation> monitorLocations;
     private readonly List<SnipScreenWindow> snipScreenWindows;
 
-    public NotifyOnCompletionCollection<UIElement> CanvasItems { get; private set; }
     private bool previousImageExists;
     private DrawBase tempBrush;
     private DrawBase drawBrush;
    
 
+    public NotifyOnCompletionCollection<UIElement> CanvasItems { get; private set; }
     public string BcpTag { get; private set; }
+    public Uri VideoUri => captureHelper.CurrentVideoFileUri;
+
     public event Action OnNewImageAdded;
 
     public MainWindowViewModel() : base()
@@ -95,6 +93,9 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         snipScreenWindows = new();
         snipScreenWindowViewModel = new();
         snipScreenWindowViewModel.OnExitFromWindow += OnExitFromWindow;
+
+        mediaPlayerPageViewModel = new();
+        captureHelper = new();
     }
 
     public void UnregisterHandlers()
@@ -104,14 +105,16 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     private void OnExitFromWindow()
     {
-        if(SnipControl.CaptureKind == CaptureType.Photo)
+        if (SnipControl.CaptureKind == CaptureType.Photo)
         {
             AddImageCore();
         }
-        else
+        else if(SnipControl.CaptureKind == CaptureType.Video
+            && snipScreenWindowViewModel.CurrentShapeBmp is null)
         {
             ShowVideoCaptureScreen();
         }
+
 
         foreach (var window in snipScreenWindows)
         {
@@ -130,8 +133,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         {
             base.LoadLocalization(bcpTag);
             BcpTag = bcpTag;
-            TakePhotoButtonName = resourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
-            SettingsButtonName = resourceMap.GetValue("Settings/Text")?.ValueAsString ?? "empty_value";
+            TakePhotoButtonName = ResourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
+            SettingsButtonName = ResourceMap.GetValue("Settings/Text")?.ValueAsString ?? "empty_value";
         }
     }
 
@@ -277,13 +280,26 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     private async void ShowVideoCaptureScreen()
     {
-        var windowLocation = snipScreenWindowViewModel.WindowPosition;
+        var frameLocation = snipScreenWindowViewModel.VideoFramePosition;
+        
+        var currentMonitor = monitorLocations
+            .First(monitor => monitor.DeviceName == snipScreenWindowViewModel.CurrentMonitorName);
 
-        var videoCaptureWindow = new VideoCaptureWindow();
-        videoCaptureWindow.PrepareWindow(windowLocation);
+        captureHelper.SetOptions(new(
+            (uint)currentMonitor.MonitorSize.Width,
+            (uint)currentMonitor.MonitorSize.Height,
+            10000000,
+            60));
+
+        var videoCaptureWindow = new VideoCaptureWindow(currentMonitor, captureHelper);
+        
+        var size = new SizeInt32((int)currentMonitor.MonitorSize.Width, 
+            (int)currentMonitor.MonitorSize.Height);
+        
+        videoCaptureWindow.PrepareWindow(size);
         videoCaptureWindow.Activate();
-        await Task.Delay(1000);
-        videoCaptureWindow.StartScreenCapture(monitorLocations[1]);
+
+        await captureHelper.StartScreenCaptureAsync(currentMonitor, frameLocation);
     }
 
     public void AddImageCore()
@@ -301,25 +317,18 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         AddImageCore();
     }
 
-    public async Task EnterSnippingModeAsync(CaptureType captureType, bool byShortcut)
+    public async Task EnterSnippingModeAsync(bool byShortcut)
     {
-        if(SnipControl.CaptureKind == CaptureType.Photo)
+        foreach (var location in monitorLocations)
         {
-            foreach (var location in monitorLocations)
-            {
-                var window = new SnipScreenWindow();
-                await window.PrepareWindow(captureType, snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
-                snipScreenWindows.Add(window);
-            }
-
-            foreach (var item in snipScreenWindows)
-            {
-                item.Activate();
-            }
+            var window = new SnipScreenWindow();
+            await window.PrepareWindowAsync(snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
+            snipScreenWindows.Add(window);
         }
-        else
+
+        foreach (var item in snipScreenWindows)
         {
-            ShowVideoCaptureScreen();
+            item.Activate();
         }
     }
 

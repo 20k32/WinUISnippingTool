@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.UI.Xaml.Controls;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Media.Imaging;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Paint;
-using Windows.Foundation;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml.Shapes;
 using WinUISnippingTool.Models.Extensions;
 using Microsoft.Windows.AppNotifications;
@@ -15,20 +12,7 @@ using WinUISnippingTool.Models.Items;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using System.Diagnostics;
-using Microsoft.UI;
-using Microsoft.Graphics.Canvas.Text;
-using Microsoft.Graphics.Canvas;
 using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
-using Windows.Storage;
-using System.Drawing;
-using Microsoft.Windows.AppLifecycle;
-using Microsoft.Windows.System.Power;
-using ABI.System.Numerics;
-using System.Numerics;
-using Microsoft.UI.Dispatching;
-using System.Collections.Frozen;
 using WinUISnippingTool.Views.UserControls;
 using Windows.Graphics;
 
@@ -56,10 +40,15 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     public int ResultFigureActualHeight;
 
     public ImageSource CurrentShapeBmp { get; private set; }
-    public RectInt32 WindowPosition { get; private set; }
+    public RectInt32 VideoFramePosition { get; private set; }
 
     public string CurrentMonitorName => currentMonitorName;
     public bool IsShortcutResponce { get; private set; }
+    public bool CanExit { get; private set; }
+    
+    public bool IsPhotoButtonEnabled => SnipControl.CaptureKind == CaptureType.Photo;
+    public bool IsVideoButtonEnabled => SnipControl.CaptureKind == CaptureType.Video;
+
     public void SetCurrentMonitor(string monitorName) => currentMonitorName = monitorName;
 
     public override void SetWindowSize(Windows.Foundation.Size newSize)
@@ -81,7 +70,6 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     public SnipScreenWindowViewModel() : base()
     {
         LoadLocalization("uk-Ua");
-
         IsOverlayVisible = true;
         shapesDictionary = new();
         imagesDictionary = new();
@@ -199,7 +187,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
                     {
                         if (IsShortcutResponce)
                         {
-                            var imageUri = new Uri("file:///" + t.Result.Path);
+                            var imageUri = new Uri($"file:///{t.Result.Path}");
                             var builder = new AppNotificationBuilder()
                             .SetInlineImage(imageUri)
                             .AddArgument("snapshotStatus", "snapshotTaken")
@@ -251,32 +239,38 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public async Task OnPointerReleased(Windows.Foundation.Point position)
     {
-        if (paintSnipKind is not null)
+        if (paintSnipKind is not null && !CanExit)
         {
             ResultFigure = paintSnipKind.OnPointerReleased(position);
 
-            if (ResultFigure is not null
-                && SelectedSnipKind.Kind != SnipKinds.AllWindows
-                && SnipControl.CaptureKind == CaptureType.Photo)
+            if (ResultFigure is not null)
             {
-                var sbitmap = await GetSingleMonitorSnapshot();
-                await CreateSaveBmpToAllPlacesTask(sbitmap);
-            }
-            else if (SnipControl.CaptureKind == CaptureType.Video)
-            {
-                var posX = (int)ResultFigure.ActualOffset.X;
-                var posY = (int)ResultFigure.ActualOffset.Y;
-                var absXDiff = (int)Math.Abs(position.X - posX);
-                var absYDiff = (int)Math.Abs(position.Y - posY);
+                if(SnipControl.CaptureKind == CaptureType.Photo 
+                    && SelectedSnipKind.Kind != SnipKinds.AllWindows)
+                {
+                    var sbitmap = await GetSingleMonitorSnapshot();
+                    await CreateSaveBmpToAllPlacesTask(sbitmap);
+                }
+                else if (SnipControl.CaptureKind == CaptureType.Video)
+                {
+                    var posX = (int)ResultFigure.ActualOffset.X;
+                    var posY = (int)ResultFigure.ActualOffset.Y;
+                    var absXDiff = (int)Math.Abs(position.X - posX);
+                    var absYDiff = (int)Math.Abs(position.Y - posY);
 
-                WindowPosition = new(posX, posY, absXDiff, absYDiff);
+                    VideoFramePosition = new(posX, posY, absXDiff, absYDiff);
+                }
+
+                CanExit = true;
             }
         }
         else if (SelectedSnipKind.Kind == SnipKinds.AllWindows)
         {
             var sbitmap = await GetAllMonitorsSnapshot();
-            Task.Run(() => Console.Beep(500, 200));
+            _ = Task.Run(() => Console.Beep(500, 200));
             await CreateSaveBmpToAllPlacesTask(sbitmap);
+
+            CanExit = true;
         }
     }
 
@@ -321,6 +315,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
             CurrentShapeBmp = null;
         }
 
+        CanExit = false;
         OnExitFromWindow?.Invoke();
     }
 }

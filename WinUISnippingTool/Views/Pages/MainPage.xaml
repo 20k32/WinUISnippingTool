@@ -37,6 +37,8 @@
               Padding="0, 5"
               x:Name="PART_MainPane">
 
+            
+            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -64,7 +66,10 @@
                 </Button>
 
                 <userControl:SnipControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
-                                         SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"/>
+                                         SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"
+                                         IsPhotoButtonEnabled="False"
+                                         IsVideoButtonEnabled="True"
+                                         IsPaintListEnabled="True"/>
             </StackPanel>
 
             <!-- Redact picture (Middle) pane -->
@@ -212,6 +217,10 @@
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE713;" />
                                 </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="Palyer"
+                                            Click="MenuFlyoutItem_Click_1">
+                                
                             </MenuFlyoutItem>
                         </MenuFlyout>
                     </Button.Flyout>
