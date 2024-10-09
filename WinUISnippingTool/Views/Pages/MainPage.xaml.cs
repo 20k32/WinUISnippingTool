@@ -136,7 +136,8 @@ internal sealed partial class MainPage : Page
         if (e.Parameter is SettingsPageParameter settingsPageParameter)
         {
             ViewModel.TrySetAndLoadLocalizationWrapper(settingsPageParameter.BcpTag);
-            PicturesFolderExtensions.NewSavingFolder = settingsPageParameter.SaveImageLocation;
+            FolderExtensions.NewPicturesSavingFolder = settingsPageParameter.SaveImageLocation;
+            FolderExtensions.NewVideosSavingFolder = settingsPageParameter.SaveVideoLocation;
         }
     }
 
@@ -318,7 +319,7 @@ internal sealed partial class MainPage : Page
 
     private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
     {
-        Frame.Navigate(typeof(Settings), new SettingsPageParameter(ViewModel.BcpTag, PicturesFolderExtensions.NewSavingFolder));
+        Frame.Navigate(typeof(Settings), new SettingsPageParameter(ViewModel.BcpTag, FolderExtensions.NewPicturesSavingFolder, FolderExtensions.NewVideosSavingFolder));
     }
 
     private async void SaveBmpToClipboard_Click(object sender, RoutedEventArgs e)

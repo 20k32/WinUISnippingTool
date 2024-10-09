@@ -112,14 +112,17 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         snipScreenWindows.Clear();
 
 
-        if (SnipControl.CaptureKind == CaptureType.Photo)
+
+        if (snipScreenWindowViewModel.CompleteRendering)
         {
-            AddImageCore();
-        }
-        else if(SnipControl.CaptureKind == CaptureType.Video
-            && snipScreenWindowViewModel.CurrentShapeBmp is null)
-        {
-            await ShowVideoCaptureScreenAsync();
+            if (SnipControl.CaptureKind == CaptureType.Photo)
+            {
+                AddImageCore();
+            }
+            else if (SnipControl.CaptureKind == CaptureType.Video)
+            {
+                await ShowVideoCaptureScreenAsync();
+            }
         }
     }
 
@@ -355,7 +358,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             (int)snipScreenWindowViewModel.PrimaryMonitor.MonitorSize.Height);
         
         videoCaptureWindow.PrepareWindow(size);
-        await videoCaptureWindow.ActivateAsync();
+        await videoCaptureWindow.ActivateAndStartCaptureAsync();
 
         if (videoCaptureWindow.Exited)
         {

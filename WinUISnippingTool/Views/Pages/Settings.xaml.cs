@@ -26,7 +26,7 @@ internal sealed partial class Settings : Page
         base.OnNavigatedTo(e);
         if(e.Parameter is SettingsPageParameter settingsParameter)
         {
-            await ViewModel.LoadState(settingsParameter.BcpTag, settingsParameter.SaveImageLocation);
+            await ViewModel.LoadState(settingsParameter);
         }
     }
 
@@ -35,6 +35,6 @@ internal sealed partial class Settings : Page
         Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = ViewModel.SelectedLanguageKind.BcpTag;
         Frame.BackStack.Clear();
 
-        Frame.Navigate(typeof(MainPage), new SettingsPageParameter(ViewModel.SelectedLanguageKind.BcpTag, ViewModel.SaveImageLocation));
+        Frame.Navigate(typeof(MainPage), new SettingsPageParameter(ViewModel.SelectedLanguageKind.BcpTag, ViewModel.SaveImageLocation, ViewModel.SaveVideoLocation));
     }
 }

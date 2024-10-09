@@ -13,7 +13,7 @@
                 Orientation="Vertical"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Width="400">
+                Width="600">
         <ListBox ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
                  SelectedItem="{x:Bind ViewModel.SelectedLanguageKind, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
             <ListBox.ItemTemplate>
@@ -23,11 +23,25 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <TextBlock Text="{x:Bind ViewModel.SaveImageLocation.Path, Mode=OneWay}"
+        <StackPanel Orientation="Horizontal"
+                    Spacing="3">
+            
+            <Button Content="{x:Bind ViewModel.ChangeLocationButtonName, Mode=OneWay}"
+                Command="{x:Bind ViewModel.PickFolderCommand}"/>
+            <TextBlock Text="{x:Bind ViewModel.SaveImageLocation.Path, Mode=OneWay}"
                    TextWrapping="Wrap"/>
 
-        <Button Content="{x:Bind ViewModel.ChangeLocationButtonName, Mode=OneWay}"
-                Command="{x:Bind ViewModel.PickFolderCommand}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal"
+                    Spacing="3">
+            <Button Content="{x:Bind ViewModel.ChangeLocationButtonName, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.PickFolderForVideoCommand}"/>
+
+            <TextBlock Text="{x:Bind ViewModel.SaveVideoLocation.Path, Mode=OneWay}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+        
         <Button Content="{x:Bind ViewModel.BackButtonName, Mode=OneWay}"
                 Click="Back_Click"/>
     </StackPanel>

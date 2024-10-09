@@ -60,7 +60,7 @@ internal sealed partial class VideoCaptureWindow : Window
         AppWindow.MoveAndResize(newLocation);
     }
 
-    public async Task ActivateAsync()
+    public async Task ActivateAndStartCaptureAsync()
     {
         this.Activate();
         await viewModel.StartCaptureAsync();

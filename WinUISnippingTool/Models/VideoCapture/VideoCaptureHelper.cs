@@ -6,6 +6,7 @@ using Windows.Graphics;
 using Windows.Graphics.DirectX.Direct3D11;
 using Windows.Storage;
 using Windows.System;
+using WinUISnippingTool.Models.Extensions;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
@@ -43,9 +44,9 @@ internal class VideoCaptureHelper
     private static async Task<StorageFile> GetFile()
     {
         var name = DateTime.Now.ToString("yyyyMMdd-HHmm-ss");
-        var fileName = $"{name}.mp4";
-
-        var file = await ApplicationData.Current.TemporaryFolder.CreateFileAsync(fileName);
+        var fileName = $"SnipT-{name}.mp4";
+        var folder = FolderExtensions.DefineFolderForVideos();
+        var file = await folder.CreateFileAsync(fileName);
         return file;
     }
 

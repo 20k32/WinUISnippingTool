@@ -141,7 +141,7 @@ namespace WinUISnippingTool.Views
 
                 await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
 
-                if (ViewModel.CanExit)
+                if (ViewModel.CompleteRendering)
                 {
                     ViewModel.Exit();
                 }

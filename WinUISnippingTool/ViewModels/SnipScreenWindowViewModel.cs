@@ -46,7 +46,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public string CurrentMonitorName => currentMonitorName;
     public bool IsShortcutResponce { get; private set; }
-    public bool CanExit { get; private set; }
+    public bool CompleteRendering { get; private set; }
     
     public bool IsPhotoButtonEnabled => SnipControl.CaptureKind == CaptureType.Photo;
     public bool IsVideoButtonEnabled => SnipControl.CaptureKind == CaptureType.Video;
@@ -84,6 +84,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public void ResetModel()
     {
+        CompleteRendering = false;
         IsOverlayVisible = true;
         CurrentShapeBmp = null;
     }
@@ -184,7 +185,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     private Task CreateSaveBmpToAllPlacesTask(SoftwareBitmap softwareBitmap)
     {
-        var saveToFolderTask = PicturesFolderExtensions.SaveAsync(softwareBitmap)
+        var saveToFolderTask = FolderExtensions.SaveBitmapAsync(softwareBitmap)
                     .ContinueWith(t =>
                     {
                         if (IsShortcutResponce)
@@ -241,7 +242,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public async Task OnPointerReleased(Windows.Foundation.Point position)
     {
-        if (paintSnipKind is not null && !CanExit)
+        if (paintSnipKind is not null && !CompleteRendering)
         {
             ResultFigure = paintSnipKind.OnPointerReleased(position);
             
@@ -275,7 +276,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
                     VideoFramePosition = new(startX, startY, width, height);
                 }
 
-                CanExit = true;
+                CompleteRendering = true;
             }
         }
         else if (SelectedSnipKind.Kind == SnipKinds.AllWindows)
@@ -284,7 +285,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
             _ = Task.Run(() => Console.Beep(500, 200));
             await CreateSaveBmpToAllPlacesTask(sbitmap);
 
-            CanExit = true;
+            CompleteRendering = true;
         }
     }
 
@@ -329,7 +330,6 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
             CurrentShapeBmp = null;
         }
 
-        CanExit = false;
         OnExitFromWindow?.Invoke();
     }
 }

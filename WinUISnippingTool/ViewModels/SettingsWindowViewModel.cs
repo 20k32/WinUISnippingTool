@@ -10,6 +10,7 @@ using Windows.Storage;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.Items;
+using WinUISnippingTool.Models.PageParameters;
 
 namespace WinUISnippingTool.ViewModels
 {
@@ -85,20 +86,44 @@ namespace WinUISnippingTool.ViewModels
             }
         }
 
+        private StorageFolder saveVideoLocation;
 
-        public async Task LoadState(string bcpTag, StorageFolder saveImageLocation)
+        public StorageFolder SaveVideoLocation
         {
-            LoadLocalization(bcpTag);
-
-            SelectedLanguageKind = Languages.FirstOrDefault(lang => lang.BcpTag == bcpTag);
-
-            if(saveImageLocation is null)
+            get => saveVideoLocation;
+            set
             {
-                SaveImageLocation = await PicturesFolderExtensions.GetScreenshotsFolderAsync();
+                if(saveVideoLocation != value)
+                {
+                    saveVideoLocation = value;
+                    NotifyOfPropertyChange();
+                }
+            }
+        }
+
+
+        public async Task LoadState(SettingsPageParameter parameter)
+        {
+            LoadLocalization(parameter.BcpTag);
+
+            SelectedLanguageKind = Languages.FirstOrDefault(lang => lang.BcpTag == parameter.BcpTag);
+
+            if(parameter.SaveImageLocation is null)
+            {
+                SaveImageLocation = await FolderExtensions.GetDefaultScreenshotsFolderAsync();
             }
             else
             {
-                SaveImageLocation = saveImageLocation;
+                SaveImageLocation = parameter.SaveImageLocation;
+            }
+
+            if(parameter.SaveVideoLocation is null)
+            {
+                SaveVideoLocation = FolderExtensions.GetDefaultVideosFolder();
+            }
+            else
+            {
+                SaveVideoLocation = parameter.SaveVideoLocation;
             }
         }
 
@@ -110,6 +135,17 @@ namespace WinUISnippingTool.ViewModels
             if (storageFolder is not null)
             {
                 SaveImageLocation = storageFolder;
+            }
+        }
+
+        [RelayCommand]
+        private async Task PickFolderForVideo()
+        {
+            var storageFolder = await FilePickerExtensions.ShowFolderPickerAsync();
+
+            if (storageFolder is not null)
+            {
+                SaveVideoLocation = storageFolder;
             }
         }
 
