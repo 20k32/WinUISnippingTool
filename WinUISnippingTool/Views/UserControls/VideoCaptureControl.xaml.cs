@@ -20,7 +20,6 @@ namespace WinUISnippingTool.Views.UserControls;
 
 public sealed partial class VideoCaptureControl : UserControl
 {
-    
     public static readonly DependencyProperty TimeStringProperty =
         DependencyProperty.Register(
             nameof(TimeString), 
@@ -32,19 +31,6 @@ public sealed partial class VideoCaptureControl : UserControl
     {
         get => (string)GetValue(TimeStringProperty);
         set => SetValue(TimeStringProperty, value);
-    }
-
-    public static readonly DependencyProperty IsStartButtonEnabledProperty =
-        DependencyProperty.Register(
-            nameof(IsStartButtonEnabled),
-            typeof(bool),
-            typeof(VideoCaptureControl),
-            new(default));
-
-    public bool IsStartButtonEnabled
-    {
-        get => (bool)GetValue(IsStartButtonEnabledProperty);
-        set => SetValue(IsStartButtonEnabledProperty, value);
     }
 
     public VideoCaptureControl()

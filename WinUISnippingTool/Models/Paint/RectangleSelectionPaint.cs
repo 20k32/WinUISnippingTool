@@ -23,7 +23,6 @@ namespace WinUISnippingTool.Models.Paint
         private readonly SolidColorBrush strokeColor;
         private ImageBrush fillColor;
 
-        private Point firstPosition;
         private Point previousPosition;
         private Path rect;
 
@@ -55,7 +54,7 @@ namespace WinUISnippingTool.Models.Paint
                     },
                 };
                 
-                firstPosition = position;
+                StartPoint = position;
                 previousPosition = position;
                 Canvas.SetLeft(rect, position.X - 1);
                 Canvas.SetTop(rect, position.Y - 1);
@@ -68,8 +67,8 @@ namespace WinUISnippingTool.Models.Paint
             if (IsDrawing
                 && CalculateDistance(previousPosition, position) > MinRenderDistance)
             {
-                double distanceX = position.X - firstPosition.X;
-                double distanceY = position.Y - firstPosition.Y;
+                double distanceX = position.X - StartPoint.X;
+                double distanceY = position.Y - StartPoint.Y;
 
                 double scaleX = 1 + (distanceX / 1);
                 double scaleY = 1 + (distanceY / 1); // 1 <- can be presented in settings
@@ -77,26 +76,26 @@ namespace WinUISnippingTool.Models.Paint
                 scaleTransform.ScaleX = scaleX;
                 scaleTransform.ScaleY = scaleY;
 
-                if(firstPosition.X < position.X
-                   && firstPosition.Y < position.Y)
+                if(StartPoint.X < position.X
+                   && StartPoint.Y < position.Y)
                 {
-                    translateTransform.X = -firstPosition.X;
-                    translateTransform.Y = -firstPosition.Y;
+                    translateTransform.X = -StartPoint.X;
+                    translateTransform.Y = -StartPoint.Y;
                 }
-                else if(firstPosition.X < position.X
-                        && firstPosition.Y > position.Y)
+                else if(StartPoint.X < position.X
+                        && StartPoint.Y > position.Y)
                 {
-                    translateTransform.X = -firstPosition.X; 
+                    translateTransform.X = -StartPoint.X; 
                     translateTransform.Y = -position.Y + 1;
                 }
-                else if(firstPosition.X > position.X
-                        && firstPosition.Y < position.Y)
+                else if(StartPoint.X > position.X
+                        && StartPoint.Y < position.Y)
                 {
                     translateTransform.X = -position.X + 1;
-                    translateTransform.Y = -firstPosition.Y;
+                    translateTransform.Y = -StartPoint.Y;
                 }
-                else if(firstPosition.X > position.X
-                        && firstPosition.Y > position.Y)
+                else if(StartPoint.X > position.X
+                        && StartPoint.Y > position.Y)
                 {
                     translateTransform.X = -position.X + 1;
                     translateTransform.Y = -position.Y + 1;
@@ -112,13 +111,18 @@ namespace WinUISnippingTool.Models.Paint
             
             if(rect is not null)
             {
-                var absX = Math.Abs(previousPosition.X - firstPosition.X);
-                var absY = Math.Abs(previousPosition.Y - firstPosition.Y);
+                var absX = Math.Abs(previousPosition.X - StartPoint.X);
+                var absY = Math.Abs(previousPosition.Y - StartPoint.Y);
 
                 if (absX > MinRenderDistance
                 && absY > MinRenderDistance)
                 {
                     rect.StrokeThickness = 0;
+
+                    var width = (int)(position.X - StartPoint.X);
+                    var height = (int)(position.Y - StartPoint.Y);
+                    ActualSize = new(width, height);
+                 
                     result = rect;
                 }
                 else

@@ -332,9 +332,4 @@ internal sealed partial class MainPage : Page
         var renderBitmap = await SaveBmpCoreAsync();
         await ViewModel.SaveBmpToFileAsync(renderBitmap);
     }
-
-    private void MenuFlyoutItem_Click_1(object sender, RoutedEventArgs e)
-    {
-        Frame.Navigate(typeof(MediaPlayerPage), new MediaPlayerParameter(ViewModel.VideoUri));
-    }
 }

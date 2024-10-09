@@ -9,15 +9,22 @@
     xmlns:userControl="using:WinUISnippingTool.Views.UserControls"
     mc:Ignorable="d">
 
-    <StackPanel Orientation="Horizontal" 
+    <Border x:Name="overlayBorder"
+            Background="{ThemeResource SystemChromeMediumColor}"
+            Padding="5">
+        
+        <StackPanel Orientation="Horizontal" 
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Spacing="5"
-                x:Name="mainPanel">
-        
-        <userControl:VideoCaptureControl IsStartButtonEnabled="False"
-                                             TimeString="00:00:00"/>
-        <Button Content="Stop" Click="Button_Click"/>
-        <Button Content="Exit" Click="Exit_Click"/>
-    </StackPanel>
+                x:Name="mainPanel"
+                Background="Transparent">
+
+            <userControl:VideoCaptureControl TimeString="{Binding TimeString}"/>
+            <Button Content="Stop" 
+                    Click="Button_Click"
+                    FontSize="16"/>
+        </StackPanel>
+    </Border>
+    
 </Window>

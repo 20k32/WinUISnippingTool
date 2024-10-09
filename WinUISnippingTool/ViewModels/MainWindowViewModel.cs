@@ -21,6 +21,8 @@ using Microsoft.UI.Xaml;
 using WinUISnippingTool.Views.UserControls;
 using WinUISnippingTool.Models.VideoCapture;
 using Windows.Media.Devices;
+using System.Globalization;
+using Windows.Media.Core;
 namespace WinUISnippingTool.ViewModels;
 
 
@@ -30,8 +32,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private readonly DrawBase eraseBrush;
     private readonly DrawBase markerBrush;
     private readonly SnipScreenWindowViewModel snipScreenWindowViewModel;
-    private readonly MediaPlayerPageViewModel mediaPlayerPageViewModel;
-    private readonly VideoCaptureHelper captureHelper;
+    private readonly VideoCaptureWindowViewModel videoCaptureWindowViewModel;
     private readonly ScaleTransformManager transformManager;
     private readonly List<MonitorLocation> monitorLocations;
     private readonly List<SnipScreenWindow> snipScreenWindows;
@@ -43,7 +44,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     public NotifyOnCompletionCollection<UIElement> CanvasItems { get; private set; }
     public string BcpTag { get; private set; }
-    public Uri VideoUri => captureHelper.CurrentVideoFileUri;
 
     public event Action OnNewImageAdded;
 
@@ -94,8 +94,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         snipScreenWindowViewModel = new();
         snipScreenWindowViewModel.OnExitFromWindow += OnExitFromWindow;
 
-        mediaPlayerPageViewModel = new();
-        captureHelper = new();
+        videoCaptureWindowViewModel = new();
     }
 
     public void UnregisterHandlers()
@@ -103,8 +102,16 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         snipScreenWindowViewModel.OnExitFromWindow -= OnExitFromWindow;
     }
 
-    private void OnExitFromWindow()
+    private async void OnExitFromWindow()
     {
+        foreach (var window in snipScreenWindows)
+        {
+            window.Close();
+        }
+
+        snipScreenWindows.Clear();
+
+
         if (SnipControl.CaptureKind == CaptureType.Photo)
         {
             AddImageCore();
@@ -112,16 +119,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         else if(SnipControl.CaptureKind == CaptureType.Video
             && snipScreenWindowViewModel.CurrentShapeBmp is null)
         {
-            ShowVideoCaptureScreen();
+            await ShowVideoCaptureScreenAsync();
         }
-
-
-        foreach (var window in snipScreenWindows)
-        {
-            window.Close();
-        }
-
-        snipScreenWindows.Clear();
     }
 
     public void AddMonitorLocation(MonitorLocation location) 
@@ -221,9 +220,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     [RelayCommand]
     private void ResetCanvas()
     {
-        drawBrush?.Clear();
-        GlobalUndoCommand.NotifyCanExecuteChanged();
-        GlobalRedoCommand.NotifyCanExecuteChanged();
+        ClearCanvasCore();
     }
 
     public async Task SaveBmpToFileAsync(RenderTargetBitmap renderBitmap)
@@ -251,21 +248,75 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             pixelBuffer.ToArray());
     }
 
-    public ScaleTransform TransformSource => transformManager.TransfromSource;
-
-    public void AddImageFromSource(ImageSource source, double width, double height)
+    private void TryAddImageToCanvas(ImageSource source)
     {
-        drawBrush?.Clear();
-
-        if (CanvasItems.Count > 0)
+        if (CanvasItems.Count > 0 && CanvasItems[0] is Image image)
         {
-            var image = (Image)CanvasItems[0];
             image.Source = source;
         }
         else
         {
+            CanvasItems.Clear();
             CanvasItems.Add(new Image { Source = source });
         }
+    }
+
+    private void TryAddMediaPlayerToCanvas(Uri source)
+    {
+        var mediaSource = MediaSource.CreateFromUri(source);
+
+        if (CanvasItems.Count > 0 && CanvasItems[0] 
+            is MediaPlayerElement mediaPlayer)
+        {
+            mediaPlayer.Source = mediaSource;
+        }
+        else
+        {
+            var newPlayer = new MediaPlayerElement();
+            newPlayer.AreTransportControlsEnabled = true;
+            newPlayer.TransportControls.IsCompact = true;
+            newPlayer.TransportControls.IsVolumeEnabled = false;
+            newPlayer.TransportControls.IsVolumeButtonVisible = false;
+
+            newPlayer.Source = mediaSource;
+            newPlayer.IsFullWindow = true;
+
+            newPlayer.Width = snipScreenWindowViewModel.PrimaryMonitor.MonitorSize.Width * 0.5;
+            newPlayer.Height = snipScreenWindowViewModel.PrimaryMonitor.MonitorSize.Height * 0.5;
+
+            CanvasItems.Clear();
+            CanvasItems.Add(newPlayer);
+
+            CanvasWidth = newPlayer.Width;
+            CanvasHeight = newPlayer.Height;
+
+            SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+            SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+        }
+    }
+
+    private void ClearCanvasCore()
+    {
+        if(drawBrush is not null)
+        {
+            drawBrush.Clear();
+            GlobalUndoCommand.NotifyCanExecuteChanged();
+            GlobalRedoCommand.NotifyCanExecuteChanged();
+        }
+        else
+        {
+            var array = CanvasItems.Skip(1).ToArray(); // 1st element is image or mediaplayer
+            CanvasItems.RemoveRange(array);
+        }
+    }
+
+    public ScaleTransform TransformSource => transformManager.TransfromSource;
+
+    public void AddImageFromSource(ImageSource source, double width, double height)
+    {
+        ClearCanvasCore();
+
+        TryAddImageToCanvas(source);
 
         CanvasWidth = width;
         CanvasHeight = height;
@@ -278,28 +329,39 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         OnNewImageAdded?.Invoke();
     }
 
-    private async void ShowVideoCaptureScreen()
+    private void AddMediaPlayer(Uri videoUri)
     {
-        var frameLocation = snipScreenWindowViewModel.VideoFramePosition;
-        
-        var currentMonitor = monitorLocations
-            .First(monitor => monitor.DeviceName == snipScreenWindowViewModel.CurrentMonitorName);
+        ClearCanvasCore();
 
-        captureHelper.SetOptions(new(
-            (uint)currentMonitor.MonitorSize.Width,
-            (uint)currentMonitor.MonitorSize.Height,
-            10000000,
-            60));
+        TryAddMediaPlayerToCanvas(videoUri);
 
-        var videoCaptureWindow = new VideoCaptureWindow(currentMonitor, captureHelper);
+        IsSnapshotTaken = true;
+
+        OnNewImageAdded?.Invoke();
+    }
+
+    private async Task ShowVideoCaptureScreenAsync()
+    {
+        var framePosition = snipScreenWindowViewModel.VideoFramePosition;
+        var currentMonitor = monitorLocations.First(monitor => monitor.DeviceName == snipScreenWindowViewModel.CurrentMonitorName);
         
-        var size = new SizeInt32((int)currentMonitor.MonitorSize.Width, 
-            (int)currentMonitor.MonitorSize.Height);
+        videoCaptureWindowViewModel.SetMonitorForCapturing(currentMonitor);
+        videoCaptureWindowViewModel.SetCaptureSize((uint)currentMonitor.MonitorSize.Width, (uint)currentMonitor.MonitorSize.Height);
+        videoCaptureWindowViewModel.SetFrameForMonitor(framePosition);
+
+        var videoCaptureWindow = new VideoCaptureWindow(currentMonitor, videoCaptureWindowViewModel);
+        
+        var size = new SizeInt32((int)snipScreenWindowViewModel.PrimaryMonitor.MonitorSize.Width, 
+            (int)snipScreenWindowViewModel.PrimaryMonitor.MonitorSize.Height);
         
         videoCaptureWindow.PrepareWindow(size);
-        videoCaptureWindow.Activate();
+        await videoCaptureWindow.ActivateAsync();
 
-        await captureHelper.StartScreenCaptureAsync(currentMonitor, frameLocation);
+        if (videoCaptureWindow.Exited)
+        {
+            var uri = videoCaptureWindowViewModel.GetVideoUri();
+            AddMediaPlayer(uri);
+        }
     }
 
     public void AddImageCore()
@@ -355,16 +417,16 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
     }
 
-    public void SetTransformObjectSize(Windows.Foundation.Size transformObject)
+    public void SetTransformObjectSize(Size transformObject)
         => transformManager.SetTransformObject(transformObject);
 
-    public void SetRelativeObjectSize(Windows.Foundation.Size relativeObject)
+    public void SetRelativeObjectSize(Size relativeObject)
         => transformManager.SetRelativeObject(relativeObject);
 
-    public void SetScaleCenterCoords(Windows.Foundation.Size size)
+    public void SetScaleCenterCoords(Size size)
         => transformManager.SetScaleCenterCoords(size);
 
-    public void Transform(Windows.Foundation.Size relativeTo) => transformManager.Transform(relativeTo);
+    public void Transform(Size relativeTo) => transformManager.Transform(relativeTo);
     public void Transform() => transformManager.Transform();
     public void ResetTransform() => transformManager.ResetTransform();
 

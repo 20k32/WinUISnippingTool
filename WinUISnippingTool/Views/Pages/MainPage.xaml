@@ -218,10 +218,6 @@
                                     <FontIcon Glyph="&#xE713;" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem Text="Palyer"
-                                            Click="MenuFlyoutItem_Click_1">
-                                
-                            </MenuFlyoutItem>
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>

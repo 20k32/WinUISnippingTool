@@ -42,9 +42,9 @@ internal sealed class Encoder : IDisposable
         CreateMediaObjects();
     }
 
-    public IAsyncAction EncodeAsync(IRandomAccessStream stream, uint width, uint height, uint bitrateInBps, uint frameRate)
+    public IAsyncAction EncodeAsync(IRandomAccessStream stream)
     {
-        return EncodeInternalAsync(stream, width, height, bitrateInBps, frameRate).AsAsyncAction();
+        return EncodeInternalAsync(stream, options.Width, options.Height, options.Bitrate, options.Framerate).AsAsyncAction();
     }
 
     private async Task EncodeInternalAsync(IRandomAccessStream stream, uint width, uint height, uint bitrateInBps, uint frameRate)

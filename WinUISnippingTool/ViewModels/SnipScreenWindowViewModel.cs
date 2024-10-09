@@ -15,6 +15,8 @@ using Microsoft.UI.Xaml.Media;
 using Windows.Graphics.Imaging;
 using WinUISnippingTool.Views.UserControls;
 using Windows.Graphics;
+using Microsoft.UI.Xaml.Controls;
+using CommunityToolkit.WinUI;
 
 
 namespace WinUISnippingTool.ViewModels;
@@ -32,7 +34,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     private readonly WindowPaint windowPaintSource;
 
     private string currentMonitorName;
-    private MonitorLocation primaryMonitor;
+    public MonitorLocation PrimaryMonitor { get; private set; }
 
     public event Action OnExitFromWindow;
     public Shape ResultFigure { get; private set; }
@@ -64,7 +66,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public void SetPrimaryMonitor(MonitorLocation monitorLocation)
     {
-        primaryMonitor = monitorLocation;
+        PrimaryMonitor = monitorLocation;
     }
 
     public SnipScreenWindowViewModel() : base()
@@ -225,7 +227,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     private async Task<SoftwareBitmap> GetAllMonitorsSnapshot()
     {
         var images = softwareBitmaps.Values.AsEnumerable();
-        var softwareBitmap = await RenderExtensions.ProcessImagesAsync(primaryMonitor, images);
+        var softwareBitmap = await RenderExtensions.ProcessImagesAsync(PrimaryMonitor, images);
         
         var source = new SoftwareBitmapSource();
         await source.SetBitmapAsync(softwareBitmap);
@@ -242,7 +244,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         if (paintSnipKind is not null && !CanExit)
         {
             ResultFigure = paintSnipKind.OnPointerReleased(position);
-
+            
             if (ResultFigure is not null)
             {
                 if(SnipControl.CaptureKind == CaptureType.Photo 
@@ -253,12 +255,24 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
                 }
                 else if (SnipControl.CaptureKind == CaptureType.Video)
                 {
-                    var posX = (int)ResultFigure.ActualOffset.X;
-                    var posY = (int)ResultFigure.ActualOffset.Y;
-                    var absXDiff = (int)Math.Abs(position.X - posX);
-                    var absYDiff = (int)Math.Abs(position.Y - posY);
+                    var startX = (int)ResultFigure.ActualOffset.X;
+                    var startY = (int)ResultFigure.ActualOffset.Y;
+                    var width = paintSnipKind.ActualSize.Width;
+                    var height = paintSnipKind.ActualSize.Height;
 
-                    VideoFramePosition = new(posX, posY, absXDiff, absYDiff);
+                    if(width < 0)
+                    {
+                        startX += width;
+                        width = Math.Abs(width);
+                    }
+
+                    if(height < 0)
+                    {
+                        startY += height;
+                        height = Math.Abs(height);
+                    }
+
+                    VideoFramePosition = new(startX, startY, width, height);
                 }
 
                 CanExit = true;

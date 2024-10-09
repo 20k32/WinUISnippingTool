@@ -8,6 +8,7 @@ using Windows.Graphics.DirectX.Direct3D11;
 using Windows.Graphics;
 using Windows.Graphics.DirectX;
 using SharpDX.Direct3D11;
+using SharpDX;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
@@ -38,7 +39,7 @@ internal sealed class CaptureFrameWait : IDisposable
     {
         this.device = device;
         d3dDevice = Direct3D11Helpers.CreateSharpDXDevice(device);
-
+        
         multithread = d3dDevice.QueryInterface<Multithread>();
         multithread.SetMultithreadProtected(true);
         this.item = item;
@@ -70,7 +71,7 @@ internal sealed class CaptureFrameWait : IDisposable
 
     private void InitializeBlankTexture(SizeInt32 size)
     {
-        var description = new SharpDX.Direct3D11.Texture2DDescription
+        var description = new Texture2DDescription
         {
             Width = size.Width,
             Height = size.Height,
@@ -89,7 +90,7 @@ internal sealed class CaptureFrameWait : IDisposable
         };
 
         blankTexture = new Texture2D(d3dDevice, description);
-
+        
         using (var renderTargetView = new RenderTargetView(d3dDevice, blankTexture))
         {
             d3dDevice.ImmediateContext.ClearRenderTargetView(renderTargetView, new SharpDX.Mathematics.Interop.RawColor4(0, 0, 0, 1));
@@ -165,7 +166,7 @@ internal sealed class CaptureFrameWait : IDisposable
                 OptionFlags = ResourceOptionFlags.GenerateMipMaps,
             };
 
-            using (var croppedTexture = new SharpDX.Direct3D11.Texture2D(d3dDevice, croppedDescription))
+            using (var croppedTexture = new Texture2D(d3dDevice, croppedDescription))
             {
 
                 var region = new ResourceRegion(

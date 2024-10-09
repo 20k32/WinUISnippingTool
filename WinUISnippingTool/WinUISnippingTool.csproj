@@ -19,7 +19,6 @@
   <ItemGroup>
     <None Remove="Resources\Styles\SimpleStyles.xaml" />
     <None Remove="Views\Pages\MainPage.xaml" />
-    <None Remove="Views\Pages\MediaPlayerPage.xaml" />
     <None Remove="Views\Pages\Settings.xaml" />
     <None Remove="Views\SnipScreenWindow.xaml" />
     <None Remove="Views\UserControls\ColorPicker.xaml" />
@@ -69,11 +68,6 @@
   -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="Views\Pages\MediaPlayerPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\UserControls\VideoCaptureControl.xaml">

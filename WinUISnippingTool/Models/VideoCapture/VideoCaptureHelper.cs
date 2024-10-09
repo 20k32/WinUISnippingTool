@@ -17,8 +17,28 @@ internal class VideoCaptureHelper
     private Encoder encoder;
     private VideoCaptureOptions options;
 
-    public void SetOptions(VideoCaptureOptions options) 
-        => this.options = options;
+    public VideoCaptureHelper()
+    {
+        this.options = new();
+    }
+
+    public VideoCaptureHelper SetBitrate(uint bitrate)
+    {
+        options.Bitrate = bitrate;
+        return this;
+    } 
+    public VideoCaptureHelper SetSize(uint width, uint height)
+    {
+        options.Width = width;
+        options.Height = height;
+        return this;
+    }
+
+    public VideoCaptureHelper SetFramerate(uint framrate)
+    {
+        options.Framerate = framrate;
+        return this;
+    }
 
     private static async Task<StorageFile> GetFile()
     {
@@ -40,12 +60,7 @@ internal class VideoCaptureHelper
             using (var stream = await currentFile.OpenAsync(FileAccessMode.ReadWrite))
             using (encoder = new Encoder(device, graphicsCaptureItem, videoFrameSize, options))
             {
-                await encoder.EncodeAsync(
-                    stream,
-                    (uint)currentMonitor.MonitorSize.Width, 
-                    (uint)currentMonitor.MonitorSize.Height,
-                    options.Bitrate,
-                    options.Framerate);
+                await encoder.EncodeAsync(stream);
             }
         }
         catch (Exception ex)

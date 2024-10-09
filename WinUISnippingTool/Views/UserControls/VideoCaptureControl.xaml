@@ -8,9 +8,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel Orientation="Horizontal">
-        <Button Content="Start"
-                IsEnabled="{x:Bind IsStartButtonEnabled, Mode=OneWay}"/>
-        <TextBlock Text="{x:Bind TimeString, Mode=OneWay}"/>
+    <StackPanel Orientation="Horizontal"
+                VerticalAlignment="Stretch">
+        <TextBlock Text="{x:Bind TimeString, Mode=OneWay}"
+                   TextAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="18"/>
     </StackPanel>
 </UserControl>

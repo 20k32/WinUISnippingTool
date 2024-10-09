@@ -58,7 +58,7 @@ internal abstract class DrawBase : PaintBase
 
     public override void Clear()
     {
-        var tempArr = Shapes.Skip(1).ToArray(); // first object is always user image
+        var tempArr = Shapes.Skip(1).ToArray();
         
         foreach (Shape item in tempArr.Cast<Shape>())
         {
