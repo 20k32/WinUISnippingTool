@@ -24,6 +24,8 @@ using Windows.Media.Devices;
 using System.Globalization;
 using Windows.Media.Core;
 using Microsoft.UI;
+using Windows.Storage;
+using System.Diagnostics;
 namespace WinUISnippingTool.ViewModels;
 
 
@@ -46,9 +48,21 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     public string BcpTag { get; private set; }
 
     public event Action OnNewImageAdded;
+    public event Action OnSnippingModeEntered;
+    public event Action<bool> OnSnippingModeExited;
+    public event Action OnVideoModeEntered;
+    public event Action<bool> OnVideoModeExited;
+
+    private bool byShortcut;
 
     public MainWindowViewModel() : base()
     {
+        snipScreenWindows = new();
+        snipScreenWindowViewModel = new();
+        snipScreenWindowViewModel.OnExitFromWindow += OnExitFromWindow;
+
+        videoCaptureWindowViewModel = new();
+
         CanvasItems = new();
         monitorLocations = new();
         transformManager = new();
@@ -90,11 +104,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         MarkerStrokeThickness = 0.5;
         IsSnapshotTaken = false;
 
-        snipScreenWindows = new();
-        snipScreenWindowViewModel = new();
-        snipScreenWindowViewModel.OnExitFromWindow += OnExitFromWindow;
-
-        videoCaptureWindowViewModel = new();
+        byShortcut = false;
     }
 
     public void UnregisterHandlers()
@@ -111,6 +121,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
         snipScreenWindows.Clear();
 
+        OnSnippingModeExited?.Invoke(byShortcut);
+
         if (snipScreenWindowViewModel.CompleteRendering)
         {
             if (SnipControl.CaptureKind == CaptureType.Photo)
@@ -119,6 +131,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             }
             else if (SnipControl.CaptureKind == CaptureType.Video)
             {
+                OnVideoModeEntered?.Invoke();
                 await ShowVideoCaptureScreenAsync();
             }
         }
@@ -135,7 +148,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             BcpTag = bcpTag;
             TakePhotoButtonName = ResourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
             SettingsButtonName = ResourceMap.GetValue("Settings/Text")?.ValueAsString ?? "empty_value";
-            
+
             snipScreenWindowViewModel.TrySetAndLoadLocalization(bcpTag);
         }
     }
@@ -224,10 +237,23 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         ClearCanvasCore();
     }
 
-    public async Task SaveBmpToFileAsync(RenderTargetBitmap renderBitmap)
+    public async Task SaveVideoAsync()
     {
+        var file = await FilePickerExtensions.ShowSaveVideoAsync();
+
+        if (file is not null)
+        {
+            var uri = videoCaptureWindowViewModel.GetVideoUri();
+            var exisitngVideoFile = await StorageFile.GetFileFromPathAsync(uri.LocalPath);
+            await exisitngVideoFile.CopyAndReplaceAsync(file);
+        }
+    }
+
+    public async Task SaveBitmapAsync(RenderTargetBitmap renderBitmap)
+    {
+        var file = await FilePickerExtensions.ShowSaveImageAsync();
+
         var pixelBuffer = await renderBitmap.GetPixelsAsync();
-        var file = await FilePickerExtensions.ShowSaveAsync();
 
         if (file is not null)
         {
@@ -237,6 +263,27 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             (uint)renderBitmap.PixelHeight,
             pixelBuffer.ToArray());
         }
+    }
+
+
+    /// <returns>true - image, false - video</returns>
+    public bool? IsDrawingElementTypeOfImage()
+    {
+        bool? result = null;
+
+        if(CanvasItems.Count > 0)
+        {
+            if (CanvasItems[0] is Image)
+            {
+                result = true;
+            }
+            else if (CanvasItems[0] is MediaPlayerElement)
+            {
+                result = false;
+            }
+        }
+
+        return result;
     }
 
     public async Task SaveBmpToClipboardAsync(RenderTargetBitmap renderBitmap)
@@ -249,11 +296,16 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             pixelBuffer.ToArray());
     }
 
-    private void TryAddImageToCanvas(ImageSource source)
+    private void TryAddImageToCanvas(ImageSource source, double width, double height)
     {
         if (CanvasItems.Count > 0 && CanvasItems[0] is Image image)
         {
             image.Source = source;
+
+            if(image.Clip is not null)
+            {
+                image.Clip.Rect = new Rect(0, 0, width, height);
+            }
         }
         else
         {
@@ -287,12 +339,12 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             mediaPlayer.HorizontalContentAlignment = HorizontalAlignment.Center;
             mediaPlayer.VerticalContentAlignment = VerticalAlignment.Center;
 
-
         }
 
         mediaPlayer.Source = mediaSource;
-        var tempWidth = snipScreenWindowViewModel.VideoFramePosition.Width - snipScreenWindowViewModel.VideoFramePosition.X;
-        mediaPlayer.Width = Math.Max(500, tempWidth);
+        var tempWidth = snipScreenWindowViewModel.VideoFramePosition.Width;
+        
+        mediaPlayer.Width = Math.Max(CoreConstants.DefaultVideoPlayerWidth, tempWidth);
         mediaPlayer.Height = snipScreenWindowViewModel.VideoFramePosition.Height;
 
         CanvasItems.Clear();
@@ -326,7 +378,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     {
         ClearCanvasCore();
 
-        TryAddImageToCanvas(source);
+        TryAddImageToCanvas(source, width, height);
 
         CanvasWidth = width;
         CanvasHeight = height;
@@ -368,6 +420,9 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         if (videoCaptureWindow.Exited)
         {
             var uri = videoCaptureWindowViewModel.GetVideoUri();
+
+            OnVideoModeExited?.Invoke(byShortcut);
+
             AddMediaPlayer(uri);
         }
     }
@@ -382,13 +437,12 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         }
     }
 
-    private void SnipScreenWindowOnClosed(object sender, WindowEventArgs args)
-    {
-        AddImageCore();
-    }
-
     public async Task EnterSnippingModeAsync(bool byShortcut)
     {
+        this.byShortcut = byShortcut;
+
+        OnSnippingModeEntered?.Invoke();
+
         foreach (var location in monitorLocations)
         {
             var window = new SnipScreenWindow();
@@ -623,13 +677,16 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         tempBrush = null;
     }
 
-    public void ExitCroppingMode()
+    public void ExitCroppingMode(bool shouldRestoreBrush)
     {
         IsInCroppingMode = false;
         CanvasItems.Remove(imageCropper);
 
-        drawBrush = tempBrush;
-        tempBrush = null;
+        if (shouldRestoreBrush)
+        {
+            drawBrush = tempBrush;
+            tempBrush = null;
+        }
     }
 
     #endregion

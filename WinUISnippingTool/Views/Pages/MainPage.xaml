@@ -10,9 +10,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    SizeChanged="Window_SizeChanged">
+    SizeChanged="Window_SizeChanged"
+    Unloaded="Page_Unloaded">
 
-    <Grid x:Name="mainGrid">
+    <Grid x:Name="mainGrid"
+          KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="X" Modifiers="Shift,Control" Invoked="EnterSnippingModeByShortcut"/>
             <KeyboardAccelerator Key="Z" Modifiers="Control" Invoked="GlobalUndoShortcut"/>

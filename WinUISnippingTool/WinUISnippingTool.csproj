@@ -15,6 +15,25 @@
     <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
   </PropertyGroup>
+
+    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
+    </PropertyGroup>
+    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
+    </PropertyGroup>
+    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
+    </PropertyGroup>
+    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
+    </PropertyGroup>
+    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">
+        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
+    </PropertyGroup>
+    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Release|arm64'">
+        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
+    </PropertyGroup>
     
   <ItemGroup>
     <None Remove="Resources\Styles\SimpleStyles.xaml" />

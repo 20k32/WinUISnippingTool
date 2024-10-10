@@ -7,15 +7,18 @@ namespace WinUISnippingTool.Models.PageParameters;
 
 internal sealed class MainPageActivatedParameter
 {
-    public readonly OverlappedPresenter AppWindowPresenter;
     public readonly DisplayArea CurrentDisplayArea;
     public readonly Monitor[] Monitors;
     public readonly MainWindowViewModel ViewModel;
     public readonly SizeInt32 StartSize;
+    public readonly nint WindowHandle;
 
-    public MainPageActivatedParameter(OverlappedPresenter appPresenter, 
+    public MainPageActivatedParameter(
         DisplayArea currentDisplayArea, 
         Monitor[] monitors, 
-        MainWindowViewModel viewModel, SizeInt32 startSize)
-        => (ViewModel, StartSize, AppWindowPresenter, CurrentDisplayArea, Monitors) = (viewModel, startSize, appPresenter, currentDisplayArea, monitors);
+        MainWindowViewModel viewModel, 
+        SizeInt32 startSize,
+        nint windowHandle)
+        => (ViewModel, StartSize, CurrentDisplayArea, Monitors, WindowHandle) =
+            (viewModel, startSize, currentDisplayArea, monitors, windowHandle);
 }

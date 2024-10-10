@@ -25,49 +25,48 @@ using Windows.Graphics;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace WinUISnippingTool.Views
+namespace WinUISnippingTool.Views;
+
+/// <summary>
+/// An empty window that can be used on its own or navigated to within a Frame.
+/// </summary>
+internal sealed partial class MainWindow : Window
 {
-    /// <summary>
-    /// An empty window that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    internal sealed partial class MainWindow : Window
+    nint windowHandle;
+    private MainWindowViewModel viewModel;
+    private Monitor[] monitors;
+
+    public MainWindow()
     {
-        private MainWindowViewModel viewModel;
-        private Monitor[] monitors;
+        this.InitializeComponent();
+        this.ExtendsContentIntoTitleBar = true;
+        this.Closed += MainWindow_Closed;
+    }
 
-        public MainWindow()
-        {
-            this.InitializeComponent();
-            this.ExtendsContentIntoTitleBar = true;
-            this.Closed += MainWindow_Closed;
-        }
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    {
+        viewModel.UnregisterHandlers();
+    }
 
-        private void MainWindow_Closed(object sender, WindowEventArgs args)
-        {
-            viewModel.UnregisterHandlers();
-        }
+    public void Prepare(MainWindowViewModel viewModel, Monitor[] monitors) 
+    {
+        windowHandle = WindowNative.GetWindowHandle(this);
+        FilePickerExtensions.SetWindowHandle(windowHandle);
 
-        public void Prepare(MainWindowViewModel viewModel, Monitor[] monitors) 
-        {
-            nint windowHandle = WindowNative.GetWindowHandle(this);
-            FilePickerExtensions.SetWindowHandle(windowHandle);
+        this.viewModel = viewModel;
+        this.monitors = monitors;
+    }
 
-            this.viewModel = viewModel;
-            this.monitors = monitors;
-        }
+    public void NavigateToMainPage()
+    {
+        var displayArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
 
-        public void NavigateToMainPage()
-        {
-            var appPresenter = (OverlappedPresenter)AppWindow.Presenter;
-            var displayArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
+        mainFrame.Navigate(typeof(MainPage),
+            new MainPageActivatedParameter(displayArea, monitors, viewModel, new (800, 800), windowHandle));
+    }
 
-            mainFrame.Navigate(typeof(MainPage),
-                new MainPageActivatedParameter(appPresenter, displayArea, monitors, viewModel, new (800, 800)));
-        }
-
-        private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
-        {
-            Debug.WriteLine($"Window: {args.Size.Width} {args.Size.Height}");
-        }
+    private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
+    {
+        Debug.WriteLine($"Window: {args.Size.Width} {args.Size.Height}");
     }
 }

@@ -52,15 +52,21 @@ namespace WinUISnippingTool.Models.Extensions
                 var dataPackage = new DataPackage();
                 dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
                 dataPackage.RequestedOperation = DataPackageOperation.Copy;
+
+                var options = new ClipboardContentOptions()
+                {
+                    IsAllowedInHistory = true,
+                    IsRoamable = false
+                };
+
+                Clipboard.SetContentWithOptions(dataPackage, options);
                 
                 try
                 {
-                    Clipboard.SetContent(dataPackage);
                     Clipboard.Flush();
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    var ex = e;
                     Debug.WriteLine(ex.Message);
                 }
             }

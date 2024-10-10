@@ -11,5 +11,8 @@ namespace WinUISnippingTool.Models
         public const int MinLargeWidth = 1154;
         public const int MinMediumWidht = 954;
         public const int MinSmallWidth = 754;
+        public const int DefaultBitrate = 10_000_000;
+        public const int DefaultFramerate = 60;
+        public const int DefaultVideoPlayerWidth = 600;
     }
 }
