@@ -26,7 +26,7 @@ internal sealed partial class Settings : Page
         base.OnNavigatedTo(e);
         if(e.Parameter is SettingsPageParameter settingsParameter)
         {
-            await ViewModel.LoadState(settingsParameter);
+            await ViewModel.LoadStateAsync(settingsParameter);
         }
     }
 

@@ -14,21 +14,19 @@ namespace WinUISnippingTool.Models.Extensions
     internal static class FolderExtensions
     {
         public static StorageFolder NewPicturesSavingFolder;
-        public static StorageFolder picturesLibraryFolder;
+        private static StorageFolder picturesLibraryFolder;
         
         public static StorageFolder NewVideosSavingFolder;
         private static StorageFolder videosLibraryFolder;
 
-        public const string ScreenshotsFolderName = "Screenshots";       
+        public const string ScreenshotsFolderName = "Screenshots";
+        public const string VideosFolderName = "Captures";
 
-        public static async Task<StorageFolder> GetDefaultScreenshotsFolderAsync()
-        {
-            return picturesLibraryFolder ??=
-                await KnownFolders.PicturesLibrary.GetFolderAsync(ScreenshotsFolderName);
-        }
+        public static async Task<StorageFolder> GetDefaultScreenshotsFolderAsync() => 
+            picturesLibraryFolder ??= await KnownFolders.PicturesLibrary.GetFolderAsync(ScreenshotsFolderName);
 
-        public static StorageFolder GetDefaultVideosFolder() 
-            => KnownFolders.VideosLibrary;
+        public static async Task<StorageFolder> GetDefaultVideosFolderAsync() =>
+            videosLibraryFolder ??= await KnownFolders.VideosLibrary.GetFolderAsync(VideosFolderName);
 
         private static async Task<StorageFolder> DefineFolderForPicturesAsync()
         {
@@ -46,13 +44,13 @@ namespace WinUISnippingTool.Models.Extensions
             return result;
         }
 
-        public static StorageFolder DefineFolderForVideos()
+        public static async Task<StorageFolder> DefineFolderForVideosAsync()
         {
             StorageFolder result;
 
             if (NewVideosSavingFolder is null)
             {
-                result = GetDefaultVideosFolder();
+                result = await GetDefaultVideosFolderAsync();
             }
             else
             {

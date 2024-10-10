@@ -41,11 +41,11 @@ internal class VideoCaptureHelper
         return this;
     }
 
-    private static async Task<StorageFile> GetFile()
+    private static async Task<StorageFile> GetFileAsync()
     {
         var name = DateTime.Now.ToString("yyyyMMdd-HHmm-ss");
         var fileName = $"SnipT-{name}.mp4";
-        var folder = FolderExtensions.DefineFolderForVideos();
+        var folder = await FolderExtensions.DefineFolderForVideosAsync();
         var file = await folder.CreateFileAsync(fileName);
         return file;
     }
@@ -54,7 +54,7 @@ internal class VideoCaptureHelper
     {
         var graphicsCaptureItem = GraphicsCaptureItemExtensions.CreateItemForMonitor(currentMonitor.HandleMonitor);
         device = Direct3D11Helpers.CreateDevice();
-        var currentFile = await GetFile();
+        var currentFile = await GetFileAsync();
 
         try
         {

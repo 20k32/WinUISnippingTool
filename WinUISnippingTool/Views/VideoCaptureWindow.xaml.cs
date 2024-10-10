@@ -67,7 +67,7 @@ internal sealed partial class VideoCaptureWindow : Window
     }
 
 
-    public void PrepareWindow(SizeInt32 windowSize)
+    public void PrepareWindow()
     {
         AppWindow.IsShownInSwitchers = false;
         

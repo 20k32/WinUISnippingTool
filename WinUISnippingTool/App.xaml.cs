@@ -4,6 +4,13 @@ using System;
 using WinUISnippingTool.Views;
 using System.Linq;
 using WinUISnippingTool.Models.MonitorInfo;
+using Microsoft.Windows.AppLifecycle;
+using Microsoft.Windows.AppNotifications;
+using WinUISnippingTool.Views.Pages;
+using WinRT.WinUISnippingToolGenericHelpers;
+using WinUISnippingTool.ViewModels;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Windowing;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -13,9 +20,10 @@ namespace WinUISnippingTool
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
-    public partial class App : Application
+    public sealed partial class App : Application
     {
-        public static Window MainWindow { get; private set; }
+        internal static MainWindow MainWindow { get; private set; }
+        private MainWindowViewModel viewModel;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -30,28 +38,82 @@ namespace WinUISnippingTool
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            LaunchAndBringToForegroundIfNeeded(args);
-        }
+            // To ensure all Notification handling happens in this process instance, register for
+            // NotificationInvoked before calling Register(). Without this a new process will
+            // be launched to handle the notification.
+            AppNotificationManager notificationManager = AppNotificationManager.Default;
+            notificationManager.NotificationInvoked += NotificationManager_NotificationInvoked;
+            notificationManager.Register();
+
+            var activatedArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+            var activationKind = activatedArgs.Kind;
             
-        private void LaunchAndBringToForegroundIfNeeded(LaunchActivatedEventArgs args)
+            if (activationKind != ExtendedActivationKind.AppNotification)
+            {
+                LaunchAndBringToForegroundIfNeeded();
+            }
+            else
+            {
+                HandleNotification((AppNotificationActivatedEventArgs)activatedArgs.Data);
+            }
+
+            LaunchAndBringToForegroundIfNeeded();
+        }
+
+        private void NotificationManager_NotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
+        {
+            HandleNotification(args);
+        }
+
+        private void HandleNotification(AppNotificationActivatedEventArgs args)
+        {
+            MainWindow.DispatcherQueue.TryEnqueue(delegate
+            {
+                try
+                {
+                    switch (args.Arguments["snapshotStatus"])
+                    {
+                        case "snapshotTaken":
+                            {
+                                string uriStr = args.Arguments["snapshotUri"];
+                                var uri = new Uri(uriStr);
+                                var bmpImage = new BitmapImage
+                                {
+                                    UriSource = uri,
+                                };
+
+                                var width = int.Parse(args.Arguments["snapshotWidth"]);
+                                var height = int.Parse(args.Arguments["snapshotHeight"]);
+
+                                viewModel.AddImageFromSource(bmpImage, width, height);
+
+                                ((OverlappedPresenter)MainWindow.AppWindow.Presenter).Restore();
+                            }
+                            break;
+                    }
+                }
+                catch
+                { }
+            });
+        }
+
+        private void LaunchAndBringToForegroundIfNeeded()
         {
             if (MainWindow == null)
             {
                 var monitors = Monitor.All.ToArray();
-                MainWindow = new MainWindow(monitors);
-                //Frame rootFrame = new Frame();
+                viewModel = new();
+                MainWindow = new();
+                MainWindow.Closed += MainWindow_Closed;
 
-                // rootFrame.NavigationFailed += RootFrame_NavigationFailed;
-                // Navigate to the first page, configuring the new page
-                // by passing required information as a navigation parameter
-                //rootFrame.Navigate(typeof(MainPage), args.Arguments);
+                MainWindow.Prepare(viewModel, monitors);
 
-                // Place the frame in the current Window
-                //m_window.Content = rootFrame;
                 // Ensure the MainWindow is active
                 MainWindow.Activate();
+
+                MainWindow.NavigateToMainPage();
 
                 // Additionally we show using our helper, since if activated via a app notification, it doesn't
                 // activate the window correctly
@@ -60,13 +122,14 @@ namespace WinUISnippingTool
             else
             {
                 MainWindow.Activate();
-                //WindowHelper.ShowWindow(m_window);
+                WindowHelper.ShowWindow(MainWindow);
             }
         }
 
-        private void RootFrame_NavigationFailed(object sender, Microsoft.UI.Xaml.Navigation.NavigationFailedEventArgs e)
+        private void MainWindow_Closed(object sender, WindowEventArgs args)
         {
-            throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
+            AppNotificationManager.Default.NotificationInvoked -= NotificationManager_NotificationInvoked;
+            AppNotificationManager.Default.Unregister();
         }
 
         private static class WindowHelper

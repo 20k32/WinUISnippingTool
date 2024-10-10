@@ -25,7 +25,7 @@ namespace WinUISnippingTool.Views.UserControls
 {
     internal sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     {
-        private SnipShapeKind tempSelectedSnipKind;
+        private static SnipShapeKind tempSelectedSnipKind;
 
         public static CaptureType CaptureKind;
 
@@ -58,7 +58,7 @@ namespace WinUISnippingTool.Views.UserControls
             }
         }
 
-        private bool isPaintListEnabled;
+        private static bool isPaintListEnabled;
 
         public bool IsPaintListEnabled
         {

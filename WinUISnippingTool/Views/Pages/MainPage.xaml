@@ -10,9 +10,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    SizeChanged="Window_SizeChanged"
-    Loaded="MainPage_Loaded"
-    Unloaded="MainPage_Unloaded">
+    SizeChanged="Window_SizeChanged">
 
     <Grid x:Name="mainGrid">
         <Grid.KeyboardAccelerators>
@@ -53,7 +51,7 @@
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
 
                 <Button Margin="0, 0, 15, 0"
-                        Click="myButton_Click">
+                        Click="SnippingModeButton_Click">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="5">
                         <FontIcon Glyph="&#xE710;"

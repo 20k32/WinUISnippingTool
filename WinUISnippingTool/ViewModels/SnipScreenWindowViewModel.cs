@@ -53,6 +53,8 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public void SetCurrentMonitor(string monitorName) => currentMonitorName = monitorName;
 
+    public void TrySetAndLoadLocalization(string bcpTag) => LoadLocalization(bcpTag);
+
     public override void SetWindowSize(Windows.Foundation.Size newSize)
     {
         base.SetWindowSize(newSize);

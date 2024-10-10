@@ -12,149 +12,148 @@ using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.Items;
 using WinUISnippingTool.Models.PageParameters;
 
-namespace WinUISnippingTool.ViewModels
+namespace WinUISnippingTool.ViewModels;
+
+internal sealed partial class SettingsWindowViewModel : ViewModelBase
 {
-    internal sealed partial class SettingsWindowViewModel : ViewModelBase
+    private string backButtonName;
+    public string BackButtonName
     {
-        private string backButtonName;
-        public string BackButtonName
+        get => backButtonName;
+        set
         {
-            get => backButtonName;
-            set
+            if (backButtonName != value)
             {
-                if (backButtonName != value)
-                {
-                    backButtonName = value;
-                    NotifyOfPropertyChange();
-                }
+                backButtonName = value;
+                NotifyOfPropertyChange();
             }
         }
+    }
 
-        private string changeLocationButtonName;
-        public string ChangeLocationButtonName
+    private string changeLocationButtonName;
+    public string ChangeLocationButtonName
+    {
+        get => changeLocationButtonName;
+        set
         {
-            get => changeLocationButtonName;
-            set
+            if (changeLocationButtonName != value)
             {
-                if (changeLocationButtonName != value)
-                {
-                    changeLocationButtonName = value;
-                    NotifyOfPropertyChange();
-                }
+                changeLocationButtonName = value;
+                NotifyOfPropertyChange();
             }
         }
+    }
 
 
-        private LanguageKind selectedLanguageKind;
-        public LanguageKind SelectedLanguageKind
+    private LanguageKind selectedLanguageKind;
+    public LanguageKind SelectedLanguageKind
+    {
+        get => selectedLanguageKind;
+        set
         {
-            get => selectedLanguageKind;
-            set
+            if(selectedLanguageKind != value)
             {
-                if(selectedLanguageKind != value)
-                {
-                    selectedLanguageKind = value;
-                    NotifyOfPropertyChange();
-                }
+                selectedLanguageKind = value;
+                NotifyOfPropertyChange();
             }
         }
+    }
 
-        public NotifyOnCompletionCollection<LanguageKind> Languages { get; }
+    public NotifyOnCompletionCollection<LanguageKind> Languages { get; }
 
-        public SettingsWindowViewModel()
+    public SettingsWindowViewModel()
+    {
+        Languages = new();
+        Languages.AddRange(new LanguageKind[]
         {
-            Languages = new();
-            Languages.AddRange(new LanguageKind[]
-            {
-                new(string.Empty, "uk-UA"),
-                new(string.Empty, "en-US")
-            });
-        }
+            new(string.Empty, "uk-UA"),
+            new(string.Empty, "en-US")
+        });
+    }
 
-        private StorageFolder saveImageLocation;
+    private StorageFolder saveImageLocation;
 
-        public StorageFolder SaveImageLocation
+    public StorageFolder SaveImageLocation
+    {
+        get => saveImageLocation;
+        set
         {
-            get => saveImageLocation;
-            set
+            if(saveImageLocation != value)
             {
-                if(saveImageLocation != value)
-                {
-                    saveImageLocation = value;
-                    NotifyOfPropertyChange();
-                }
-            }
-        }
-
-        private StorageFolder saveVideoLocation;
-
-        public StorageFolder SaveVideoLocation
-        {
-            get => saveVideoLocation;
-            set
-            {
-                if(saveVideoLocation != value)
-                {
-                    saveVideoLocation = value;
-                    NotifyOfPropertyChange();
-                }
+                saveImageLocation = value;
+                NotifyOfPropertyChange();
             }
         }
+    }
 
+    private StorageFolder saveVideoLocation;
 
-        public async Task LoadState(SettingsPageParameter parameter)
+    public StorageFolder SaveVideoLocation
+    {
+        get => saveVideoLocation;
+        set
         {
-            LoadLocalization(parameter.BcpTag);
-
-            SelectedLanguageKind = Languages.FirstOrDefault(lang => lang.BcpTag == parameter.BcpTag);
-
-            if(parameter.SaveImageLocation is null)
+            if(saveVideoLocation != value)
             {
-                SaveImageLocation = await FolderExtensions.GetDefaultScreenshotsFolderAsync();
-            }
-            else
-            {
-                SaveImageLocation = parameter.SaveImageLocation;
-            }
-
-            if(parameter.SaveVideoLocation is null)
-            {
-                SaveVideoLocation = FolderExtensions.GetDefaultVideosFolder();
-            }
-            else
-            {
-                SaveVideoLocation = parameter.SaveVideoLocation;
+                saveVideoLocation = value;
+                NotifyOfPropertyChange();
             }
         }
+    }
 
-        [RelayCommand]
-        private async Task PickFolderAsync()
+
+    public async Task LoadStateAsync(SettingsPageParameter parameter)
+    {
+        LoadLocalization(parameter.BcpTag);
+
+        SelectedLanguageKind = Languages.FirstOrDefault(lang => lang.BcpTag == parameter.BcpTag);
+
+        if(parameter.SaveImageLocation is null)
         {
-            var storageFolder = await FilePickerExtensions.ShowFolderPickerAsync();
-
-            if (storageFolder is not null)
-            {
-                SaveImageLocation = storageFolder;
-            }
+            SaveImageLocation = await FolderExtensions.GetDefaultScreenshotsFolderAsync();
+        }
+        else
+        {
+            SaveImageLocation = parameter.SaveImageLocation;
         }
 
-        [RelayCommand]
-        private async Task PickFolderForVideo()
+        if(parameter.SaveVideoLocation is null)
         {
-            var storageFolder = await FilePickerExtensions.ShowFolderPickerAsync();
-
-            if (storageFolder is not null)
-            {
-                SaveVideoLocation = storageFolder;
-            }
+            SaveVideoLocation = await FolderExtensions.GetDefaultVideosFolderAsync();
         }
-
-        protected override void LoadLocalization(string bcpTag)
+        else
         {
-            BackButtonName = ResourceMap.GetValue("BackButton/Text")?.ValueAsString ?? "empty_value";
-            ChangeLocationButtonName = ResourceMap.GetValue("ChangeLocationButton/Text")?.ValueAsString ?? "empty_value";
-            Languages[1].DisplayName = ResourceMap.GetValue("EnglishLangMenuItem/Text")?.ValueAsString ?? "empty_value";
-            Languages[0].DisplayName = ResourceMap.GetValue("UkrainianLangMenuItem/Text")?.ValueAsString ?? "empty_value";
+            SaveVideoLocation = parameter.SaveVideoLocation;
         }
+    }
+
+    [RelayCommand]
+    private async Task PickFolderAsync()
+    {
+        var storageFolder = await FilePickerExtensions.ShowFolderPickerAsync();
+
+        if (storageFolder is not null)
+        {
+            SaveImageLocation = storageFolder;
+        }
+    }
+
+    [RelayCommand]
+    private async Task PickFolderForVideo()
+    {
+        var storageFolder = await FilePickerExtensions.ShowFolderPickerAsync();
+
+        if (storageFolder is not null)
+        {
+            SaveVideoLocation = storageFolder;
+        }
+    }
+
+    protected override void LoadLocalization(string bcpTag)
+    {
+        BackButtonName = ResourceMap.GetValue("BackButton/Text")?.ValueAsString ?? "empty_value";
+        ChangeLocationButtonName = ResourceMap.GetValue("ChangeLocationButton/Text")?.ValueAsString ?? "empty_value";
+        Languages[1].DisplayName = ResourceMap.GetValue("EnglishLangMenuItem/Text")?.ValueAsString ?? "empty_value";
+        Languages[0].DisplayName = ResourceMap.GetValue("UkrainianLangMenuItem/Text")?.ValueAsString ?? "empty_value";
     }
 }

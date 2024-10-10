@@ -13,7 +13,7 @@ namespace WinUISnippingTool.ViewModels;
 
 internal class VideoCaptureWindowViewModel : ViewModelBase
 {
-    private VideoCaptureHelper captureHelper;
+    private readonly VideoCaptureHelper captureHelper;
     private MonitorLocation currentMonitor;
     private RectInt32 videoFrame;
 

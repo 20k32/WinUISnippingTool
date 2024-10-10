@@ -35,7 +35,7 @@ internal sealed partial class MainPage : Page
     private DispatcherTimer timer;
     private OverlappedPresenter appWindowPersenter;
     
-    public bool SizeChanginRequested;
+    public bool SizeChangingRequested;
 
     public MainWindowViewModel ViewModel { get; private set; }
 
@@ -43,81 +43,26 @@ internal sealed partial class MainPage : Page
     {
         this.InitializeComponent();
         NavigationCacheMode = NavigationCacheMode.Enabled;
-        AppNotificationManager.Default.NotificationInvoked += NotificationManager_NotificationInvoked;
-        AppNotificationManager.Default.Register();
-    }
-
-    private void MainPage_Unloaded(object sender, RoutedEventArgs e)
-    {
-        App.MainWindow.Closed -= MainWindow_Closed;
-    }
-
-    private void MainPage_Loaded(object sender, RoutedEventArgs e)
-    {
-        App.MainWindow.Closed += MainWindow_Closed;
-    }
-
-    private void MainWindow_Closed(object sender, WindowEventArgs args)
-    {
-        ViewModel.UnregisterHandlers();
-        AppNotificationManager.Default.NotificationInvoked -= NotificationManager_NotificationInvoked;
-        AppNotificationManager.Default.Unregister();
-    }
-
-    private void NotificationManager_NotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
-    {
-        HandleNotification(args);
-    }
-
-    private void HandleNotification(AppNotificationActivatedEventArgs args)
-    {
-        DispatcherQueue.TryEnqueue(delegate
-        {
-            try
-            {
-                switch (args.Arguments["snapshotStatus"])
-                {
-                    case "snapshotTaken":
-                        {
-                            string uriStr = args.Arguments["snapshotUri"];
-                            var uri = new Uri(uriStr);
-                            var bmpImage = new BitmapImage
-                            {
-                                UriSource = uri,
-                            };
-
-                            var width = int.Parse(args.Arguments["snapshotWidth"]);
-                            var height = int.Parse(args.Arguments["snapshotHeight"]);
-
-                            ViewModel.AddImageFromSource(bmpImage, width, height);
-                            appWindowPersenter.Restore();
-                        }
-                        break;
-                }
-            }
-            catch
-            { }
-        });
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
-        if (e.Parameter is MainPageParameter mainPageParameter)
+        if(e.Parameter is MainPageActivatedParameter pageActivatedParamter)
         {
-            contentLoaded = true;
-            
-            ViewModel = new();
+            PageWidth = pageActivatedParamter.StartSize.Width;
+            PageHeight = pageActivatedParamter.StartSize.Height;
+
+            ViewModel = pageActivatedParamter.ViewModel;
             ViewModel.OnNewImageAdded += PART_Canvas_SizeChanged;
 
-            appWindowPersenter = mainPageParameter.AppWindowPresenter;
-            display = mainPageParameter.CurrentDisplayArea;
+            appWindowPersenter = pageActivatedParamter.AppWindowPresenter;
+            display = pageActivatedParamter.CurrentDisplayArea;
 
             mainGrid.DataContext = ViewModel;
 
-
-            foreach(var monitor in mainPageParameter.Monitors)
+            foreach (var monitor in pageActivatedParamter.Monitors)
             {
                 var monitorLocation = new MonitorLocation(monitor.Bounds, monitor.IsPrimary, monitor.DeviceName, monitor.Handle);
                 ViewModel.AddMonitorLocation(monitorLocation);
@@ -127,13 +72,16 @@ internal sealed partial class MainPage : Page
 
             timer = new()
             {
-                Interval = System.TimeSpan.FromMilliseconds(500),
+                Interval = TimeSpan.FromMilliseconds(500),
             };
+
             timer.Tick += Timer_Tick;
             timer.Start();
+
+            contentLoaded = true;
         }
 
-        if (e.Parameter is SettingsPageParameter settingsPageParameter)
+        else if (e.Parameter is SettingsPageParameter settingsPageParameter)
         {
             ViewModel.TrySetAndLoadLocalizationWrapper(settingsPageParameter.BcpTag);
             FolderExtensions.NewPicturesSavingFolder = settingsPageParameter.SaveImageLocation;
@@ -143,10 +91,10 @@ internal sealed partial class MainPage : Page
 
     private void Timer_Tick(object sender, object e)
     {
-        if (SizeChanginRequested)
+        if (SizeChangingRequested)
         {
             PART_Canvas_SizeChanged();
-            SizeChanginRequested = false;
+            SizeChangingRequested = false;
         }
     }
 
@@ -155,7 +103,7 @@ internal sealed partial class MainPage : Page
         //throw new NotImplementedException();
     }
 
-    private async void myButton_Click(object sender, RoutedEventArgs e)
+    private async void SnippingModeButton_Click(object sender, RoutedEventArgs e)
     {
         appWindowPersenter.Minimize(false);
         await ViewModel.EnterSnippingModeAsync(false);
@@ -217,7 +165,7 @@ internal sealed partial class MainPage : Page
                 }
             }
             Debug.WriteLine($"Page: {args.NewSize.Width} {args.NewSize.Height}");
-            SizeChanginRequested = true;
+            SizeChangingRequested = true;
         }
     }
 
