@@ -11,11 +11,17 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     SizeChanged="Window_SizeChanged"
-    Unloaded="Page_Unloaded">
+    Unloaded="Page_Unloaded"
+    ActualThemeChanged="ThemeChanged"
+    PointerWheelChanged="Page_PointerWheelChanged"
+    KeyUp="Page_KeyUp"
+    KeyDown="Page_KeyDown">
 
     <Grid x:Name="mainGrid"
           KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
+            
+
             <KeyboardAccelerator Key="X" Modifiers="Shift,Control" Invoked="EnterSnippingModeByShortcut"/>
             <KeyboardAccelerator Key="Z" Modifiers="Control" Invoked="GlobalUndoShortcut"/>
             <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="GlobalRedoShortcut"/>
@@ -37,8 +43,6 @@
               Padding="0, 5"
               x:Name="PART_MainPane">
 
-            
-            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -70,6 +74,8 @@
                                          IsPhotoButtonEnabled="False"
                                          IsVideoButtonEnabled="True"
                                          IsPaintListEnabled="True"/>
+
+                <Button Content="Maginfy" Command="{x:Bind ViewModel.MagnifyCommand}"/>
             </StackPanel>
 
             <!-- Redact picture (Middle) pane -->
@@ -82,7 +88,7 @@
                 <Button Style="{StaticResource TransparentButton}"
                         Command="{x:Bind ViewModel.SetSimpleBrushCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
-                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
                     <Button.Content>
                         <FontIcon Glyph="&#xED63;" />
                     </Button.Content>
@@ -106,7 +112,7 @@
                 <Button Style="{StaticResource TransparentButton}"
                         Command="{x:Bind ViewModel.SetMarkerBrushCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
-                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
                     <Button.Content>
                         <FontIcon Glyph="&#xED64;" />
                     </Button.Content>
@@ -130,7 +136,7 @@
                 <Button Style="{StaticResource TransparentButton}"
                         Command="{x:Bind ViewModel.SetEraseBrushCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
-                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
                     <FontIcon Glyph="&#xED60;" />
                 </Button>
 
@@ -138,7 +144,7 @@
                         Content="ClearCanvas"
                         Command="{x:Bind ViewModel.ResetCanvasCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
-                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
                 </Button>
 
                 <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
@@ -148,13 +154,14 @@
 
                 <Button Style="{StaticResource TransparentButton}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
-                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
                         Click="CropButton_Click">
                     <FontIcon Glyph="&#xE7A8;" />
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=True, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
                         Click="CommitCropButton_Click">
                     <FontIcon Glyph="&#xE73E;" />
                 </Button>
@@ -198,7 +205,7 @@
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
-                        IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
                         Click="SaveBmpToClipboard_Click">
                     <FontIcon Glyph="&#xE8C8;" />
                 </Button>

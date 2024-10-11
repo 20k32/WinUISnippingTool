@@ -144,10 +144,13 @@
   <data name="EnglishLangMenuItem.Text" xml:space="preserve">
     <value>English</value>
   </data>
-  <data name="ChangeLocationButton.Text" xml:space="preserve">
-    <value>Change location</value>
+  <data name="ChangePhotosLocationButton.Text" xml:space="preserve">
+    <value>Change photo location</value>
   </data>
   <data name="BackButton.Text" xml:space="preserve">
     <value>Back</value>
+  </data>
+  <data name="ChangeVideosLocationButton.Text" xml:space="preserve">
+    <value>Change video location</value>
   </data>
 </root>

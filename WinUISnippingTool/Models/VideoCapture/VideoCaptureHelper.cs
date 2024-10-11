@@ -67,7 +67,6 @@ internal class VideoCaptureHelper
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
-            Debug.WriteLine(ex);
         }
 
         CurrentVideoFileUri = new($"file:///{currentFile.Path}");

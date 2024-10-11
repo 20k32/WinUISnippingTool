@@ -5,7 +5,6 @@ namespace WinUISnippingTool.Models;
 
 internal sealed class ScaleTransformManager
 {
-    private Size tempScaleCenterCoords;
     private Size transformObject;
     private Size relativeEntity;
     public ScaleTransform TransfromSource { get; private set; }
@@ -29,7 +28,6 @@ internal sealed class ScaleTransformManager
 
     public void SetScaleCenterCoords(Size size)
     {
-        tempScaleCenterCoords = size;
         TransfromSource.CenterX = size.Width / 2;
         TransfromSource.CenterY = size.Height / 2;
     }

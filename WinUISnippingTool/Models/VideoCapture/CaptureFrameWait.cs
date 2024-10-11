@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Windows.Graphics.Capture;
 using Windows.Graphics.DirectX.Direct3D11;
 using Windows.Graphics;
 using Windows.Graphics.DirectX;
 using SharpDX.Direct3D11;
-using SharpDX;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
@@ -138,50 +134,53 @@ internal sealed class CaptureFrameWait : IDisposable
     {
         currentFrame?.Dispose();
         frameEvent.Reset();
+        SurfaceWithInfo result = null;
 
         var signaledEvent = events[WaitHandle.WaitAny(events)];
+
         if (signaledEvent == closedEvent)
         {
             Cleanup();
-            return null;
         }
-
-        var result = new SurfaceWithInfo();
-        result.SystemRelativeTime = currentFrame.SystemRelativeTime;
-
-        using (var multithreadLock = new MultithreadLock(multithread))
-        using (var sourceTexture = Direct3D11Helpers.CreateSharpDXTexture2D(currentFrame.Surface))
+        else
         {
-            var croppedDescription = new Texture2DDescription
+            result = new SurfaceWithInfo();
+            result.SystemRelativeTime = currentFrame.SystemRelativeTime;
+
+            using (var multithreadLock = new MultithreadLock(multithread))
+            using (var sourceTexture = Direct3D11Helpers.CreateSharpDXTexture2D(currentFrame.Surface))
             {
-                Width = currentFrame.Surface.Description.Width,
-                Height = currentFrame.Surface.Description.Height,
-                MipLevels = 1,
-                ArraySize = 1,
-                Format = sourceTexture.Description.Format,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
-                CpuAccessFlags = CpuAccessFlags.None,
-                OptionFlags = ResourceOptionFlags.GenerateMipMaps,
-            };
+                var croppedDescription = new Texture2DDescription
+                {
+                    Width = currentFrame.Surface.Description.Width,
+                    Height = currentFrame.Surface.Description.Height,
+                    MipLevels = 1,
+                    ArraySize = 1,
+                    Format = sourceTexture.Description.Format,
+                    SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
+                    Usage = ResourceUsage.Default,
+                    BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
+                    CpuAccessFlags = CpuAccessFlags.None,
+                    OptionFlags = ResourceOptionFlags.GenerateMipMaps,
+                };
 
-            using (var croppedTexture = new Texture2D(d3dDevice, croppedDescription))
-            {
+                using (var croppedTexture = new Texture2D(d3dDevice, croppedDescription))
+                {
 
-                var region = new ResourceRegion(
-                    frameRect.X,
-                    frameRect.Y,
-                    0,
-                    frameRect.Width + frameRect.X,
-                    frameRect.Height + frameRect.Y,
-                    1);
+                    var region = new ResourceRegion(
+                        frameRect.X,
+                        frameRect.Y,
+                        0,
+                        frameRect.Width + frameRect.X,
+                        frameRect.Height + frameRect.Y,
+                        1);
 
-                d3dDevice.ImmediateContext.CopyResource(blankTexture, croppedTexture);
-                d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, centerFrameCoords.X, centerFrameCoords.Y);
+                    d3dDevice.ImmediateContext.CopyResource(blankTexture, croppedTexture);
+                    d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, centerFrameCoords.X, centerFrameCoords.Y);
 
-                // Create the surface from the cropped texture
-                result.Surface = Direct3D11Helpers.CreateDirect3DSurfaceFromSharpDXTexture(croppedTexture);
+                    // Create the surface from the cropped texture
+                    result.Surface = Direct3D11Helpers.CreateDirect3DSurfaceFromSharpDXTexture(croppedTexture);
+                }
             }
         }
 

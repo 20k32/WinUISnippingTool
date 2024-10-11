@@ -9,6 +9,9 @@ using Windows.UI.WindowManagement;
 using WinUISnippingTool.ViewModels;
 using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+using System.Threading;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,7 +20,7 @@ namespace WinUISnippingTool.Views;
 
 internal sealed partial class VideoCaptureWindow : Window
 {
-    private VideoCaptureWindowViewModel viewModel;
+    private readonly VideoCaptureWindowViewModel viewModel;
     private readonly MonitorLocation currentMonitor;
     private bool exitRequested;
     public bool Exited { get; private set; }
@@ -30,15 +33,30 @@ internal sealed partial class VideoCaptureWindow : Window
         mainPanel.DataContext = viewModel;
         mainPanel.Loaded += MainPanel_Loaded;
         AppWindow.Closing += AppWindow_Closing;
-        exitRequested = false;
         Exited = false;
+        exitRequested = false;
+    }
+
+    private void ExitCore()
+    {
+        DispatcherQueue.TryEnqueue(() => 
+        {
+            Exited = true;
+            viewModel.StopCapture();
+            mainPanel.Loaded -= MainPanel_Loaded;
+            AppWindow.Closing -= AppWindow_Closing;
+        });
     }
 
     private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (!exitRequested) 
+        if (!exitRequested)
         {
             args.Cancel = true;
+        }
+        else
+        {
+            ExitCore();
         }
     }
 
@@ -85,11 +103,13 @@ internal sealed partial class VideoCaptureWindow : Window
 
     private void Button_Click(object sender, RoutedEventArgs e)
     {
-        Exited = true;
         exitRequested = true;
-        viewModel.StopCapture();
-        mainPanel.Loaded -= MainPanel_Loaded;
-        AppWindow.Closing -= AppWindow_Closing;
-        this.Close();
+        ExitCore();
+        DispatcherQueue.TryEnqueue(Close);
+    }
+
+    private void Window_Activated(object sender, WindowActivatedEventArgs args)
+    {
+        Debug.WriteLine($"{DateTime.Now.ToShortTimeString()} Activated");
     }
 }

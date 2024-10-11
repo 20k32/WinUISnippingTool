@@ -16,26 +16,7 @@
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
   </PropertyGroup>
 
-    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
-    </PropertyGroup>
-    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
-    </PropertyGroup>
-    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Release|x86'">
-        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
-    </PropertyGroup>
-    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
-    </PropertyGroup>
-    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">
-        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
-    </PropertyGroup>
-    <PropertyGroup condition="'$(Configuration)|$(Platform)'=='Release|arm64'">
-        <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
-    </PropertyGroup>
-    
-  <ItemGroup>
+    <ItemGroup>
     <None Remove="Resources\Styles\SimpleStyles.xaml" />
     <None Remove="Views\Pages\MainPage.xaml" />
     <None Remove="Views\Pages\Settings.xaml" />
@@ -140,5 +121,6 @@
   -->
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+    <defineconstants>DISABLE_XAML_GENERATED_MAIN</defineconstants>
   </PropertyGroup>
 </Project>

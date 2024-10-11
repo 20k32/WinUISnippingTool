@@ -11,6 +11,10 @@ using WinRT.WinUISnippingToolGenericHelpers;
 using WinUISnippingTool.ViewModels;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Windowing;
+using SharpDX.DXGI;
+using SharpDX.Direct3D;
+using SharpDX.Direct3D11;
+using System.Diagnostics;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -22,8 +26,10 @@ namespace WinUISnippingTool
     /// </summary>
     public sealed partial class App : Application
     {
+        internal static bool IsDirectXSupported { get; private set; }
         internal static MainWindow MainWindow { get; private set; }
         private MainWindowViewModel viewModel;
+
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -103,6 +109,8 @@ namespace WinUISnippingTool
         {
             if (MainWindow == null)
             {
+                CheckForDirectXSupport();
+
                 var monitors = Monitor.All.ToArray();
                 viewModel = new();
                 MainWindow = new();
@@ -151,6 +159,35 @@ namespace WinUISnippingTool
 
                 // And call SetForegroundWindow... requires DLL import above
                 SetForegroundWindow(hwnd);
+            }
+        }
+
+        private void CheckForDirectXSupport()
+        {
+            IsDirectXSupported = false;
+
+            try
+            {
+                using (var factory = new Factory1())
+                {
+                    for (int i = 0; i < factory.Adapters.Length; i++)
+                    {
+                        using (var adapter = factory.Adapters[i])
+                        using (var device = new SharpDX.Direct3D11.Device(adapter, DeviceCreationFlags.None, FeatureLevel.Level_10_0))
+                        {
+                            if (device != null)
+                            {
+                                IsDirectXSupported = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                IsDirectXSupported = false;
             }
         }
     }

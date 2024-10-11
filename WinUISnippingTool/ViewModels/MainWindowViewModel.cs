@@ -40,7 +40,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private readonly List<MonitorLocation> monitorLocations;
     private readonly List<SnipScreenWindow> snipScreenWindows;
 
-    private bool previousImageExists;
     private DrawBase tempBrush;
     private DrawBase drawBrush;
 
@@ -68,10 +67,9 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         transformManager = new();
         CanvasWidth = 100;
         CanvasHeight = 100;
-        previousImageExists = false;
+        
         SelectedSnipKind = SnipShapeKinds.First();
         DrawingColorList = new();
-
 
         DrawingColorList.AddRange(new ColorKind[]
         {
@@ -86,7 +84,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             new("#CC6CE7")
         });
 
-        LoadLocalization("uk-UA");
+        LoadLocalization(CoreConstants.DefaultLocalizationBcp);
 
         MarkerColorList = new();
         MarkerColorList.AddRange(new ColorKind[]
@@ -265,6 +263,16 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         }
     }
 
+    public bool CanShowWindow =>
+        !byShortcut
+            && (SnipControl.CaptureKind == CaptureType.Photo
+                || !snipScreenWindowViewModel.CompleteRendering);
+
+    public bool CanMinimizeWindow => 
+        byShortcut 
+            && (SnipControl.CaptureKind == CaptureType.Photo
+                || !snipScreenWindowViewModel.CompleteRendering);
+
 
     /// <returns>true - image, false - video</returns>
     public bool? IsDrawingElementTypeOfImage()
@@ -387,6 +395,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
 
         IsSnapshotTaken = true;
+        IsImageLoaded = true;
 
         OnNewImageAdded?.Invoke();
     }
@@ -398,6 +407,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         TryAddMediaPlayerToCanvas(videoUri);
 
         IsSnapshotTaken = true;
+        IsImageLoaded = false;
 
         OnNewImageAdded?.Invoke();
     }
@@ -454,29 +464,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         {
             item.Activate();
         }
-    }
-
-    public void AddImage(Image image, int width, int height)
-    {
-        if (previousImageExists)
-        {
-            var existing = (Image)CanvasItems.First(x => x.GetType() == typeof(Image));
-            CanvasItems.Remove(existing);
-            previousImageExists = false;
-        }
-        else
-        {
-            previousImageExists = true;
-        }
-
-        CanvasItems.Add(image);
-        var bitmapImage = ((BitmapImage)image.Source);
-
-        CanvasWidth = width;
-        CanvasHeight = height;
-
-        SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
-        SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
     }
 
     public void SetTransformObjectSize(Size transformObject)
@@ -708,4 +695,32 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     }
 
     #endregion
+
+    #region Is video loaded
+
+    private bool isImageLoaded;
+    public bool IsImageLoaded
+    {
+        get => isImageLoaded;
+        set
+        {
+            if(isImageLoaded != value)
+            {
+                isImageLoaded = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    #endregion
+
+
+    [RelayCommand]
+    private void Magnify()
+    {
+        var newWidth = CanvasWidth + 40;
+        var newHeight = CanvasHeight + 50;
+        var newSize = new Size(newWidth, newHeight);
+        Transform(newSize);
+    }
 }

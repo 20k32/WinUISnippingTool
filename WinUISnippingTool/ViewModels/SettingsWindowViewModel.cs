@@ -30,15 +30,29 @@ internal sealed partial class SettingsWindowViewModel : ViewModelBase
         }
     }
 
-    private string changeLocationButtonName;
-    public string ChangeLocationButtonName
+    private string changePhotoLocationButtonName;
+    public string ChangePhotoLocationButtonName
     {
-        get => changeLocationButtonName;
+        get => changePhotoLocationButtonName;
         set
         {
-            if (changeLocationButtonName != value)
+            if (changePhotoLocationButtonName != value)
             {
-                changeLocationButtonName = value;
+                changePhotoLocationButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string changeVideoLocationButtonName;
+    public string ChangeVideoLocationButtonName
+    {
+        get => changeVideoLocationButtonName;
+        set
+        {
+            if (changeVideoLocationButtonName != value)
+            {
+                changeVideoLocationButtonName = value;
                 NotifyOfPropertyChange();
             }
         }
@@ -152,7 +166,8 @@ internal sealed partial class SettingsWindowViewModel : ViewModelBase
     protected override void LoadLocalization(string bcpTag)
     {
         BackButtonName = ResourceMap.GetValue("BackButton/Text")?.ValueAsString ?? "empty_value";
-        ChangeLocationButtonName = ResourceMap.GetValue("ChangeLocationButton/Text")?.ValueAsString ?? "empty_value";
+        ChangePhotoLocationButtonName = ResourceMap.GetValue("ChangePhotosLocationButton/Text")?.ValueAsString ?? "empty_value";
+        ChangeVideoLocationButtonName = ResourceMap.GetValue("ChangeVideosLocationButton/Text")?.ValueAsString ?? "empty_value";
         Languages[1].DisplayName = ResourceMap.GetValue("EnglishLangMenuItem/Text")?.ValueAsString ?? "empty_value";
         Languages[0].DisplayName = ResourceMap.GetValue("UkrainianLangMenuItem/Text")?.ValueAsString ?? "empty_value";
     }

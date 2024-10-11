@@ -6,17 +6,16 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WinUISnippingTool.Models
+namespace WinUISnippingTool.Models;
+
+internal class ModelBase : INotifyPropertyChanged
 {
-    internal class ModelBase : INotifyPropertyChanged
+    protected ModelBase() { }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
     {
-        protected ModelBase() { }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

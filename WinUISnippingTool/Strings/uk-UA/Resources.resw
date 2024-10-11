@@ -135,8 +135,8 @@
   <data name="BackButton.Text" xml:space="preserve">
     <value>Назад</value>
   </data>
-  <data name="ChangeLocationButton.Text" xml:space="preserve">
-    <value>Обрати місце</value>
+  <data name="ChangePhotosLocationButton.Text" xml:space="preserve">
+    <value>Обрати місце для фото</value>
   </data>
   <data name="Settings.Text" xml:space="preserve">
     <value>Налаштування</value>
@@ -146,5 +146,8 @@
   </data>
   <data name="UkrainianLangMenuItem.Text" xml:space="preserve">
     <value>Україньска</value>
+  </data>
+  <data name="ChangeVideosLocationButton.Text" xml:space="preserve">
+    <value>Обрати місце для відео</value>
   </data>
 </root>

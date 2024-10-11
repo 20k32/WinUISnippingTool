@@ -67,14 +67,8 @@ namespace WinUISnippingTool.Models.Paint
             if (IsDrawing
                 && CalculateDistance(previousPosition, position) > MinRenderDistance)
             {
-                double distanceX = position.X - StartPoint.X;
-                double distanceY = position.Y - StartPoint.Y;
-
-                double scaleX = 1 + (distanceX / 1);
-                double scaleY = 1 + (distanceY / 1); // 1 <- can be presented in settings
-
-                scaleTransform.ScaleX = scaleX;
-                scaleTransform.ScaleY = scaleY;
+                scaleTransform.ScaleX = position.X - StartPoint.X;
+                scaleTransform.ScaleY = position.Y - StartPoint.Y;
 
                 if(StartPoint.X < position.X
                    && StartPoint.Y < position.Y)

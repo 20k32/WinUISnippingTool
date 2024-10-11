@@ -9,6 +9,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Windows.UI;
 using WinRT.Interop;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
@@ -35,16 +36,21 @@ public static class Win32Api
 /// </summary>
 internal sealed partial class MainPage : Page
 {
-    private nint windowHandle;
     private static bool contentLoaded;
-    private DisplayArea display;
+    
+    private nint windowHandle;
+    
     private bool isScreenTinySized;
     private bool isScreenSmallSized;
     private bool isScreenMiddleSized;
-    private Canvas parentCanvas;
+    private bool isCtrPressed;
+
     private double PageWidth;
     private double PageHeight;
+    
+    private Canvas parentCanvas;
     private DispatcherTimer timer;
+    private DisplayArea display;
     
     public bool SizeChangingRequested;
 
@@ -54,6 +60,7 @@ internal sealed partial class MainPage : Page
     {
         this.InitializeComponent();
         NavigationCacheMode = NavigationCacheMode.Enabled;
+        isCtrPressed = false;
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -117,9 +124,13 @@ internal sealed partial class MainPage : Page
 
     private void ViewModel_OnSnippingModeExited(bool byShortcut)
     {
-        if (!byShortcut)
+        if (ViewModel.CanShowWindow)
         {
             Win32Api.ShowWindow(windowHandle, Win32Api.SW_SHOW);
+        }
+        else if (ViewModel.CanMinimizeWindow)
+        {
+            ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize();
         }
     }
 
@@ -139,7 +150,16 @@ internal sealed partial class MainPage : Page
 
     private void ThemeChanged(FrameworkElement sender, object args)
     {
-        //throw new NotImplementedException();
+        var titleBar = App.MainWindow.AppWindow.TitleBar;
+
+        if(sender.ActualTheme == ElementTheme.Dark)
+        {
+            titleBar.ButtonBackgroundColor = Color.FromArgb(0, 0, 0, 0);
+        }
+        else
+        {
+            titleBar.ButtonBackgroundColor = Color.FromArgb(0, 0, 0, 1);
+        }
     }
 
     private async void SnippingModeButton_Click(object sender, RoutedEventArgs e)
@@ -354,5 +374,33 @@ internal sealed partial class MainPage : Page
         ViewModel.OnSnippingModeExited -= ViewModel_OnSnippingModeExited;
         ViewModel.OnVideoModeEntered -= ViewModel_OnVideoModeEntered;
         ViewModel.OnVideoModeExited -= ViewModel_OnVideoModeExited;
+    }
+
+    private void Page_PointerWheelChanged(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if(sender is Canvas canvas
+            && isCtrPressed)
+        {
+            var position = e.GetPositionRelativeToCanvas(canvas);
+
+            var delta = e.GetCurrentPoint(this);
+        }
+        
+    }
+
+    private void Page_KeyUp(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if(e.Key == Windows.System.VirtualKey.Control)
+        {
+            isCtrPressed = false;
+        }
+    }
+
+    private void Page_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Control)
+        {
+            isCtrPressed = true;
+        }
     }
 }

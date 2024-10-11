@@ -29,6 +29,9 @@ namespace WinUISnippingTool.Views.UserControls
 
         public static CaptureType CaptureKind;
 
+        static SnipControl()
+        { }
+
         public SnipControl()
         {
             this.InitializeComponent();
@@ -65,25 +68,22 @@ namespace WinUISnippingTool.Views.UserControls
             get => isPaintListEnabled;
             set
             {
-                if (isPaintListEnabled != value)
+                isPaintListEnabled = value;
+
+                if (isPaintListEnabled)
                 {
-                    isPaintListEnabled = value;
-
-                    if (isPaintListEnabled)
+                    if (tempSelectedSnipKind is not null)
                     {
-                        if(tempSelectedSnipKind is not null)
-                        {
-                            SelectedSnipKind = tempSelectedSnipKind;
-                        }
+                        SelectedSnipKind = tempSelectedSnipKind;
                     }
-                    else
-                    {
-                        tempSelectedSnipKind = SelectedSnipKind;
-                        SelectedSnipKind = SnipKinds.First();
-                    }
-
-                    OnPropertyChanged();
                 }
+                else
+                {
+                    tempSelectedSnipKind = SelectedSnipKind;
+                    SelectedSnipKind = SnipKinds.First();
+                }
+
+                OnPropertyChanged();
             }
         }
 
@@ -98,7 +98,7 @@ namespace WinUISnippingTool.Views.UserControls
         }
 
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanVideoButtonClick))]
         private void VideoButtonClick()
         {
             CaptureKind = CaptureType.Video;
@@ -106,6 +106,9 @@ namespace WinUISnippingTool.Views.UserControls
             IsVideoButtonEnabled = false;
             IsPaintListEnabled = false;
         }
+
+        private bool CanVideoButtonClick() => App.IsDirectXSupported; 
+
 
         public readonly static DependencyProperty SnipKindsProperty = DependencyProperty.Register(
             nameof(SnipKinds),

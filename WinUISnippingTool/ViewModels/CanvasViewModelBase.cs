@@ -13,7 +13,7 @@ namespace WinUISnippingTool.ViewModels;
 
 internal abstract class CanvasViewModelBase : ViewModelBase
 {
-    protected Size defaultWindowSize = new(500, 500);
+    protected Size DefaultWindowSize = new(500, 500);
     public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; protected set; }
 
     protected CanvasViewModelBase()
@@ -31,10 +31,7 @@ internal abstract class CanvasViewModelBase : ViewModelBase
 
     protected override void LoadLocalization(string bcpTag)
     {
-        if (Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride != bcpTag)
-        {
-            Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = bcpTag;
-        }
+        Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = bcpTag;
 
         SnipShapeKinds[0].Name = ResourceMap.GetValue("RectangleAreaName/Text")?.ValueAsString ?? "emtpy_value";
         SnipShapeKinds[1].Name = ResourceMap.GetValue("WindowAreaName/Text")?.ValueAsString ?? "emtpy_value";
@@ -67,7 +64,7 @@ internal abstract class CanvasViewModelBase : ViewModelBase
 
     public virtual void SetWindowSize(Size newSize)
     {
-        defaultWindowSize = newSize;
+        DefaultWindowSize = newSize;
     }
 
     private double canvasWidth;

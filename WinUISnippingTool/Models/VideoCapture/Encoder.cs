@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Graphics.Capture;
@@ -11,8 +8,6 @@ using Windows.Media.Core;
 using Windows.Media.MediaProperties;
 using Windows.Media.Transcoding;
 using Windows.Storage.Streams;
-using Microsoft.UI.Composition;
-using System.Linq.Expressions;
 using Windows.Graphics;
 
 namespace WinUISnippingTool.Models.VideoCapture;
@@ -87,18 +82,17 @@ internal sealed class Encoder : IDisposable
 
     public void Dispose()
     {
-        if (closed)
+        if (!closed)
         {
-            return;
-        }
-        closed = true;
+            closed = true;
 
-        if (!isRecording)
-        {
-            DisposeInternal();
-        }
+            if (!isRecording)
+            {
+                DisposeInternal();
+            }
 
-        isRecording = false;
+            isRecording = false;
+        }
     }
 
     private void DisposeInternal()
@@ -108,21 +102,17 @@ internal sealed class Encoder : IDisposable
 
     private void CreateMediaObjects()
     {
-        // Create our encoding profile based on the size of the item
         int width = captureItem.Size.Width;
         int height = captureItem.Size.Height;
 
-        // Describe our input: uncompressed BGRA8 buffers
         var videoProperties = VideoEncodingProperties.CreateUncompressed(MediaEncodingSubtypes.Bgra8, (uint)width, (uint)height);
         videoDescriptor = new VideoStreamDescriptor(videoProperties);
 
-        // Create our MediaStreamSource
         mediaStreamSource = new MediaStreamSource(videoDescriptor);
         mediaStreamSource.BufferTime = TimeSpan.FromSeconds(0);
         mediaStreamSource.Starting += OnMediaStreamSourceStarting;
         mediaStreamSource.SampleRequested += OnMediaStreamSourceSampleRequested;
 
-        // Create our transcoder
         transcoder = new MediaTranscoder();
         transcoder.HardwareAccelerationEnabled = true;
     }
@@ -139,13 +129,14 @@ internal sealed class Encoder : IDisposable
                     {
                         args.Request.Sample = null;
                         DisposeInternal();
-                        return;
                     }
+                    else
+                    {
+                        var timeStamp = frame.SystemRelativeTime;
 
-                    var timeStamp = frame.SystemRelativeTime;
-
-                    var sample = MediaStreamSample.CreateFromDirect3D11Surface(frame.Surface, timeStamp);
-                    args.Request.Sample = sample;
+                        var sample = MediaStreamSample.CreateFromDirect3D11Surface(frame.Surface, timeStamp);
+                        args.Request.Sample = sample;
+                    }
                 }
             }
             catch (Exception e)

@@ -14,5 +14,6 @@ namespace WinUISnippingTool.Models
         public const int DefaultBitrate = 10_000_000;
         public const int DefaultFramerate = 60;
         public const int DefaultVideoPlayerWidth = 600;
+        public const string DefaultLocalizationBcp = "uk-UA";
     }
 }

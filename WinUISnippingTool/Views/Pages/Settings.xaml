@@ -26,7 +26,7 @@
         <StackPanel Orientation="Horizontal"
                     Spacing="3">
             
-            <Button Content="{x:Bind ViewModel.ChangeLocationButtonName, Mode=OneWay}"
+            <Button Content="{x:Bind ViewModel.ChangePhotoLocationButtonName, Mode=OneWay}"
                 Command="{x:Bind ViewModel.PickFolderCommand}"/>
             <TextBlock Text="{x:Bind ViewModel.SaveImageLocation.Path, Mode=OneWay}"
                    TextWrapping="Wrap"/>
@@ -35,7 +35,7 @@
 
         <StackPanel Orientation="Horizontal"
                     Spacing="3">
-            <Button Content="{x:Bind ViewModel.ChangeLocationButtonName, Mode=OneWay}"
+            <Button Content="{x:Bind ViewModel.ChangeVideoLocationButtonName, Mode=OneWay}"
                     Command="{x:Bind ViewModel.PickFolderForVideoCommand}"/>
 
             <TextBlock Text="{x:Bind ViewModel.SaveVideoLocation.Path, Mode=OneWay}"
