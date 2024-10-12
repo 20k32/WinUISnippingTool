@@ -46,8 +46,10 @@
 
                 <userControl:SnipControl SnipKinds="{Binding SnipShapeKinds}"
                                      SelectedSnipKind="{Binding SelectedSnipKind, Mode=TwoWay}"/>
-                <Button Content="Exit"
-                    Click="ExitButton_Click"/>
+                
+                <Button Click="ExitButton_Click">
+                    <FontIcon Glyph="&#xE8BB;" />
+                </Button>
             </StackPanel>
         </Border>
 

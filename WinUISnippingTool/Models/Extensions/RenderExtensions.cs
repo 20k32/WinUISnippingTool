@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
+using WinUISnippingTool.Models.MonitorInfo;
 
 namespace WinUISnippingTool.Models.Extensions;
 
@@ -52,8 +53,8 @@ internal static class RenderExtensions
         var newHeight = height * minScale;
         var newWidth = width * minScale;
 
-        CanvasDevice device = CanvasDevice.GetSharedDevice();
-        CanvasRenderTarget renderTarget = new CanvasRenderTarget(device, (int)newWidth, (int)newHeight, 96);
+        var device = CanvasDevice.GetSharedDevice();
+        var renderTarget = new CanvasRenderTarget(device, (int)newWidth, (int)newHeight, 96);
 
         using (var drawingSession = renderTarget.CreateDrawingSession())
         {

@@ -8,7 +8,7 @@ using Windows.Graphics;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Gdi;
 
-namespace WinUISnippingTool.Models;
+namespace WinUISnippingTool.Models.MonitorInfo;
 
 internal readonly struct MonitorLocation
 {

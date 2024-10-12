@@ -17,6 +17,7 @@ using WinRT;
 using WinRT.Interop;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
+using WinUISnippingTool.Models.MonitorInfo;
 using WinUISnippingTool.Models.PageParameters;
 using WinUISnippingTool.ViewModels;
 using WinUISnippingTool.Views.UserControls;
@@ -159,6 +160,7 @@ internal sealed partial class MainPage : Page
 
     private async void SnippingModeButton_Click(object sender, RoutedEventArgs e)
     {
+        Debug.WriteLine("Entered");
         await ViewModel.EnterSnippingModeAsync(false);
     }
 
@@ -181,7 +183,7 @@ internal sealed partial class MainPage : Page
                 isScreenMiddleSized = true;
             }
             else if (!isScreenSmallSized
-                     && args.NewSize.Width < CoreConstants.MinMediumWidht)
+                     && args.NewSize.Width < CoreConstants.MinMediumWidth)
             {
                 PART_MainPane.Children.Remove(PART_RedactPicturePane);
                 PART_SubPane.Children.Add(PART_RedactPicturePane);
@@ -203,7 +205,7 @@ internal sealed partial class MainPage : Page
                     isScreenMiddleSized = false;
                 }
                 else if (isScreenSmallSized
-                    && args.NewSize.Width > CoreConstants.MinMediumWidht)
+                    && args.NewSize.Width > CoreConstants.MinMediumWidth)
                 {
                     PART_SubPane.Children.Remove(PART_RedactPicturePane);
                     PART_MainPane.Children.Add(PART_RedactPicturePane);

@@ -18,6 +18,7 @@ using Windows.Graphics.Imaging;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.Items;
+using WinUISnippingTool.Models.MonitorInfo;
 using WinUISnippingTool.ViewModels;
 using WinUISnippingTool.Views.UserControls;
 
@@ -51,10 +52,10 @@ namespace WinUISnippingTool.Views
             ViewModel.SetCurrentMonitor(location.DeviceName);
             PART_Canvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
-            var softwareBitmap = await DispatcherQueue.EnqueueAsync(() => ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
+            var softwareBitmap = await ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
                 location.StartPoint,
                 System.Drawing.Point.Empty,
-                location.MonitorSize));
+                location.MonitorSize);
 
             var softwareBitmapSource = new SoftwareBitmapSource();
             await softwareBitmapSource.SetBitmapAsync(softwareBitmap);

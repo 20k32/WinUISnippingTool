@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics;
-using WinUISnippingTool.Models;
+using WinUISnippingTool.Models.MonitorInfo;
 using WinUISnippingTool.Models.VideoCapture;
 
 namespace WinUISnippingTool.ViewModels;

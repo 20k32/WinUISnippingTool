@@ -29,6 +29,7 @@ using System.Diagnostics;
 using Microsoft.UI.Input;
 using System.ComponentModel.DataAnnotations;
 using Windows.Security.Cryptography.Certificates;
+using WinUISnippingTool.Models.MonitorInfo;
 namespace WinUISnippingTool.ViewModels;
 
 

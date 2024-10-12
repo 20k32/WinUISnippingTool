@@ -18,8 +18,7 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Spacing="5"
-                x:Name="mainPanel"
-                Background="Transparent">
+                x:Name="mainPanel">
 
             <userControl:VideoCaptureControl TimeString="{Binding TimeString}"/>
             <Button Content="Stop" 

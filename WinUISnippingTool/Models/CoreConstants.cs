@@ -9,7 +9,7 @@ namespace WinUISnippingTool.Models
     internal static class CoreConstants
     {
         public const int MinLargeWidth = 1154;
-        public const int MinMediumWidht = 954;
+        public const int MinMediumWidth = 954;
         public const int MinSmallWidth = 754;
 
         public const int DefaultBitrate = 10_000_000;
@@ -21,13 +21,12 @@ namespace WinUISnippingTool.Models
         public const string DefaultLocalizationBcp = "uk-UA";
 
         public const double MinScaleCoeff = 0.1;
-        public const double MaxScaleCoeff = 2d;
+        public const double MaxScaleCoeff = 2;
         public const double ScaleFactor = 1;
         public const double ScaleStep = MinScaleCoeff;
 
         public const double BottomPanelHeight = 32;
         public const double MarginLeftRight = 32;
         public const double MarginTopBottom = MarginLeftRight + BottomPanelHeight;
-
     }
 }

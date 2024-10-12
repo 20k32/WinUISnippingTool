@@ -17,6 +17,7 @@ using WinUISnippingTool.Views.UserControls;
 using Windows.Graphics;
 using Microsoft.UI.Xaml.Controls;
 using CommunityToolkit.WinUI;
+using WinUISnippingTool.Models.MonitorInfo;
 
 
 namespace WinUISnippingTool.ViewModels;
@@ -73,7 +74,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public SnipScreenWindowViewModel() : base()
     {
-        LoadLocalization("uk-Ua");
+        LoadLocalization(CoreConstants.DefaultLocalizationBcp);
         IsOverlayVisible = true;
         shapesDictionary = new();
         imagesDictionary = new();

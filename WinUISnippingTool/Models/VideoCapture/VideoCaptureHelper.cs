@@ -7,6 +7,7 @@ using Windows.Graphics.DirectX.Direct3D11;
 using Windows.Storage;
 using Windows.System;
 using WinUISnippingTool.Models.Extensions;
+using WinUISnippingTool.Models.MonitorInfo;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 

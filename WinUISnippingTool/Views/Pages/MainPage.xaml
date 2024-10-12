@@ -134,10 +134,10 @@
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
-                        Content="ClearCanvas"
                         Command="{x:Bind ViewModel.ResetCanvasCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
+                    <FontIcon Glyph="&#xED62;" />
                 </Button>
 
                 <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
