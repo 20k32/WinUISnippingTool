@@ -26,6 +26,9 @@ using Windows.Media.Core;
 using Microsoft.UI;
 using Windows.Storage;
 using System.Diagnostics;
+using Microsoft.UI.Input;
+using System.ComponentModel.DataAnnotations;
+using Windows.Security.Cryptography.Certificates;
 namespace WinUISnippingTool.ViewModels;
 
 
@@ -39,6 +42,11 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     private readonly ScaleTransformManager transformManager;
     private readonly List<MonitorLocation> monitorLocations;
     private readonly List<SnipScreenWindow> snipScreenWindows;
+    private Size? actualSize;
+
+    private double scaleFactor;
+    private double tempScaleFactor;
+    private double scaleStep;
 
     private DrawBase tempBrush;
     private DrawBase drawBrush;
@@ -67,7 +75,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         transformManager = new();
         CanvasWidth = 100;
         CanvasHeight = 100;
-        
+
         SelectedSnipKind = SnipShapeKinds.First();
         DrawingColorList = new();
 
@@ -103,6 +111,15 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         IsSnapshotTaken = false;
 
         byShortcut = false;
+
+        ResetScaleValues();
+    }
+
+    public void ResetScaleValues()
+    {
+        scaleFactor = CoreConstants.ScaleFactor;
+        tempScaleFactor = scaleFactor;
+        scaleStep = CoreConstants.ScaleStep;
     }
 
     public void UnregisterHandlers()
@@ -153,6 +170,41 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     public void TrySetAndLoadLocalizationWrapper(string bcpTag) => LoadLocalization(bcpTag);
 
+    public bool CanShowWindow =>
+        !byShortcut
+            && (SnipControl.CaptureKind == CaptureType.Photo
+                || !snipScreenWindowViewModel.CompleteRendering);
+
+    public bool CanMinimizeWindow =>
+        byShortcut
+            && (SnipControl.CaptureKind == CaptureType.Photo
+                || !snipScreenWindowViewModel.CompleteRendering);
+
+
+    /// <returns>true - image, false - video</returns>
+    public bool? IsDrawingElementTypeOfImage()
+    {
+        bool? result = null;
+
+        if (CanvasItems.Count > 0)
+        {
+            if (CanvasItems[0] is Image)
+            {
+                result = true;
+            }
+            else if (CanvasItems[0] is MediaPlayerElement)
+            {
+                result = false;
+            }
+        }
+
+        return result;
+    }
+
+    public ScaleTransform TransformSource => transformManager.TransfromSource;
+
+    #region Drawing
+
     public void OnPointerPressed(Point value) => drawBrush?.OnPointerPressed(value);
 
     public void OnPointerMoved(Point value)
@@ -178,14 +230,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             }
             GlobalUndoCommand.NotifyCanExecuteChanged();
         }
-    }
-
-    public Size GetActualImageSize() => transformManager.ActualSize;
-
-    [RelayCommand]
-    private void SetEraseBrush()
-    {
-        drawBrush = eraseBrush;
     }
 
     [RelayCommand(CanExecute = nameof(CanUndo))]
@@ -217,6 +261,21 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     private bool CanRedo() => drawBrush is not null && drawBrush.CanRedo();
 
+    private void ClearCanvasCore()
+    {
+        if (drawBrush is not null)
+        {
+            drawBrush.Clear();
+            GlobalUndoCommand.NotifyCanExecuteChanged();
+            GlobalRedoCommand.NotifyCanExecuteChanged();
+        }
+        else
+        {
+            var array = CanvasItems.Skip(1).ToArray(); // 1st element is image or mediaplayer
+            CanvasItems.RemoveRange(array);
+        }
+    }
+
     [RelayCommand]
     private void SetSimpleBrush()
     {
@@ -234,6 +293,16 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     {
         ClearCanvasCore();
     }
+
+    [RelayCommand]
+    private void SetEraseBrush()
+    {
+        drawBrush = eraseBrush;
+    }
+
+    #endregion
+
+    #region Save image/video
 
     public async Task SaveVideoAsync()
     {
@@ -263,37 +332,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         }
     }
 
-    public bool CanShowWindow =>
-        !byShortcut
-            && (SnipControl.CaptureKind == CaptureType.Photo
-                || !snipScreenWindowViewModel.CompleteRendering);
-
-    public bool CanMinimizeWindow => 
-        byShortcut 
-            && (SnipControl.CaptureKind == CaptureType.Photo
-                || !snipScreenWindowViewModel.CompleteRendering);
-
-
-    /// <returns>true - image, false - video</returns>
-    public bool? IsDrawingElementTypeOfImage()
-    {
-        bool? result = null;
-
-        if(CanvasItems.Count > 0)
-        {
-            if (CanvasItems[0] is Image)
-            {
-                result = true;
-            }
-            else if (CanvasItems[0] is MediaPlayerElement)
-            {
-                result = false;
-            }
-        }
-
-        return result;
-    }
-
     public async Task SaveBmpToClipboardAsync(RenderTargetBitmap renderBitmap)
     {
         var pixelBuffer = await renderBitmap.GetPixelsAsync();
@@ -304,113 +342,9 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             pixelBuffer.ToArray());
     }
 
-    private void TryAddImageToCanvas(ImageSource source, double width, double height)
-    {
-        if (CanvasItems.Count > 0 && CanvasItems[0] is Image image)
-        {
-            image.Source = source;
+    #endregion
 
-            if(image.Clip is not null)
-            {
-                image.Clip.Rect = new Rect(0, 0, width, height);
-            }
-        }
-        else
-        {
-            CanvasItems.Clear();
-            CanvasItems.Add(new Image { Source = source });
-        }
-    }
-
-    private void TryAddMediaPlayerToCanvas(Uri source)
-    {
-        var mediaSource = MediaSource.CreateFromUri(source);
-        MediaPlayerElement mediaPlayer;
-
-        if (CanvasItems.Count > 0 && CanvasItems[0]
-            is MediaPlayerElement existingPlayer)
-        {
-            mediaPlayer = existingPlayer;
-        }
-        else
-        {
-            mediaPlayer = new MediaPlayerElement();
-            mediaPlayer.AreTransportControlsEnabled = true;
-            mediaPlayer.TransportControls.IsCompact = true;
-            mediaPlayer.TransportControls.Width = 400;
-            mediaPlayer.TransportControls.IsVolumeEnabled = false;
-            mediaPlayer.TransportControls.IsVolumeButtonVisible = false;
-            mediaPlayer.Source = mediaSource;
-
-            mediaPlayer.Stretch = Stretch.UniformToFill;
-
-            mediaPlayer.HorizontalContentAlignment = HorizontalAlignment.Center;
-            mediaPlayer.VerticalContentAlignment = VerticalAlignment.Center;
-
-        }
-
-        mediaPlayer.Source = mediaSource;
-        var tempWidth = snipScreenWindowViewModel.VideoFramePosition.Width;
-        
-        mediaPlayer.Width = Math.Max(CoreConstants.DefaultVideoPlayerWidth, tempWidth);
-        mediaPlayer.Height = snipScreenWindowViewModel.VideoFramePosition.Height;
-
-        CanvasItems.Clear();
-        CanvasItems.Add(mediaPlayer);
-
-        CanvasWidth = mediaPlayer.Width;
-        CanvasHeight = mediaPlayer.Height;
-
-        SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
-        SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
-    }
-
-    private void ClearCanvasCore()
-    {
-        if (drawBrush is not null)
-        {
-            drawBrush.Clear();
-            GlobalUndoCommand.NotifyCanExecuteChanged();
-            GlobalRedoCommand.NotifyCanExecuteChanged();
-        }
-        else
-        {
-            var array = CanvasItems.Skip(1).ToArray(); // 1st element is image or mediaplayer
-            CanvasItems.RemoveRange(array);
-        }
-    }
-
-    public ScaleTransform TransformSource => transformManager.TransfromSource;
-
-    public void AddImageFromSource(ImageSource source, double width, double height)
-    {
-        ClearCanvasCore();
-
-        TryAddImageToCanvas(source, width, height);
-
-        CanvasWidth = width;
-        CanvasHeight = height;
-
-        SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
-        SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
-
-        IsSnapshotTaken = true;
-        IsImageLoaded = true;
-
-        OnNewImageAdded?.Invoke();
-    }
-
-    private void AddMediaPlayer(Uri videoUri)
-    {
-        ClearCanvasCore();
-
-        TryAddMediaPlayerToCanvas(videoUri);
-
-        IsSnapshotTaken = true;
-        IsImageLoaded = false;
-
-        OnNewImageAdded?.Invoke();
-    }
+    #region Capture modes
 
     private async Task ShowVideoCaptureScreenAsync()
     {
@@ -437,16 +371,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         }
     }
 
-    public void AddImageCore()
-    {
-        if (!snipScreenWindowViewModel.IsShortcutResponce)
-        {
-            AddImageFromSource(snipScreenWindowViewModel.CurrentShapeBmp,
-                snipScreenWindowViewModel.ResultFigureActualWidth,
-                snipScreenWindowViewModel.ResultFigureActualHeight);
-        }
-    }
-
     public async Task EnterSnippingModeAsync(bool byShortcut)
     {
         this.byShortcut = byShortcut;
@@ -466,6 +390,118 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         }
     }
 
+    #endregion
+
+    #region Video adding
+
+    private void AddMediaPlayer(Uri videoUri)
+    {
+        ClearCanvasCore();
+
+        TryAddMediaPlayerToCanvas(videoUri);
+
+        IsSnapshotTaken = true;
+        IsImageLoaded = false;
+
+        OnNewImageAdded?.Invoke();
+    }
+
+    private void TryAddMediaPlayerToCanvas(Uri source)
+    {
+        var mediaSource = MediaSource.CreateFromUri(source);
+        MediaPlayerElement mediaPlayer;
+
+        if (CanvasItems.Count > 0 && CanvasItems[0]
+            is MediaPlayerElement existingPlayer)
+        {
+            mediaPlayer = existingPlayer;
+        }
+        else
+        {
+            mediaPlayer = new MediaPlayerElement();
+            mediaPlayer.AreTransportControlsEnabled = true;
+            mediaPlayer.TransportControls.IsCompact = true;
+            mediaPlayer.TransportControls.IsVolumeEnabled = false;
+            mediaPlayer.TransportControls.IsVolumeButtonVisible = false;
+            mediaPlayer.Source = mediaSource;
+
+            mediaPlayer.Stretch = Stretch.UniformToFill;
+
+            mediaPlayer.HorizontalContentAlignment = HorizontalAlignment.Center;
+            mediaPlayer.VerticalContentAlignment = VerticalAlignment.Center;
+
+        }
+
+        mediaPlayer.Source = mediaSource;
+        var tempWidth = snipScreenWindowViewModel.VideoFramePosition.Width;
+
+        mediaPlayer.Width = Math.Max(CoreConstants.MinVideoPlayerWidth, tempWidth);
+        mediaPlayer.Height = Math.Max(CoreConstants.MinVideoPlayerHeight, snipScreenWindowViewModel.VideoFramePosition.Height);
+
+        CanvasItems.Clear();
+        CanvasItems.Add(mediaPlayer);
+
+        CanvasWidth = mediaPlayer.Width;
+        CanvasHeight = mediaPlayer.Height;
+
+        transformManager.SetTransformObject(new(CanvasWidth, CanvasHeight));
+        transformManager.SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+    }
+
+    #endregion
+
+    #region Image adding
+
+    private void TryAddImageToCanvas(ImageSource source, double width, double height)
+    {
+        if (CanvasItems.Count > 0 && CanvasItems[0] is Image image)
+        {
+            image.Source = source;
+
+            if (image.Clip is not null)
+            {
+                image.Clip.Rect = new Rect(0, 0, width, height);
+            }
+        }
+        else
+        {
+            var newImage = new Image { Source = source };
+            CanvasItems.Clear();
+            CanvasItems.Add(newImage);
+        }
+    }
+
+    public void AddImageFromSource(ImageSource source, double width, double height)
+    {
+        ClearCanvasCore();
+
+        TryAddImageToCanvas(source, width, height);
+
+        CanvasWidth = width;
+        CanvasHeight = height;
+
+        SetTransformObjectSize(new(CanvasWidth, CanvasHeight));
+        SetScaleCenterCoords(new(CanvasWidth, CanvasHeight));
+
+        IsSnapshotTaken = true;
+        IsImageLoaded = true;
+
+        OnNewImageAdded?.Invoke();
+    }
+
+    public void AddImageCore()
+    {
+        if (!snipScreenWindowViewModel.IsShortcutResponce)
+        {
+            AddImageFromSource(snipScreenWindowViewModel.CurrentShapeBmp,
+                snipScreenWindowViewModel.ResultFigureActualWidth,
+                snipScreenWindowViewModel.ResultFigureActualHeight);
+        }
+    }
+
+    #endregion
+
+    #region Transforms
     public void SetTransformObjectSize(Size transformObject)
         => transformManager.SetTransformObject(transformObject);
 
@@ -478,6 +514,53 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     public void Transform(Size relativeTo) => transformManager.Transform(relativeTo);
     public void Transform() => transformManager.Transform();
     public void ResetTransform() => transformManager.ResetTransform();
+
+    public void ScaleCanvas(int delta)
+    {
+        var tempDifference = (tempScaleFactor - scaleStep);
+        var tempMultiplication = (tempScaleFactor + scaleStep);
+
+        double newWidth = default;
+        double newHeight = default;
+
+        if (delta < 0 && tempDifference >= CoreConstants.MinScaleCoeff)
+        {
+            newWidth = tempDifference * CanvasWidth;
+            newHeight = tempDifference * CanvasHeight;
+
+            tempScaleFactor = tempDifference;
+
+            var newSize = new Size(newWidth, newHeight);
+            transformManager.Transform(newSize);
+        }
+        else if (delta > 0 && tempMultiplication <= CoreConstants.MaxScaleCoeff)
+        {
+            newWidth = tempMultiplication * CanvasWidth;
+            newHeight = tempMultiplication * CanvasHeight;
+
+            tempScaleFactor = tempMultiplication;
+
+            var newSize = new Size(newWidth, newHeight);
+            transformManager.Transform(newSize);
+        }
+    }
+
+    public void RollbackTransform(Size size)
+    {
+        if (actualSize is not null)
+        {
+            ResetScaleValues();
+
+            transformManager.SetScaleCenterCoords(actualSize.Value);
+            transformManager.SetTransformObject(actualSize.Value);
+
+            transformManager.Transform(size);
+
+            actualSize = null;
+        }
+    }
+
+    #endregion
 
     #region Take photo button name
 
@@ -541,7 +624,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     #endregion
 
-    #region Drawing troke thickness
+    #region Drawing stroke thickness
 
     private double drawingStrokeThickness;
 
@@ -704,7 +787,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         get => isImageLoaded;
         set
         {
-            if(isImageLoaded != value)
+            if (isImageLoaded != value)
             {
                 isImageLoaded = value;
                 NotifyOfPropertyChange();
@@ -713,14 +796,4 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     }
 
     #endregion
-
-
-    [RelayCommand]
-    private void Magnify()
-    {
-        var newWidth = CanvasWidth + 40;
-        var newHeight = CanvasHeight + 50;
-        var newSize = new Size(newWidth, newHeight);
-        Transform(newSize);
-    }
 }

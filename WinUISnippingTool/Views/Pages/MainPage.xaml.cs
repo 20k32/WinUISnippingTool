@@ -1,4 +1,6 @@
+using CommunityToolkit.WinUI;
 using Microsoft.Graphics.Canvas;
+using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -9,7 +11,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Windows.Foundation;
 using Windows.UI;
+using WinRT;
 using WinRT.Interop;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
@@ -21,15 +25,6 @@ using WinUISnippingTool.Views.UserControls;
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace WinUISnippingTool.Views.Pages;
-
-public static class Win32Api
-{
-    [DllImport("user32.dll", SetLastError = true)]
-    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-    public const int SW_HIDE = 0;
-    public const int SW_SHOW = 5;
-}
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.
@@ -43,7 +38,8 @@ internal sealed partial class MainPage : Page
     private bool isScreenTinySized;
     private bool isScreenSmallSized;
     private bool isScreenMiddleSized;
-    private bool isCtrPressed;
+
+    private bool scaleRequested;
 
     private double PageWidth;
     private double PageHeight;
@@ -60,7 +56,6 @@ internal sealed partial class MainPage : Page
     {
         this.InitializeComponent();
         NavigationCacheMode = NavigationCacheMode.Enabled;
-        isCtrPressed = false;
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -114,19 +109,19 @@ internal sealed partial class MainPage : Page
 
     private void ViewModel_OnVideoModeExited(bool _)
     {
-        Win32Api.ShowWindow(windowHandle, Win32Api.SW_SHOW);
+        Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwShow);
     }
 
     private void ViewModel_OnVideoModeEntered()
     {
-        Win32Api.ShowWindow(windowHandle, Win32Api.SW_HIDE);
+        Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwHide);
     }
 
     private void ViewModel_OnSnippingModeExited(bool byShortcut)
     {
         if (ViewModel.CanShowWindow)
         {
-            Win32Api.ShowWindow(windowHandle, Win32Api.SW_SHOW);
+            Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwShow);
         }
         else if (ViewModel.CanMinimizeWindow)
         {
@@ -136,7 +131,7 @@ internal sealed partial class MainPage : Page
 
     private void ViewModel_OnSnippingModeEntered()
     {
-        Win32Api.ShowWindow(windowHandle, Win32Api.SW_HIDE);
+        Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwHide);
     }
 
     private void Timer_Tick(object sender, object e)
@@ -176,7 +171,7 @@ internal sealed partial class MainPage : Page
 
             if (isScreenSmallSized)
             {
-                PageHeight -= 32;
+                PageHeight -= CoreConstants.BottomPanelHeight;
             }
 
             if (!isScreenMiddleSized
@@ -227,21 +222,19 @@ internal sealed partial class MainPage : Page
         }
     }
 
-    public void TransformImage()
-    {
-        if (PART_Border.ActualWidth <= PART_Canvas.Width
-                   || PART_Border.ActualHeight <= PART_Canvas.Height)
-        {
-            ViewModel.Transform(new(PART_Border.ActualWidth, PART_Border.ActualHeight));
-        }
-    }
-
     private void PART_Canvas_SizeChanged()
     {
-        if (PageWidth + 32 <= ViewModel.CanvasWidth
-            || PageHeight - 64 <= ViewModel.CanvasHeight)
+        if (PageWidth + CoreConstants.MarginLeftRight <= ViewModel.CanvasWidth
+            || PageHeight - CoreConstants.MarginTopBottom <= ViewModel.CanvasHeight)
         {
-            ViewModel.Transform(new(PageWidth - 32, PageHeight - 64));
+            var currentSize = new Size(PageWidth - CoreConstants.MarginLeftRight, PageHeight - CoreConstants.MarginTopBottom);
+            ViewModel.Transform(currentSize);
+
+            if (scaleRequested)
+            {
+                ViewModel.ResetScaleValues();
+                scaleRequested = false;
+            }
         }
         else
         {
@@ -257,15 +250,21 @@ internal sealed partial class MainPage : Page
 
     private void GlobalUndoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
     {
-        ViewModel.GlobalUndoCommand?.Execute(null);
+        if (ViewModel.GlobalUndoCommand.CanExecute(null))
+        {
+            ViewModel.GlobalUndoCommand.Execute(null);
+        }
     }
 
     private void GlobalRedoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
     {
-        ViewModel.GlobalRedoCommand?.Execute(null);
+        if (ViewModel.GlobalRedoCommand.CanExecute(null))
+        {
+            ViewModel.GlobalRedoCommand.Execute(null);
+        }
     }
 
-    private async Task<RenderTargetBitmap> SaveBmpCoreAsync()
+    private async Task<RenderTargetBitmap> RenderBmpCoreAsync()
     {
         var renderBitmap = new RenderTargetBitmap();
         await renderBitmap.RenderAsync(PART_Canvas, (int)ViewModel.CanvasWidth, (int)ViewModel.CanvasHeight);
@@ -278,9 +277,10 @@ internal sealed partial class MainPage : Page
 
         var isImageType = ViewModel.IsDrawingElementTypeOfImage();
 
-        if(isImageType.Value is true)
+        if(isImageType is not null 
+           && isImageType.Value is true)
         {
-            var renderBitmap = await SaveBmpCoreAsync();
+            var renderBitmap = await RenderBmpCoreAsync();
             await ViewModel.SaveBmpToClipboardAsync(renderBitmap);
         }
     }
@@ -293,7 +293,7 @@ internal sealed partial class MainPage : Page
         {
             if (isImageType.Value is true)
             {
-                var renderBitmap = await SaveBmpCoreAsync();
+                var renderBitmap = await RenderBmpCoreAsync();
                 await ViewModel.SaveBitmapAsync(renderBitmap);
             }
             else if (isImageType.Value is false)
@@ -311,7 +311,20 @@ internal sealed partial class MainPage : Page
 
     private void Canvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas(parentCanvas));
+        var point = e.GetCurrentPoint(this);
+
+        if (point.Properties.IsMiddleButtonPressed && scaleRequested)
+        {
+            var currentSize = new Size(PageWidth - CoreConstants.MarginLeftRight, PageHeight - CoreConstants.MarginTopBottom);
+            ViewModel.Transform(currentSize);
+            ViewModel.ResetScaleValues();
+
+            scaleRequested = false;
+        }
+        else
+        {
+            ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas(parentCanvas));
+        }
     }
 
     private void Canvas_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -331,7 +344,7 @@ internal sealed partial class MainPage : Page
 
     private async void CropButton_Click(object sender, RoutedEventArgs e)
     {
-        var renderBitmap = await SaveBmpCoreAsync();
+        var renderBitmap = await RenderBmpCoreAsync();
         await ViewModel.EnterCroppingMode(renderBitmap);
     }
 
@@ -356,14 +369,14 @@ internal sealed partial class MainPage : Page
 
         if(isImageType.Value is true)
         {
-            var renderBitmap = await SaveBmpCoreAsync();
+            var renderBitmap = await RenderBmpCoreAsync();
             await ViewModel.SaveBmpToClipboardAsync(renderBitmap);
         }
     }
 
     private async void SaveBmpToFile_Click(object sender, RoutedEventArgs e)
     {
-        var renderBitmap = await SaveBmpCoreAsync();
+        var renderBitmap = await RenderBmpCoreAsync();
         await SaveCoreAsync();
     }
 
@@ -378,29 +391,13 @@ internal sealed partial class MainPage : Page
 
     private void Page_PointerWheelChanged(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        if(sender is Canvas canvas
-            && isCtrPressed)
+        if(parentCanvas is not null)
         {
-            var position = e.GetPositionRelativeToCanvas(canvas);
+            var delta = e.GetCurrentPoint(this).Properties.MouseWheelDelta;
 
-            var delta = e.GetCurrentPoint(this);
-        }
-        
-    }
+            ViewModel.ScaleCanvas(delta);
 
-    private void Page_KeyUp(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
-    {
-        if(e.Key == Windows.System.VirtualKey.Control)
-        {
-            isCtrPressed = false;
-        }
-    }
-
-    private void Page_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
-    {
-        if (e.Key == Windows.System.VirtualKey.Control)
-        {
-            isCtrPressed = true;
+            scaleRequested = true;
         }
     }
 }

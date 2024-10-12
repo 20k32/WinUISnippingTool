@@ -1,3 +1,4 @@
+using CommunityToolkit.WinUI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -50,10 +51,10 @@ namespace WinUISnippingTool.Views
             ViewModel.SetCurrentMonitor(location.DeviceName);
             PART_Canvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
-            var softwareBitmap = await ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
+            var softwareBitmap = await DispatcherQueue.EnqueueAsync(() => ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
                 location.StartPoint,
                 System.Drawing.Point.Empty,
-                location.MonitorSize);
+                location.MonitorSize));
 
             var softwareBitmapSource = new SoftwareBitmapSource();
             await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
@@ -62,7 +63,7 @@ namespace WinUISnippingTool.Views
 
             if (!location.IsPrimary)
             {
-                PART_TrayPanel.Visibility = Visibility.Collapsed;
+                PART_Border.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -71,7 +72,7 @@ namespace WinUISnippingTool.Views
                 var binding = new Binding();
                 binding.Path = new(nameof(ViewModel.IsOverlayVisible));
                 binding.Source = ViewModel;
-                PART_TrayPanel.SetBinding(StackPanel.VisibilityProperty, binding);
+                PART_Border.SetBinding(StackPanel.VisibilityProperty, binding);
 
             }
 

@@ -14,7 +14,7 @@ namespace WinUISnippingTool.Views.Pages;
 /// </summary>
 internal sealed partial class Settings : Page
 {
-    public SettingsWindowViewModel ViewModel { get; }
+    private SettingsWindowViewModel ViewModel { get; }
     public Settings()
     {
         this.InitializeComponent();

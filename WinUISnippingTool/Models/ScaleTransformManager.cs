@@ -61,4 +61,9 @@ internal sealed class ScaleTransformManager
         TransfromSource.ScaleY = 1;
     }
 
+    internal void SetScaleCoords(Point position)
+    {
+        TransfromSource.CenterX = position.X;
+        TransfromSource.CenterY = position.Y;
+    }
 }

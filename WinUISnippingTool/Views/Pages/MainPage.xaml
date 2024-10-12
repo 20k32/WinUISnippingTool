@@ -12,16 +12,11 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     SizeChanged="Window_SizeChanged"
     Unloaded="Page_Unloaded"
-    ActualThemeChanged="ThemeChanged"
-    PointerWheelChanged="Page_PointerWheelChanged"
-    KeyUp="Page_KeyUp"
-    KeyDown="Page_KeyDown">
+    ActualThemeChanged="ThemeChanged">
 
     <Grid x:Name="mainGrid"
           KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
-            
-
             <KeyboardAccelerator Key="X" Modifiers="Shift,Control" Invoked="EnterSnippingModeByShortcut"/>
             <KeyboardAccelerator Key="Z" Modifiers="Control" Invoked="GlobalUndoShortcut"/>
             <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="GlobalRedoShortcut"/>
@@ -74,8 +69,6 @@
                                          IsPhotoButtonEnabled="False"
                                          IsVideoButtonEnabled="True"
                                          IsPaintListEnabled="True"/>
-
-                <Button Content="Maginfy" Command="{x:Bind ViewModel.MagnifyCommand}"/>
             </StackPanel>
 
             <!-- Redact picture (Middle) pane -->
@@ -249,8 +242,8 @@
                           VerticalContentAlignment="Center"
                           VerticalAlignment="Center"
                           HorizontalAlignment="Center"
-                          Width="{Binding CanvasWidth, Mode=OneWay}"
-                          Height="{Binding CanvasHeight, Mode=OneWay}"
+                          Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
+                          Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
                           Loaded="PART_Canvas_Loaded"
                           x:Name="PART_Canvas">
 
@@ -261,6 +254,7 @@
                                 PointerPressed="Canvas_PointerPressed"
                                 PointerMoved="Canvas_PointerMoved"
                                 PointerReleased="Canvas_PointerReleased"
+                                PointerWheelChanged="Page_PointerWheelChanged"
                                 x:Name="parentCanvas"
                                 Width="{Binding CanvasWidth, Mode=OneWay}"
                                 Height="{Binding CanvasHeight, Mode=OneWay}"/>

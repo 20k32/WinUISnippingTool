@@ -50,7 +50,7 @@ internal static class Direct3D11Helpers
         )]
     internal static extern uint CreateDirect3D11SurfaceFromDXGISurface(nint dxgiSurface, out nint graphicsSurface);
 
-    private static readonly uint DXGI_ERROR_UNSUPPORTED = 0x887A0004;
+    private static readonly uint DxgiErrorUnsupported = 0x887A0004;
 
     private static ID3D11Device CreateD3DDevice(D3D_DRIVER_TYPE driverType, D3D11_CREATE_DEVICE_FLAG flags)
     {
@@ -71,7 +71,7 @@ internal static class Direct3D11Helpers
         }
         catch (Exception ex)
         {
-            if (ex.HResult != (int)DXGI_ERROR_UNSUPPORTED)
+            if (ex.HResult != (int)DxgiErrorUnsupported)
             {
                 throw;
             }

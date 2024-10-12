@@ -20,7 +20,7 @@
                       HorizontalAlignment="Left"
                       Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
                       Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
-                      Background="{ThemeResource SystemChromeMediumColor}">
+                      Background="#FFE6E6E6">
 
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -32,19 +32,25 @@
             </ItemsControl.ItemsPanel>
         </ItemsControl>
 
-        <StackPanel HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    Background="{ThemeResource SystemChromeMediumColor}"
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0, 40, 0, 0"
+                Background="{ThemeResource SystemChromeMediumColor}"
+                Padding="10"
+                CornerRadius="10"
+                x:Name="PART_Border">
+            <StackPanel 
+                    Background="Transparent"
                     Orientation="Horizontal"
-                    x:Name="PART_TrayPanel"
-                    Spacing="5"
-                    Margin="0, 40, 0, 0">
+                    Spacing="5">
 
-            <userControl:SnipControl SnipKinds="{Binding SnipShapeKinds}"
+                <userControl:SnipControl SnipKinds="{Binding SnipShapeKinds}"
                                      SelectedSnipKind="{Binding SelectedSnipKind, Mode=TwoWay}"/>
-            <Button Content="Exit"
+                <Button Content="Exit"
                     Click="ExitButton_Click"/>
-        </StackPanel>
+            </StackPanel>
+        </Border>
+
 
     </Grid>
 
