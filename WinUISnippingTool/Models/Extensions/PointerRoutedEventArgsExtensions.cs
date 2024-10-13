@@ -9,22 +9,21 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.ConversationalAgent;
 using Windows.Foundation;
 
-namespace WinUISnippingTool.Models.Extensions
+namespace WinUISnippingTool.Models.Extensions;
+
+internal static class PointerRoutedEventArgsExtensions
 {
-    internal static class PointerRoutedEventArgsExtensions
+    public static Point GetPositionRelativeToCanvas(this PointerRoutedEventArgs args, Canvas canvas)
     {
-        public static Point GetPositionRelativeToCanvas(this PointerRoutedEventArgs args, Canvas canvas)
+        Point result = default;
+
+        try
         {
-            Point result = default;
-
-            try
-            {
-                result = args.GetCurrentPoint(canvas).Position;
-            }
-            catch
-            { }
-
-            return result;
+            result = args.GetCurrentPoint(canvas).Position;
         }
+        catch
+        { }
+
+        return result;
     }
 }

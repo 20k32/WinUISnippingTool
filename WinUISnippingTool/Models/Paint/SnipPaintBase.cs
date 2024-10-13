@@ -8,23 +8,22 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Graphics;
 
-namespace WinUISnippingTool.Models.Paint
+namespace WinUISnippingTool.Models.Paint;
+
+internal abstract class SnipPaintBase : PaintBase
 {
-    internal abstract class SnipPaintBase : PaintBase
+    public Point StartPoint { get; protected set; }
+    public SizeInt32 ActualSize { get; protected set; }
+
+    protected static Size WindowSize;
+
+    protected SnipPaintBase() : base(null)
     {
-        public Point StartPoint { get; protected set; }
-        public SizeInt32 ActualSize { get; protected set; }
-
-        protected static Size WindowSize;
-
-        protected SnipPaintBase() : base(null)
-        {
-        }
-
-        public void SetWindowSize(Size windowSize) => WindowSize = windowSize;
-
-        public void SetShapeSource(NotifyOnCompletionCollection<UIElement> shapes) => Shapes = shapes;
-
-        public abstract void SetImageFill(ImageSource source);
     }
+
+    public void SetWindowSize(Size windowSize) => WindowSize = windowSize;
+
+    public void SetShapeSource(NotifyOnCompletionCollection<UIElement> shapes) => Shapes = shapes;
+
+    public abstract void SetImageFill(ImageSource source);
 }

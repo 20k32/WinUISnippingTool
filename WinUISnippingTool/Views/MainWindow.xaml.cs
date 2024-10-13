@@ -21,6 +21,7 @@ using Windows.Devices.Display;
 using Windows.Devices.Enumeration;
 using WinUISnippingTool.Models.MonitorInfo;
 using Windows.Graphics;
+using Windows.UI.WebUI;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -32,8 +33,9 @@ namespace WinUISnippingTool.Views;
 /// </summary>
 internal sealed partial class MainWindow : Window
 {
-    nint windowHandle;
-    private MainWindowViewModel viewModel;
+    private nint windowHandle;
+    private MainPageViewModel viewModel;
+    private SizeInt32 startSize;
     private Monitor[] monitors;
 
     public MainWindow()
@@ -48,7 +50,7 @@ internal sealed partial class MainWindow : Window
         viewModel.UnregisterHandlers();
     }
 
-    public void Prepare(MainWindowViewModel viewModel, Monitor[] monitors) 
+    public void Prepare(MainPageViewModel viewModel, Monitor[] monitors) 
     {
         windowHandle = WindowNative.GetWindowHandle(this);
         FilePickerExtensions.SetWindowHandle(windowHandle);
@@ -57,6 +59,21 @@ internal sealed partial class MainWindow : Window
         this.monitors = monitors;
 
         WindowExtensions.SetMinSize(this, new(500, 500));
+        startSize = new(800, 700);
+
+        AppWindow.Resize(startSize);
+
+        foreach(var monitor in monitors)
+        {
+            if (monitor.IsPrimary)
+            {
+                var posX = (monitor.Bounds.Width - startSize.Width) / 2;
+                var posY = (monitor.Bounds.Height - startSize.Height) / 2;
+                App.MainWindow.AppWindow.Move(new(posX, posY));
+                break;
+            }
+        }
+        
     }
 
     public void NavigateToMainPage()
@@ -64,6 +81,6 @@ internal sealed partial class MainWindow : Window
         var displayArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
 
         mainFrame.Navigate(typeof(MainPage),
-            new MainPageActivatedParameter(displayArea, monitors, viewModel, new (800, 800), windowHandle));
+            new MainPageActivatedParameter(displayArea, monitors, viewModel, startSize, windowHandle));
     }
 }

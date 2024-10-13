@@ -11,64 +11,63 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 
-namespace WinUISnippingTool.Models.Extensions
+namespace WinUISnippingTool.Models.Extensions;
+
+internal static class ClipboardExtensions
 {
-    internal static class ClipboardExtensions
+    public static async Task CopyAsync(uint pixelWidth, uint pixelHeight, byte[] buffer)
     {
-        public static async Task CopyAsync(uint pixelWidth, uint pixelHeight, byte[] buffer)
+        using (var stream = new InMemoryRandomAccessStream())
         {
-            using (var stream = new InMemoryRandomAccessStream())
+            var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+
+            encoder.SetPixelData(
+                BitmapPixelFormat.Bgra8,
+                BitmapAlphaMode.Premultiplied,
+                pixelWidth,
+                pixelHeight,
+                BitmapSavingConstants.Dpi,
+                BitmapSavingConstants.Dpi,
+                buffer);
+
+            await encoder.FlushAsync();
+
+            var dataPackage = new DataPackage();
+            dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
+            dataPackage.RequestedOperation = DataPackageOperation.Copy;
+            Clipboard.SetContent(dataPackage);
+            Clipboard.Flush();
+        }
+    }
+
+    public static async Task CopyAsync(SoftwareBitmap softwareBitmap)
+    {
+        using (var stream = new InMemoryRandomAccessStream())
+        {
+            var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+
+            encoder.SetSoftwareBitmap(softwareBitmap);
+            await encoder.FlushAsync();
+
+            var dataPackage = new DataPackage();
+            dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
+            dataPackage.RequestedOperation = DataPackageOperation.Copy;
+
+            var options = new ClipboardContentOptions()
             {
-                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+                IsAllowedInHistory = true,
+                IsRoamable = false
+            };
 
-                encoder.SetPixelData(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Premultiplied,
-                    pixelWidth,
-                    pixelHeight,
-                    BitmapSavingConstants.Dpi,
-                    BitmapSavingConstants.Dpi,
-                    buffer);
-
-                await encoder.FlushAsync();
-
-                var dataPackage = new DataPackage();
-                dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
-                dataPackage.RequestedOperation = DataPackageOperation.Copy;
-                Clipboard.SetContent(dataPackage);
+            Clipboard.SetContentWithOptions(dataPackage, options);
+            
+            try
+            {
                 Clipboard.Flush();
             }
-        }
-
-        public static async Task CopyAsync(SoftwareBitmap softwareBitmap)
-        {
-            using (var stream = new InMemoryRandomAccessStream())
+            catch (Exception ex)
             {
-                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
-
-                encoder.SetSoftwareBitmap(softwareBitmap);
-                await encoder.FlushAsync();
-
-                var dataPackage = new DataPackage();
-                dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
-                dataPackage.RequestedOperation = DataPackageOperation.Copy;
-
-                var options = new ClipboardContentOptions()
-                {
-                    IsAllowedInHistory = true,
-                    IsRoamable = false
-                };
-
-                Clipboard.SetContentWithOptions(dataPackage, options);
-                
-                try
-                {
-                    Clipboard.Flush();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
+                Debug.WriteLine(ex.Message);
             }
         }
     }

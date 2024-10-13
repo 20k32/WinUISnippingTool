@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics;
+using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.MonitorInfo;
 using WinUISnippingTool.Models.VideoCapture;
 
@@ -43,8 +44,8 @@ internal class VideoCaptureWindowViewModel : ViewModelBase
         
         captureHelper = new();
         captureHelper
-            .SetFramerate(60)
-            .SetBitrate(10_000_000);
+            .SetFramerate(CoreConstants.DefaultFramerate)
+            .SetBitrate(CoreConstants.DefaultBitrate);
     }
 
     private void Timer_Tick(object sender, object e)

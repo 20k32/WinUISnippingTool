@@ -9,14 +9,14 @@ internal sealed class MainPageActivatedParameter
 {
     public readonly DisplayArea CurrentDisplayArea;
     public readonly Monitor[] Monitors;
-    public readonly MainWindowViewModel ViewModel;
+    public readonly MainPageViewModel ViewModel;
     public readonly SizeInt32 StartSize;
     public readonly nint WindowHandle;
 
     public MainPageActivatedParameter(
         DisplayArea currentDisplayArea, 
         Monitor[] monitors, 
-        MainWindowViewModel viewModel, 
+        MainPageViewModel viewModel, 
         SizeInt32 startSize,
         nint windowHandle)
         => (ViewModel, StartSize, CurrentDisplayArea, Monitors, WindowHandle) =

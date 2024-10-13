@@ -10,6 +10,7 @@ using Microsoft.Windows.AppNotifications;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.UI;
@@ -42,8 +43,8 @@ internal sealed partial class MainPage : Page
 
     private bool scaleRequested;
 
-    private double PageWidth;
-    private double PageHeight;
+    private double pageWidth;
+    private double pageHeight;
     
     private Canvas parentCanvas;
     private DispatcherTimer timer;
@@ -51,7 +52,7 @@ internal sealed partial class MainPage : Page
     
     public bool SizeChangingRequested;
 
-    public MainWindowViewModel ViewModel { get; private set; }
+    public MainPageViewModel ViewModel { get; private set; }
 
     public MainPage()
     {
@@ -66,16 +67,10 @@ internal sealed partial class MainPage : Page
         if(e.Parameter is MainPageActivatedParameter pageActivatedParamter)
         {
             windowHandle = pageActivatedParamter.WindowHandle;
-            PageWidth = pageActivatedParamter.StartSize.Width;
-            PageHeight = pageActivatedParamter.StartSize.Height;
+            pageWidth = pageActivatedParamter.StartSize.Width;
+            pageHeight = pageActivatedParamter.StartSize.Height;
 
             ViewModel = pageActivatedParamter.ViewModel;
-
-            ViewModel.OnNewImageAdded += PART_Canvas_SizeChanged;
-            ViewModel.OnSnippingModeEntered += ViewModel_OnSnippingModeEntered;
-            ViewModel.OnSnippingModeExited += ViewModel_OnSnippingModeExited;
-            ViewModel.OnVideoModeEntered += ViewModel_OnVideoModeEntered;
-            ViewModel.OnVideoModeExited += ViewModel_OnVideoModeExited;
 
             display = pageActivatedParamter.CurrentDisplayArea;
 
@@ -105,6 +100,8 @@ internal sealed partial class MainPage : Page
             ViewModel.TrySetAndLoadLocalizationWrapper(settingsPageParameter.BcpTag);
             ViewModel.SetSavingFolders(settingsPageParameter.SaveImageLocation, settingsPageParameter.SaveVideoLocation);
         }
+
+        RegisterHandlers();
     }
 
     private void ViewModel_OnVideoModeExited(bool _)
@@ -166,12 +163,12 @@ internal sealed partial class MainPage : Page
     {
         if (contentLoaded)
         {
-            PageWidth = args.NewSize.Width;
-            PageHeight = args.NewSize.Height;
+            pageWidth = args.NewSize.Width;
+            pageHeight = args.NewSize.Height;
 
             if (isScreenMediumSized)
             {
-                PageHeight -= CoreConstants.BottomPanelHeight;
+                pageHeight -= CoreConstants.BottomPanelHeight;
             }
 
             if (!isScreenLargeSized
@@ -224,10 +221,10 @@ internal sealed partial class MainPage : Page
 
     private void PART_Canvas_SizeChanged()
     {
-        if (PageWidth + CoreConstants.MarginLeftRight <= ViewModel.CanvasWidth
-            || PageHeight - CoreConstants.MarginTopBottom <= ViewModel.CanvasHeight)
+        if (pageWidth + CoreConstants.MarginLeftRight <= ViewModel.CanvasWidth
+            || pageHeight - CoreConstants.MarginTopBottom <= ViewModel.CanvasHeight)
         {
-            var currentSize = new Size(PageWidth - CoreConstants.MarginLeftRight, PageHeight - CoreConstants.MarginTopBottom);
+            var currentSize = new Size(pageWidth - CoreConstants.MarginLeftRight, pageHeight - CoreConstants.MarginTopBottom);
             ViewModel.Transform(currentSize);
 
             if (scaleRequested)
@@ -320,13 +317,13 @@ internal sealed partial class MainPage : Page
 
         if (point.Properties.IsMiddleButtonPressed && scaleRequested)
         {
-            var currentSize = new Size(PageWidth - CoreConstants.MarginLeftRight, PageHeight - CoreConstants.MarginTopBottom);
+            var currentSize = new Size(pageWidth - CoreConstants.MarginLeftRight, pageHeight - CoreConstants.MarginTopBottom);
             ViewModel.Transform(currentSize);
             ViewModel.ResetScaleValues();
 
             scaleRequested = false;
         }
-        else
+        else if(!point.Properties.IsMiddleButtonPressed)
         {
             ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas(parentCanvas));
         }
@@ -338,10 +335,7 @@ internal sealed partial class MainPage : Page
 
         var point = e.GetCurrentPoint(this);
 
-        if (!point.Properties.IsMiddleButtonPressed)
-        {
-            ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas(parentCanvas));
-        }
+        ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas(parentCanvas));
     }
 
     private void Canvas_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -350,10 +344,7 @@ internal sealed partial class MainPage : Page
 
         var point = e.GetCurrentPoint(this);
 
-        if (!scaleRequested)
-        {
-            ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas(parentCanvas));
-        }
+        ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas(parentCanvas));
     }
 
     private void PART_Canvas_Loaded(object sender, RoutedEventArgs e)
@@ -397,6 +388,15 @@ internal sealed partial class MainPage : Page
     {
         var renderBitmap = await RenderBmpCoreAsync();
         await SaveCoreAsync();
+    }
+
+    public void RegisterHandlers()
+    {
+        ViewModel.OnNewImageAdded += PART_Canvas_SizeChanged;
+        ViewModel.OnSnippingModeEntered += ViewModel_OnSnippingModeEntered;
+        ViewModel.OnSnippingModeExited += ViewModel_OnSnippingModeExited;
+        ViewModel.OnVideoModeEntered += ViewModel_OnVideoModeEntered;
+        ViewModel.OnVideoModeExited += ViewModel_OnVideoModeExited;
     }
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)

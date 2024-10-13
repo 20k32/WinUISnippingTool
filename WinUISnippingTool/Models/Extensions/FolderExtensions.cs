@@ -9,76 +9,75 @@ using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace WinUISnippingTool.Models.Extensions
+namespace WinUISnippingTool.Models.Extensions;
+
+internal static class FolderExtensions
 {
-    internal static class FolderExtensions
+    public static StorageFolder NewPicturesSavingFolder;
+    private static StorageFolder picturesLibraryFolder;
+    
+    public static StorageFolder NewVideosSavingFolder;
+    private static StorageFolder videosLibraryFolder;
+
+    public const string ScreenshotsFolderName = "Screenshots";
+    public const string VideosFolderName = "Captures";
+
+    public static async Task<StorageFolder> GetDefaultScreenshotsFolderAsync() => 
+        picturesLibraryFolder ??= await KnownFolders.PicturesLibrary.GetFolderAsync(ScreenshotsFolderName);
+
+    public static async Task<StorageFolder> GetDefaultVideosFolderAsync() =>
+        videosLibraryFolder ??= await KnownFolders.VideosLibrary.GetFolderAsync(VideosFolderName);
+
+    private static async Task<StorageFolder> DefineFolderForPicturesAsync()
     {
-        public static StorageFolder NewPicturesSavingFolder;
-        private static StorageFolder picturesLibraryFolder;
+        StorageFolder result;
         
-        public static StorageFolder NewVideosSavingFolder;
-        private static StorageFolder videosLibraryFolder;
-
-        public const string ScreenshotsFolderName = "Screenshots";
-        public const string VideosFolderName = "Captures";
-
-        public static async Task<StorageFolder> GetDefaultScreenshotsFolderAsync() => 
-            picturesLibraryFolder ??= await KnownFolders.PicturesLibrary.GetFolderAsync(ScreenshotsFolderName);
-
-        public static async Task<StorageFolder> GetDefaultVideosFolderAsync() =>
-            videosLibraryFolder ??= await KnownFolders.VideosLibrary.GetFolderAsync(VideosFolderName);
-
-        private static async Task<StorageFolder> DefineFolderForPicturesAsync()
+        if(NewPicturesSavingFolder is null)
         {
-            StorageFolder result;
-            
-            if(NewPicturesSavingFolder is null)
-            {
-                result = await GetDefaultScreenshotsFolderAsync();
-            }
-            else
-            {
-                result = NewPicturesSavingFolder;
-            }
-
-            return result;
+            result = await GetDefaultScreenshotsFolderAsync();
+        }
+        else
+        {
+            result = NewPicturesSavingFolder;
         }
 
-        public static async Task<StorageFolder> DefineFolderForVideosAsync()
+        return result;
+    }
+
+    public static async Task<StorageFolder> DefineFolderForVideosAsync()
+    {
+        StorageFolder result;
+
+        if (NewVideosSavingFolder is null)
         {
-            StorageFolder result;
-
-            if (NewVideosSavingFolder is null)
-            {
-                result = await GetDefaultVideosFolderAsync();
-            }
-            else
-            {
-                result = NewVideosSavingFolder;
-            }
-
-            return result;
+            result = await GetDefaultVideosFolderAsync();
+        }
+        else
+        {
+            result = NewVideosSavingFolder;
         }
 
-        public static async Task<StorageFile> SaveBitmapAsync(SoftwareBitmap softwareBitmap)
+        return result;
+    }
+
+    public static async Task<StorageFile> SaveBitmapAsync(SoftwareBitmap softwareBitmap)
+    {
+        var currDate = DateTime.Now;
+        var fileName = $"Screenshot {currDate:yyyy-dd-MM} {currDate.Hour}{currDate.Minute}{currDate.Second}{BitmapSavingConstants.FileExtension}";
+        var screenshotsFolder = await DefineFolderForPicturesAsync();
+
+        var file = await screenshotsFolder.CreateFileAsync(fileName);
+
+        using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
         {
-            var currDate = DateTime.Now;
-            var fileName = $"Screenshot {currDate:yyyy-dd-MM} {currDate.Hour}{currDate.Minute}{currDate.Second}{BitmapSavingConstants.FileExtension}";
-            var screenshotsFolder = await DefineFolderForPicturesAsync();
 
-            var file = await screenshotsFolder.CreateFileAsync(fileName);
+            var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
 
-            using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-            {
+            encoder.SetSoftwareBitmap(softwareBitmap);
 
-                var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
-
-                encoder.SetSoftwareBitmap(softwareBitmap);
-
-                await encoder.FlushAsync();
-            }
-
-            return file;
+            await encoder.FlushAsync();
         }
+
+        return file;
     }
 }

@@ -50,10 +50,14 @@ internal static class WindowExtensions
     public static bool HideWindow(nint windowHandle) => ShowWindow(windowHandle, SwHide);
 
     [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
     [DllImport("user32.dll")]
-    internal static extern int GetDpiForWindow(IntPtr hwnd);
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern int GetDpiForWindow(IntPtr hwnd);
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
     private static extern int SetWindowLong32(IntPtr hWnd, WindowLongIndexFlags nIndex, WinProc newProc);

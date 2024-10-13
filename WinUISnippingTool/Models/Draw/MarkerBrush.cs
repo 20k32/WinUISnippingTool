@@ -9,57 +9,56 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using WinUISnippingTool.Models.Paint;
 
-namespace WinUISnippingTool.Models.Draw
+namespace WinUISnippingTool.Models.Draw;
+
+internal sealed class MarkerBrush : DrawBase
 {
-    internal sealed class MarkerBrush : DrawBase
+    private Point previousPosition;
+
+    public MarkerBrush(NotifyOnCompletionCollection<UIElement> shapes) 
+        : base(shapes)
+    { }
+
+    public override void OnPointerPressed(Point position)
     {
-        private Point previousPosition;
-
-        public MarkerBrush(NotifyOnCompletionCollection<UIElement> shapes) 
-            : base(shapes)
-        { }
-
-        public override void OnPointerPressed(Point position)
+        if (!IsDrawing)
         {
-            if (!IsDrawing)
+            IsDrawing = true;
+
+            Line = new Polyline()
             {
-                IsDrawing = true;
+                Stroke = DrawingColor,
+                StrokeThickness = DrawingThickness,
+                Opacity = 0.5,
+                StrokeLineJoin = PenLineJoin.Bevel,
+                StrokeStartLineCap = PenLineCap.Square,
+                StrokeEndLineCap = PenLineCap.Square,
+            };
+            
 
-                Line = new Polyline()
-                {
-                    Stroke = DrawingColor,
-                    StrokeThickness = DrawingThickness,
-                    Opacity = 0.5,
-                    StrokeLineJoin = PenLineJoin.Bevel,
-                    StrokeStartLineCap = PenLineCap.Square,
-                    StrokeEndLineCap = PenLineCap.Square,
-                };
-                
+            Line.Points.Add(position);
+            Shapes.Add(Line);
 
+            previousPosition = position;
+        }
+        
+    }
+
+    public override void OnPointerMoved(Point position)
+    {
+        if (IsDrawing)
+        {
+            if (CalculateDistance(previousPosition, position) > MinRenderDistance)
+            {
                 Line.Points.Add(position);
-                Shapes.Add(Line);
-
                 previousPosition = position;
             }
-            
         }
+    }
 
-        public override void OnPointerMoved(Point position)
-        {
-            if (IsDrawing)
-            {
-                if (CalculateDistance(previousPosition, position) > MinRenderDistance)
-                {
-                    Line.Points.Add(position);
-                    previousPosition = position;
-                }
-            }
-        }
-
-        public override Shape OnPointerReleased(Point position)
-        {
-            IsDrawing = false;
-            return Line;
-        }
+    public override Shape OnPointerReleased(Point position)
+    {
+        IsDrawing = false;
+        return Line;
     }
 }

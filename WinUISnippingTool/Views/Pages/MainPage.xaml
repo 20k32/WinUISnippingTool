@@ -11,8 +11,8 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     SizeChanged="Page_SizeChanged"
-    Unloaded="Page_Unloaded"
-    ActualThemeChanged="ThemeChanged">
+    ActualThemeChanged="ThemeChanged"
+    Unloaded="Page_Unloaded">
 
     <Grid x:Name="mainGrid"
           KeyboardAcceleratorPlacementMode="Hidden">

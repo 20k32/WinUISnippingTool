@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WinUISnippingTool.Models.Extensions;
 
 namespace WinUISnippingTool;
 
@@ -67,9 +68,6 @@ internal static class Program
         uint dwFlags, uint dwMilliseconds, ulong nHandles,
         IntPtr[] pHandles, out uint dwIndex);
 
-    [DllImport("user32.dll")]
-    static extern bool SetForegroundWindow(IntPtr hWnd);
-
     private static IntPtr redirectEventHandle = IntPtr.Zero;
 
     // Do the redirection on another thread, and use a non-blocking
@@ -84,15 +82,15 @@ internal static class Program
             SetEvent(redirectEventHandle);
         });
 
-        uint CWMO_DEFAULT = 0;
-        uint INFINITE = 0xFFFFFFFF;
+        uint CwmoDefault = 0;
+        uint infinite = 0xFFFFFFFF;
         _ = CoWaitForMultipleObjects(
-           CWMO_DEFAULT, INFINITE, 1,
+           CwmoDefault, infinite, 1,
            [redirectEventHandle], out uint handleIndex);
 
         // Bring the window to the foreground
         Process process = Process.GetProcessById((int)keyInstance.ProcessId);
-        SetForegroundWindow(process.MainWindowHandle);
+        WindowExtensions.SetForegroundWindow(process.MainWindowHandle);
     }
 
     private static void OnActivated(object sender, AppActivationArguments args)

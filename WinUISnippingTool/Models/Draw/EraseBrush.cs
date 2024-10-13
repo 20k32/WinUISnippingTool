@@ -9,36 +9,35 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
 
-namespace WinUISnippingTool.Models.Draw
+namespace WinUISnippingTool.Models.Draw;
+
+internal sealed class EraseBrush : DrawBase
 {
-    internal sealed class EraseBrush : DrawBase
+    public Action NotifyUndoChanged;
+
+    public EraseBrush(NotifyOnCompletionCollection<UIElement> shapes, Action notifyUndoChanged) : base(shapes)
     {
-        public Action NotifyUndoChanged;
+        NotifyUndoChanged = notifyUndoChanged;
+    }
 
-        public EraseBrush(NotifyOnCompletionCollection<UIElement> shapes, Action notifyUndoChanged) : base(shapes)
+    public override void OnPointerPressed(Point position)
+    {
+        if (!IsDrawing)
         {
-            NotifyUndoChanged = notifyUndoChanged;
-        }
-
-        public override void OnPointerPressed(Point position)
-        {
-            if (!IsDrawing)
+            foreach (Shape item in Shapes.Skip(1).Cast<Shape>())
             {
-                foreach (Shape item in Shapes.Skip(1).Cast<Shape>())
-                {
-                    AddEraseHandler(item);
-                }
-                IsDrawing = true;
+                AddEraseHandler(item);
             }
+            IsDrawing = true;
         }
+    }
 
-        public override void OnPointerMoved(Point position)
-        { }
+    public override void OnPointerMoved(Point position)
+    { }
 
-        public override Shape OnPointerReleased(Point position)
-        {
-            IsDrawing = false;
-            return null;
-        }
+    public override Shape OnPointerReleased(Point position)
+    {
+        IsDrawing = false;
+        return null;
     }
 }

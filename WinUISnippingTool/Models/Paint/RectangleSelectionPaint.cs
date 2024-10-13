@@ -14,141 +14,140 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
 
-namespace WinUISnippingTool.Models.Paint
+namespace WinUISnippingTool.Models.Paint;
+
+internal sealed class RectangleSelectionPaint : SnipPaintBase
 {
-    internal sealed class RectangleSelectionPaint : SnipPaintBase
+    private readonly TranslateTransform translateTransform;
+    private readonly ScaleTransform scaleTransform;
+    private readonly SolidColorBrush strokeColor;
+    private ImageBrush fillColor;
+
+    private Point previousPosition;
+    private Path rect;
+
+    public RectangleSelectionPaint() : base()
     {
-        private readonly TranslateTransform translateTransform;
-        private readonly ScaleTransform scaleTransform;
-        private readonly SolidColorBrush strokeColor;
-        private ImageBrush fillColor;
+        scaleTransform = new();
+        strokeColor = new SolidColorBrush(Colors.White);
+        translateTransform = new();
+    }
 
-        private Point previousPosition;
-        private Path rect;
-
-        public RectangleSelectionPaint() : base()
+    public override void OnPointerPressed(Point position)
+    {
+        if(!IsDrawing)
         {
-            scaleTransform = new();
-            strokeColor = new SolidColorBrush(Colors.White);
-            translateTransform = new();
-        }
-
-        public override void OnPointerPressed(Point position)
-        {
-            if(!IsDrawing)
-            {
-                IsDrawing = true;
-                
-                scaleTransform.ScaleX = 0;
-                scaleTransform.ScaleY = 0;
-
-                rect = new Path()
-                {
-                    Fill = fillColor,
-                    Stroke = strokeColor,
-                    StrokeThickness = 1,
-                    Data = new RectangleGeometry()
-                    {
-                        Transform = scaleTransform,
-                        Rect = new Rect(0, 0, 1, 1)
-                    },
-                };
-                
-                StartPoint = position;
-                previousPosition = position;
-                Canvas.SetLeft(rect, position.X - 1);
-                Canvas.SetTop(rect, position.Y - 1);
-                Shapes.Add(rect);
-            }
-        }
-
-        public override void OnPointerMoved(Point position)
-        {
-            if (IsDrawing
-                && CalculateDistance(previousPosition, position) > MinRenderDistance)
-            {
-                scaleTransform.ScaleX = position.X - StartPoint.X;
-                scaleTransform.ScaleY = position.Y - StartPoint.Y;
-
-                if(StartPoint.X < position.X
-                   && StartPoint.Y < position.Y)
-                {
-                    translateTransform.X = -StartPoint.X;
-                    translateTransform.Y = -StartPoint.Y;
-                }
-                else if(StartPoint.X < position.X
-                        && StartPoint.Y > position.Y)
-                {
-                    translateTransform.X = -StartPoint.X; 
-                    translateTransform.Y = -position.Y + 1;
-                }
-                else if(StartPoint.X > position.X
-                        && StartPoint.Y < position.Y)
-                {
-                    translateTransform.X = -position.X + 1;
-                    translateTransform.Y = -StartPoint.Y;
-                }
-                else if(StartPoint.X > position.X
-                        && StartPoint.Y > position.Y)
-                {
-                    translateTransform.X = -position.X + 1;
-                    translateTransform.Y = -position.Y + 1;
-                }
-
-                previousPosition = position;
-            }
-        }
-
-        public override Shape OnPointerReleased(Point position)
-        {
-            Path result = null;
+            IsDrawing = true;
             
-            if(rect is not null)
+            scaleTransform.ScaleX = 0;
+            scaleTransform.ScaleY = 0;
+
+            rect = new Path()
             {
-                var absX = Math.Abs(previousPosition.X - StartPoint.X);
-                var absY = Math.Abs(previousPosition.Y - StartPoint.Y);
-
-                if (absX > MinRenderDistance
-                && absY > MinRenderDistance)
+                Fill = fillColor,
+                Stroke = strokeColor,
+                StrokeThickness = 1,
+                Data = new RectangleGeometry()
                 {
-                    rect.StrokeThickness = 0;
+                    Transform = scaleTransform,
+                    Rect = new Rect(0, 0, 1, 1)
+                },
+            };
+            
+            StartPoint = position;
+            previousPosition = position;
+            Canvas.SetLeft(rect, position.X - 1);
+            Canvas.SetTop(rect, position.Y - 1);
+            Shapes.Add(rect);
+        }
+    }
 
-                    var width = (int)(position.X - StartPoint.X);
-                    var height = (int)(position.Y - StartPoint.Y);
-                    ActualSize = new(width, height);
-                 
-                    result = rect;
-                }
-                else
-                {
-                    Shapes.Remove(rect);
-                    rect = null;
-                }
+    public override void OnPointerMoved(Point position)
+    {
+        if (IsDrawing
+            && CalculateDistance(previousPosition, position) > MinRenderDistance)
+        {
+            scaleTransform.ScaleX = position.X - StartPoint.X;
+            scaleTransform.ScaleY = position.Y - StartPoint.Y;
+
+            if(StartPoint.X < position.X
+               && StartPoint.Y < position.Y)
+            {
+                translateTransform.X = -StartPoint.X;
+                translateTransform.Y = -StartPoint.Y;
+            }
+            else if(StartPoint.X < position.X
+                    && StartPoint.Y > position.Y)
+            {
+                translateTransform.X = -StartPoint.X; 
+                translateTransform.Y = -position.Y + 1;
+            }
+            else if(StartPoint.X > position.X
+                    && StartPoint.Y < position.Y)
+            {
+                translateTransform.X = -position.X + 1;
+                translateTransform.Y = -StartPoint.Y;
+            }
+            else if(StartPoint.X > position.X
+                    && StartPoint.Y > position.Y)
+            {
+                translateTransform.X = -position.X + 1;
+                translateTransform.Y = -position.Y + 1;
             }
 
-            IsDrawing = false;
-
-            return result;
+            previousPosition = position;
         }
+    }
 
-        public override void Clear()
+    public override Shape OnPointerReleased(Point position)
+    {
+        Path result = null;
+        
+        if(rect is not null)
         {
-            rect = null;
-            Shapes.Clear();
-        }
+            var absX = Math.Abs(previousPosition.X - StartPoint.X);
+            var absY = Math.Abs(previousPosition.Y - StartPoint.Y);
 
-        public override void SetImageFill(ImageSource source)
-        {
-            fillColor = new ImageBrush()
+            if (absX > MinRenderDistance
+            && absY > MinRenderDistance)
             {
-                ImageSource = source,
-                Stretch = Stretch.None,
-                AlignmentX = AlignmentX.Left,
-                AlignmentY = AlignmentY.Top,
-                Transform = translateTransform
-            };
+                rect.StrokeThickness = 0;
 
-            fillColor.Opacity = 1;
+                var width = (int)(position.X - StartPoint.X);
+                var height = (int)(position.Y - StartPoint.Y);
+                ActualSize = new(width, height);
+             
+                result = rect;
+            }
+            else
+            {
+                Shapes.Remove(rect);
+                rect = null;
+            }
         }
+
+        IsDrawing = false;
+
+        return result;
+    }
+
+    public override void Clear()
+    {
+        rect = null;
+        Shapes.Clear();
+    }
+
+    public override void SetImageFill(ImageSource source)
+    {
+        fillColor = new ImageBrush()
+        {
+            ImageSource = source,
+            Stretch = Stretch.None,
+            AlignmentX = AlignmentX.Left,
+            AlignmentY = AlignmentY.Top,
+            Transform = translateTransform
+        };
+
+        fillColor.Opacity = 1;
     }
 }

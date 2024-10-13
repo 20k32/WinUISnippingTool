@@ -38,7 +38,7 @@ using System.Threading;
 namespace WinUISnippingTool.ViewModels;
 
 
-internal sealed partial class MainWindowViewModel : CanvasViewModelBase
+internal sealed partial class MainPageViewModel : CanvasViewModelBase
 {
     private readonly DrawBase simpleBrush;
     private readonly DrawBase eraseBrush;
@@ -68,7 +68,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     private bool byShortcut;
 
-    public MainWindowViewModel() : base()
+    public MainPageViewModel() : base()
     {
         snipScreenWindows = new();
         snipScreenWindowViewModel = new();
