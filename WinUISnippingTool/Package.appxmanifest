@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:uap6="http://schemas.microsoft.com/appx/manifest/uap/windows10/6"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  IgnorableNamespaces="uap rescap uap6 com desktop uap3">
+
+  <Identity
+    Name="8cc6ba8c-d666-4974-a9cb-a619c3e40472"
+    Publisher="CN=egorm"
+    Version="1.0.0.0" />
+
+  <mp:PhoneIdentity PhoneProductId="8cc6ba8c-d666-4974-a9cb-a619c3e40472" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+  <Properties>
+    <DisplayName>WinUISnippingTool</DisplayName>
+    <PublisherDisplayName>egorm</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-US"/>
+    <Resource Language="uk-UA"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="$targetnametoken$.exe"
+      EntryPoint="$targetentrypoint$">
+        <Extensions>
+            <!--Specify which CLSID to activate when app notification clicked-->
+            <desktop:Extension Category="windows.toastNotificationActivation">
+                <desktop:ToastNotificationActivation ToastActivatorCLSID="8cc6ba8c-d666-4974-a9cb-a619c3e40472" />
+            </desktop:Extension>
+
+            <!--Register COM CLSID LocalServer32 registry key-->
+            <com:Extension Category="windows.comServer">
+                <com:ComServer>
+                    <com:ExeServer Executable="WinUISnippingTool.exe" Arguments="----AppNotificationActivated:" DisplayName="App notification activator">
+                        <com:Class Id="8cc6ba8c-d666-4974-a9cb-a619c3e40472" DisplayName="App notification activator"/>
+                    </com:ExeServer>
+                </com:ComServer>
+            </com:Extension>
+        </Extensions>
+      <uap:VisualElements
+        DisplayName="WinUISnippingTool"
+        Description="WinUISnippingTool"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+    <Capabilities>
+        <rescap:Capability Name="runFullTrust" />
+        <uap6:Capability Name="graphicsCapture"/>
+        <uap:Capability Name="picturesLibrary"/>
+    </Capabilities>
+</Package>
