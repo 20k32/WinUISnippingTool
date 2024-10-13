@@ -31,16 +31,16 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     private readonly SnipPaintBase windowPaint;
     private readonly SnipPaintBase customShapePaint;
     private readonly SnipPaintBase rectangleSelectionPaint;
-    private SnipPaintBase paintSnipKind;
     private readonly WindowPaint windowPaintSource;
+    private SnipPaintBase paintSnipKind;
 
     private string currentMonitorName;
     public MonitorLocation PrimaryMonitor { get; private set; }
 
     public event Action OnExitFromWindow;
     public Shape ResultFigure { get; private set; }
-    public int ResultFigureActualWidth;
-    public int ResultFigureActualHeight;
+    public int ResultFigureActualWidth { get; private set; }
+    public int ResultFigureActualHeight { get; private set; }
 
     public ImageSource CurrentShapeBmp { get; private set; }
     public RectInt32 VideoFramePosition { get; private set; }
@@ -48,10 +48,7 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     public string CurrentMonitorName => currentMonitorName;
     public bool IsShortcutResponce { get; private set; }
     public bool CompleteRendering { get; private set; }
-    
-    public bool IsPhotoButtonEnabled => SnipControl.CaptureKind == CaptureType.Photo;
-    public bool IsVideoButtonEnabled => SnipControl.CaptureKind == CaptureType.Video;
-
+   
     public void SetCurrentMonitor(string monitorName) => currentMonitorName = monitorName;
 
     public void TrySetAndLoadLocalization(string bcpTag) => LoadLocalization(bcpTag);
@@ -153,9 +150,9 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         return result;
     }
 
-    public void SetSelectedItem(SnipKinds kind)
+    public void SetSelectedItem(SnipShapeKind selectedKind)
     {
-        SelectedSnipKind = SnipShapeKinds.First(shapeKind => shapeKind.Kind == kind);
+        SelectedSnipKind = selectedKind;
     }
 
     protected override void SelectionChangedCallback()
@@ -334,5 +331,17 @@ internal sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         }
 
         OnExitFromWindow?.Invoke();
+    }
+
+    public void TryExit()
+    {
+        if (CompleteRendering)
+        {
+            Exit();
+        }
+        else
+        {
+            IsOverlayVisible = true;
+        }
     }
 }

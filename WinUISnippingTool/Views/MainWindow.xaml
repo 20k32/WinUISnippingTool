@@ -10,7 +10,6 @@
     xmlns:templateSelector="using:WinUISnippingTool.Models.TemplateSelectors"
     xmlns:toolkit="using:CommunityToolkit.WinUI.UI.Controls"
     mc:Ignorable="d"
-    SizeChanged="WindowSizeChanged"
     x:Name="mainWindow">
     <Grid>
         <Grid.RowDefinitions>

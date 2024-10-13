@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Storage.Pickers;
 using Windows.Storage;
-using System.Runtime.CompilerServices;
 using WinRT.Interop;
 
 namespace WinUISnippingTool.Models.Extensions;
@@ -44,7 +41,6 @@ internal static class FilePickerExtensions
 
         imageSavePicker.FileTypeChoices.Add(".png", new[] { ".png" } );
         videoSavePicker.FileTypeChoices.Add(".mp4", new[] { ".mp4" });
-        folderPicker.FileTypeFilter.Add(".png");
     }
 
     public static void SetWindowHandle(nint windowHandle)

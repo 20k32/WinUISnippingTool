@@ -36,9 +36,9 @@ internal sealed partial class MainPage : Page
     
     private nint windowHandle;
     
-    private bool isScreenTinySized;
     private bool isScreenSmallSized;
-    private bool isScreenMiddleSized;
+    private bool isScreenMediumSized;
+    private bool isScreenLargeSized;
 
     private bool scaleRequested;
 
@@ -103,26 +103,25 @@ internal sealed partial class MainPage : Page
         else if (e.Parameter is SettingsPageParameter settingsPageParameter)
         {
             ViewModel.TrySetAndLoadLocalizationWrapper(settingsPageParameter.BcpTag);
-            FolderExtensions.NewPicturesSavingFolder = settingsPageParameter.SaveImageLocation;
-            FolderExtensions.NewVideosSavingFolder = settingsPageParameter.SaveVideoLocation;
+            ViewModel.SetSavingFolders(settingsPageParameter.SaveImageLocation, settingsPageParameter.SaveVideoLocation);
         }
     }
 
     private void ViewModel_OnVideoModeExited(bool _)
     {
-        Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwShow);
+        WindowExtensions.ShowWindow(windowHandle);
     }
 
     private void ViewModel_OnVideoModeEntered()
     {
-        Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwHide);
+        WindowExtensions.HideWindow(windowHandle);
     }
 
     private void ViewModel_OnSnippingModeExited(bool byShortcut)
     {
         if (ViewModel.CanShowWindow)
         {
-            Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwShow);
+            WindowExtensions.ShowWindow(windowHandle);
         }
         else if (ViewModel.CanMinimizeWindow)
         {
@@ -132,7 +131,7 @@ internal sealed partial class MainPage : Page
 
     private void ViewModel_OnSnippingModeEntered()
     {
-        Win32WindowApi.ShowWindow(windowHandle, Win32WindowApi.SwHide);
+        WindowExtensions.HideWindow(windowHandle);
     }
 
     private void Timer_Tick(object sender, object e)
@@ -160,63 +159,62 @@ internal sealed partial class MainPage : Page
 
     private async void SnippingModeButton_Click(object sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("Entered");
         await ViewModel.EnterSnippingModeAsync(false);
     }
 
-    private void Window_SizeChanged(object sender, SizeChangedEventArgs args)
+    private void Page_SizeChanged(object sender, SizeChangedEventArgs args)
     {
         if (contentLoaded)
         {
             PageWidth = args.NewSize.Width;
             PageHeight = args.NewSize.Height;
 
-            if (isScreenSmallSized)
+            if (isScreenMediumSized)
             {
                 PageHeight -= CoreConstants.BottomPanelHeight;
             }
 
-            if (!isScreenMiddleSized
+            if (!isScreenLargeSized
                  && args.NewSize.Width < CoreConstants.MinLargeWidth)
             {
                 PART_TakePictureButtonName.Visibility = Visibility.Collapsed;
-                isScreenMiddleSized = true;
+                isScreenLargeSized = true;
             }
-            else if (!isScreenSmallSized
+            else if (!isScreenMediumSized
                      && args.NewSize.Width < CoreConstants.MinMediumWidth)
             {
                 PART_MainPane.Children.Remove(PART_RedactPicturePane);
                 PART_SubPane.Children.Add(PART_RedactPicturePane);
                 PART_TakePictureButtonName.Visibility = Visibility.Visible;
-                isScreenSmallSized = true;
+                isScreenMediumSized = true;
             }
-            else if (!isScreenTinySized
+            else if (!isScreenSmallSized
                     && args.NewSize.Width < CoreConstants.MinSmallWidth)
             {
                 PART_TakePictureButtonName.Visibility = Visibility.Collapsed;
-                isScreenTinySized = true;
+                isScreenSmallSized = true;
             }
             else
             {
-                if (isScreenMiddleSized
+                if (isScreenLargeSized
                          && args.NewSize.Width > CoreConstants.MinLargeWidth)
                 {
                     PART_TakePictureButtonName.Visibility = Visibility.Visible;
-                    isScreenMiddleSized = false;
+                    isScreenLargeSized = false;
                 }
-                else if (isScreenSmallSized
+                else if (isScreenMediumSized
                     && args.NewSize.Width > CoreConstants.MinMediumWidth)
                 {
                     PART_SubPane.Children.Remove(PART_RedactPicturePane);
                     PART_MainPane.Children.Add(PART_RedactPicturePane);
                     PART_TakePictureButtonName.Visibility = Visibility.Collapsed;
-                    isScreenSmallSized = false;
+                    isScreenMediumSized = false;
                 }
-                else if (isScreenTinySized
+                else if (isScreenSmallSized
                     && args.NewSize.Width > CoreConstants.MinSmallWidth)
                 {
                     PART_TakePictureButtonName.Visibility = Visibility.Visible;
-                    isScreenTinySized = false;
+                    isScreenSmallSized = false;
                 }
             }
             Debug.WriteLine($"Page: {args.NewSize.Width} {args.NewSize.Height}");
@@ -247,11 +245,14 @@ internal sealed partial class MainPage : Page
     private async void EnterSnippingModeByShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
     {
         args.Handled = true;
+
         await ViewModel.EnterSnippingModeAsync(true);
     }
 
     private void GlobalUndoShortcut(Microsoft.UI.Xaml.Input.KeyboardAccelerator sender, Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
     {
+        args.Handled = true;
+
         if (ViewModel.GlobalUndoCommand.CanExecute(null))
         {
             ViewModel.GlobalUndoCommand.Execute(null);
@@ -313,6 +314,8 @@ internal sealed partial class MainPage : Page
 
     private void Canvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        e.Handled = true;
+
         var point = e.GetCurrentPoint(this);
 
         if (point.Properties.IsMiddleButtonPressed && scaleRequested)
@@ -331,12 +334,26 @@ internal sealed partial class MainPage : Page
 
     private void Canvas_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas(parentCanvas));
+        e.Handled = true;
+
+        var point = e.GetCurrentPoint(this);
+
+        if (!point.Properties.IsMiddleButtonPressed)
+        {
+            ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas(parentCanvas));
+        }
     }
 
     private void Canvas_PointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas(parentCanvas));
+        e.Handled = true;
+
+        var point = e.GetCurrentPoint(this);
+
+        if (!scaleRequested)
+        {
+            ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas(parentCanvas));
+        }
     }
 
     private void PART_Canvas_Loaded(object sender, RoutedEventArgs e)
@@ -393,6 +410,8 @@ internal sealed partial class MainPage : Page
 
     private void Page_PointerWheelChanged(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        e.Handled = true;
+
         if(parentCanvas is not null)
         {
             var delta = e.GetCurrentPoint(this).Properties.MouseWheelDelta;

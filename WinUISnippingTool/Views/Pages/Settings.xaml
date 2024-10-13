@@ -9,40 +9,70 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <StackPanel Spacing="5"
-                Orientation="Vertical"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Width="600">
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          MaxWidth="800">
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
         <ListBox ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
-                 SelectedItem="{x:Bind ViewModel.SelectedLanguageKind, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                 SelectedItem="{x:Bind ViewModel.SelectedLanguageKind, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Grid.Row="0"
+                 MaxWidth="300"
+                 MinWidth="100">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding DisplayName}"/>
+                    <TextBlock Text="{Binding DisplayName}"
+                               HorizontalAlignment="Right"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <StackPanel Orientation="Horizontal"
-                    Spacing="3">
-            
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
             <Button Content="{x:Bind ViewModel.ChangePhotoLocationButtonName, Mode=OneWay}"
-                Command="{x:Bind ViewModel.PickFolderCommand}"/>
+                    Command="{x:Bind ViewModel.PickFolderCommand}"
+                    Grid.Column="0"
+                    Margin="0, 0, 10, 0"
+                    Width="220"/>
             <TextBlock Text="{x:Bind ViewModel.SaveImageLocation.Path, Mode=OneWay}"
-                   TextWrapping="Wrap"/>
+                       TextWrapping="Wrap"
+                       TextAlignment="Left"
+                       Grid.Column="1"/>
+        </Grid>
 
-        </StackPanel>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <StackPanel Orientation="Horizontal"
-                    Spacing="3">
             <Button Content="{x:Bind ViewModel.ChangeVideoLocationButtonName, Mode=OneWay}"
-                    Command="{x:Bind ViewModel.PickFolderForVideoCommand}"/>
+                    Command="{x:Bind ViewModel.PickFolderForVideoCommand}"
+                    Grid.Column="0"
+                    Margin="0, 0, 10, 0"
+                    Width="220"/>
 
             <TextBlock Text="{x:Bind ViewModel.SaveVideoLocation.Path, Mode=OneWay}"
-                       TextWrapping="Wrap"/>
-        </StackPanel>
+                       TextWrapping="Wrap"
+                       TextAlignment="Left"
+                       Grid.Column="1"/>
+            
+        </Grid>
+        
         
         <Button Content="{x:Bind ViewModel.BackButtonName, Mode=OneWay}"
-                Click="Back_Click"/>
-    </StackPanel>
+                Click="Back_Click"
+                Grid.Row="4"/>
+    </Grid>
 </Page>

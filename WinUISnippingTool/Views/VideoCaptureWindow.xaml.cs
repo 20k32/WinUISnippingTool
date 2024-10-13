@@ -98,7 +98,7 @@ internal sealed partial class VideoCaptureWindow : Window
         AppWindow.IsShownInSwitchers = true;
         presenter.IsAlwaysOnTop = true;
         this.ExtendsContentIntoTitleBar = true;
-        SetTitleBar(overlayBorder);
+        SetTitleBar(PartBorder);
     }
 
     private void Button_Click(object sender, RoutedEventArgs e)
@@ -106,10 +106,5 @@ internal sealed partial class VideoCaptureWindow : Window
         exitRequested = true;
         ExitCore();
         DispatcherQueue.TryEnqueue(Close);
-    }
-
-    private void Window_Activated(object sender, WindowActivatedEventArgs args)
-    {
-        Debug.WriteLine($"{DateTime.Now.ToShortTimeString()} Activated");
     }
 }

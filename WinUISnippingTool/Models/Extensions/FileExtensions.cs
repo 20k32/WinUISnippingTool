@@ -22,8 +22,8 @@ namespace WinUISnippingTool.Models.Extensions
                      BitmapAlphaMode.Premultiplied,
                      pixelWidth,
                      pixelHeight,
-                     BitmapSavingConstants.DpiX,
-                     BitmapSavingConstants.DpiY,
+                     BitmapSavingConstants.Dpi,
+                     BitmapSavingConstants.Dpi,
                      buffer);
 
                 await encoder.FlushAsync();

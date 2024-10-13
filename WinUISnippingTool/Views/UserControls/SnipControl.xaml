@@ -13,7 +13,7 @@
         <DataTemplate x:Key="comboBoxDefaultItemTemplate">
             <StackPanel Orientation="Horizontal">
                 <FontIcon Glyph="{Binding Glyph}"
-                              Margin="0, 0, 10, 0"/>
+                          Margin="0, 0, 10, 0"/>
                 <TextBlock Text="{Binding Name, Mode=OneWay}" />
             </StackPanel>
         </DataTemplate>
@@ -45,12 +45,12 @@
         </Button>
 
         <ComboBox VerticalAlignment="Center"
-                          Background="Transparent"
-                          BorderThickness="0"
-                          ItemTemplateSelector="{StaticResource comboBoxItemTemplateSelector}"
-                          ItemsSource="{x:Bind SnipKinds}"
-                          SelectedItem="{x:Bind SelectedSnipKind, Mode=TwoWay}"
-                          IsEnabled="{x:Bind IsPaintListEnabled, Mode=OneWay}">
+                  Background="Transparent"
+                  BorderThickness="0"
+                  ItemTemplateSelector="{StaticResource comboBoxItemTemplateSelector}"
+                  ItemsSource="{x:Bind SnipKinds}"
+                  SelectedItem="{x:Bind SelectedSnipKind, Mode=TwoWay}"
+                  IsEnabled="{x:Bind IsPaintListEnabled, Mode=OneWay}">
         </ComboBox>
     </StackPanel>
 </UserControl>

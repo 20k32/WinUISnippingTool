@@ -54,7 +54,7 @@ internal static class RenderExtensions
         var newWidth = width * minScale;
 
         var device = CanvasDevice.GetSharedDevice();
-        var renderTarget = new CanvasRenderTarget(device, (int)newWidth, (int)newHeight, 96);
+        var renderTarget = new CanvasRenderTarget(device, (int)newWidth, (int)newHeight, BitmapSavingConstants.Dpi);
 
         using (var drawingSession = renderTarget.CreateDrawingSession())
         {

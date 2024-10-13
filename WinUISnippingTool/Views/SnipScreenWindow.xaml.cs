@@ -19,6 +19,7 @@ using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.Items;
 using WinUISnippingTool.Models.MonitorInfo;
+using WinUISnippingTool.Models.VideoCapture;
 using WinUISnippingTool.ViewModels;
 using WinUISnippingTool.Views.UserControls;
 
@@ -33,7 +34,6 @@ namespace WinUISnippingTool.Views
     internal sealed partial class SnipScreenWindow : Window
     {
         private MonitorLocation currentWindowLocation;
-        private bool isPointerReleased;
 
         public SnipScreenWindowViewModel ViewModel { get; private set; }
 
@@ -42,16 +42,16 @@ namespace WinUISnippingTool.Views
             this.InitializeComponent();
         }
 
-        public async Task PrepareWindowAsync(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipKinds snipKind, bool byShortcut)
+        public async Task PrepareWindowAsync(SnipScreenWindowViewModel viewModel, MonitorLocation location, SnipShapeKind snipKind, bool byShortcut)
         {
-            isPointerReleased = false;
             currentWindowLocation = location;
-            mainGrid.DataContext = viewModel;
+            PartGrid.DataContext = viewModel;
             ViewModel = viewModel;
             ViewModel.ResetModel();
             ViewModel.SetCurrentMonitor(location.DeviceName);
-            PART_Canvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
+            PartCanvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
+            await Task.Delay(100);
             var softwareBitmap = await ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
                 location.StartPoint,
                 System.Drawing.Point.Empty,
@@ -64,7 +64,7 @@ namespace WinUISnippingTool.Views
 
             if (!location.IsPrimary)
             {
-                PART_Border.Visibility = Visibility.Collapsed;
+                PartBorder.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -73,7 +73,7 @@ namespace WinUISnippingTool.Views
                 var binding = new Binding();
                 binding.Path = new(nameof(ViewModel.IsOverlayVisible));
                 binding.Source = ViewModel;
-                PART_Border.SetBinding(StackPanel.VisibilityProperty, binding);
+                PartBorder.SetBinding(Border.VisibilityProperty, binding);
 
             }
 
@@ -93,7 +93,7 @@ namespace WinUISnippingTool.Views
             SoftwareBitmapSource softwareBitmapSource,
             SoftwareBitmap softwareBitmap,
             bool byShortcut,
-            SnipKinds snipKind)
+            SnipShapeKind snipKind)
         {
             ViewModel.AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
             ViewModel.AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
@@ -137,22 +137,8 @@ namespace WinUISnippingTool.Views
         {
             e.Handled = true;
 
-            if (!isPointerReleased)
-            {
-                isPointerReleased = true;
-
-                await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
-
-                if (ViewModel.CompleteRendering)
-                {
-                    ViewModel.Exit();
-                }
-                else
-                {
-                    isPointerReleased = false;
-                    ViewModel.IsOverlayVisible = true;
-                }
-            }
+            await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
+            ViewModel.TryExit();
         }
     }
 }

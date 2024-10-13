@@ -9,12 +9,22 @@ using Windows.Media.Playback;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.ExceptionServices;
 using System.Diagnostics;
+using Windows.Graphics.Capture;
+using WinUISnippingTool.Models.VideoCapture;
+using Windows.Win32.Graphics.Gdi;
+using Windows.Graphics.DirectX;
+using Microsoft.UI.Dispatching;
+using CommunityToolkit.WinUI;
 
 
 namespace WinUISnippingTool.Models.Extensions;
 
 internal static class ScreenshotExtensions
 {
+
+    /// <summary>
+    /// slow, uses a bit memory
+    /// </summary>
     public static BitmapImage GetBitmapImageScreenshotForArea
         (Point upperLeftSource, Point upperLeftDestination, Windows.Foundation.Size size)
     {
@@ -43,6 +53,9 @@ internal static class ScreenshotExtensions
         return bitmapImage;
     }
 
+    /// <summary>
+    /// slow, uses a bit memory
+    /// </summary>
     public static async Task<SoftwareBitmap> GetSoftwareBitmapImageScreenshotForAreaAsync
         (Point upperLeftSource, Point upperLeftDestination, Windows.Foundation.Size size)
     {
@@ -62,11 +75,47 @@ internal static class ScreenshotExtensions
                     bmpScreenshot.Save(averageStream, ImageFormat.Jpeg);
                     BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
                     stream.Seek(0);
-                    // access violation here: 
+
                     softwareBitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
                 }
             }
         }
+
+        return softwareBitmap;
+    }
+
+    /// <summary>
+    /// fast, uses much memory
+    /// </summary>
+    public static async Task<SoftwareBitmap> GetSoftwareBitmapImageScreenshotForAreaAsync
+        (Point upperLeftSource, Point upperLeftDestination, nint handleMonitor)
+    {
+        SoftwareBitmap softwareBitmap = null;
+        var graphicsItem = GraphicsCaptureItemExtensions.CreateItemForMonitor((HMONITOR)handleMonitor);
+        var device3d = Direct3D11Helpers.CreateDevice();
+        
+        var framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
+                device3d,
+                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                1,
+                graphicsItem.Size);
+        var session = framePool.CreateCaptureSession(graphicsItem);
+
+        var taskCompletion = new TaskCompletionSource<Direct3D11CaptureFrame>();
+        framePool.FrameArrived += (s, a) =>
+        {
+            var frame = s.TryGetNextFrame();
+            taskCompletion.SetResult(frame);
+        };
+        session.StartCapture();
+
+        var frame = await taskCompletion.Task;
+        framePool.Dispose();
+        session.Dispose();
+
+        var surface = frame.Surface;
+        // todo if app crashes: access violation here.
+        softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(surface, BitmapAlphaMode.Premultiplied);
 
         return softwareBitmap;
     }

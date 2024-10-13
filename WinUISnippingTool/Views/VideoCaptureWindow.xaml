@@ -7,10 +7,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:userControl="using:WinUISnippingTool.Views.UserControls"
-    mc:Ignorable="d"
-    Activated="Window_Activated">
+    mc:Ignorable="d">
 
-    <Border x:Name="overlayBorder"
+    <Border x:Name="PartBorder"
             Background="{ThemeResource SystemChromeMediumColor}"
             Padding="5">
         

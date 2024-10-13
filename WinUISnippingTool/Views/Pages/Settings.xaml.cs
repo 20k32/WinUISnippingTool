@@ -24,6 +24,7 @@ internal sealed partial class Settings : Page
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+
         if(e.Parameter is SettingsPageParameter settingsParameter)
         {
             await ViewModel.LoadStateAsync(settingsParameter);
@@ -32,9 +33,14 @@ internal sealed partial class Settings : Page
 
     private void Back_Click(object sender, RoutedEventArgs e)
     {
-        Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = ViewModel.SelectedLanguageKind.BcpTag;
-        Frame.BackStack.Clear();
+        var comparisonBcp = ViewModel.SelectedLanguageKind.BcpTag.Substring(0, 2).ToLower();
 
+        if (Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride != comparisonBcp)
+        {
+            Windows.Globalization.ApplicationLanguages.PrimaryLanguageOverride = ViewModel.SelectedLanguageKind.BcpTag;
+            Frame.BackStack.Clear();
+        }
+        
         Frame.Navigate(typeof(MainPage), new SettingsPageParameter(ViewModel.SelectedLanguageKind.BcpTag, ViewModel.SaveImageLocation, ViewModel.SaveVideoLocation));
     }
 }

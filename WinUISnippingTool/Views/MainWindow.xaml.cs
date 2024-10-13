@@ -55,6 +55,8 @@ internal sealed partial class MainWindow : Window
 
         this.viewModel = viewModel;
         this.monitors = monitors;
+
+        WindowExtensions.SetMinSize(this, new(500, 500));
     }
 
     public void NavigateToMainPage()
@@ -63,10 +65,5 @@ internal sealed partial class MainWindow : Window
 
         mainFrame.Navigate(typeof(MainPage),
             new MainPageActivatedParameter(displayArea, monitors, viewModel, new (800, 800), windowHandle));
-    }
-
-    private void WindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
-    {
-        Debug.WriteLine($"Window: {args.Size.Width} {args.Size.Height}");
     }
 }

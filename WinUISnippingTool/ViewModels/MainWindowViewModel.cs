@@ -30,6 +30,8 @@ using Microsoft.UI.Input;
 using System.ComponentModel.DataAnnotations;
 using Windows.Security.Cryptography.Certificates;
 using WinUISnippingTool.Models.MonitorInfo;
+using WinUISnippingTool.Models.PageParameters;
+using SharpDX.Direct3D11;
 namespace WinUISnippingTool.ViewModels;
 
 
@@ -74,8 +76,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         CanvasItems = new();
         monitorLocations = new();
         transformManager = new();
-        CanvasWidth = 100;
-        CanvasHeight = 100;
+        CanvasWidth = 0;
+        CanvasHeight = 0;
 
         SelectedSnipKind = SnipShapeKinds.First();
         DrawingColorList = new();
@@ -170,6 +172,12 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     }
 
     public void TrySetAndLoadLocalizationWrapper(string bcpTag) => LoadLocalization(bcpTag);
+
+    public void SetSavingFolders(StorageFolder photos, StorageFolder videos)
+    {
+        FolderExtensions.NewPicturesSavingFolder = photos;
+        FolderExtensions.NewVideosSavingFolder = videos;
+    }
 
     public bool CanShowWindow =>
         !byShortcut
@@ -272,7 +280,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         }
         else
         {
-            var array = CanvasItems.Skip(1).ToArray(); // 1st element is image or mediaplayer
+            var array = CanvasItems.Skip(1).ToArray(); // 1st element is existing image or mediaplayer
             CanvasItems.RemoveRange(array);
         }
     }
@@ -368,7 +376,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
             OnVideoModeExited?.Invoke(byShortcut);
 
-            AddMediaPlayer(uri);
+            AddMediaPlayerFromSource(uri);
         }
     }
 
@@ -381,7 +389,7 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
         foreach (var location in monitorLocations)
         {
             var window = new SnipScreenWindow();
-            await window.PrepareWindowAsync(snipScreenWindowViewModel, location, SelectedSnipKind.Kind, byShortcut);
+            await window.PrepareWindowAsync(snipScreenWindowViewModel, location, SelectedSnipKind, byShortcut);
             snipScreenWindows.Add(window);
         }
 
@@ -395,9 +403,9 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     #region Video adding
 
-    private void AddMediaPlayer(Uri videoUri)
+    private void AddMediaPlayerFromSource(Uri videoUri)
     {
-        ClearCanvasCore();
+        RemoveAllElementsFromCanvasExceptFirst();
 
         TryAddMediaPlayerToCanvas(videoUri);
 
@@ -411,9 +419,9 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     {
         var mediaSource = MediaSource.CreateFromUri(source);
         MediaPlayerElement mediaPlayer;
-
-        if (CanvasItems.Count > 0 && CanvasItems[0]
-            is MediaPlayerElement existingPlayer)
+       
+        if (CanvasItems.Count > 0 
+            && CanvasItems[0] is MediaPlayerElement existingPlayer)
         {
             mediaPlayer = existingPlayer;
         }
@@ -431,6 +439,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
             mediaPlayer.HorizontalContentAlignment = HorizontalAlignment.Center;
             mediaPlayer.VerticalContentAlignment = VerticalAlignment.Center;
 
+            CanvasItems.Clear();
+            CanvasItems.Add(mediaPlayer);
         }
 
         mediaPlayer.Source = mediaSource;
@@ -438,9 +448,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
         mediaPlayer.Width = Math.Max(CoreConstants.MinVideoPlayerWidth, tempWidth);
         mediaPlayer.Height = Math.Max(CoreConstants.MinVideoPlayerHeight, snipScreenWindowViewModel.VideoFramePosition.Height);
-
-        CanvasItems.Clear();
-        CanvasItems.Add(mediaPlayer);
 
         CanvasWidth = mediaPlayer.Width;
         CanvasHeight = mediaPlayer.Height;
@@ -452,6 +459,28 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
     #endregion
 
     #region Image adding
+
+
+    private void RemoveAllElementsFromCanvasExceptFirst()
+    {
+        if(CanvasItems.Count > 0)
+        {
+            if (CanvasItems[0] is Image image
+               && image.Source is SoftwareBitmapSource softwareBitmapSource)
+            {
+                softwareBitmapSource.Dispose();
+                image.Source = null;
+            }
+            else if (CanvasItems[0] is MediaPlayerElement mediaPlayer
+                && mediaPlayer.Source is MediaSource mediaSource)
+            {
+                mediaSource.Dispose();
+                mediaPlayer.Source = null;
+            }
+
+            ClearCanvasCore();
+        }
+    }
 
     private void TryAddImageToCanvas(ImageSource source, double width, double height)
     {
@@ -474,8 +503,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
     public void AddImageFromSource(ImageSource source, double width, double height)
     {
-        ClearCanvasCore();
-
+        RemoveAllElementsFromCanvasExceptFirst();
+        
         TryAddImageToCanvas(source, width, height);
 
         CanvasWidth = width;

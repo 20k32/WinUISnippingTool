@@ -12,8 +12,8 @@
     mc:Ignorable="d"
     Title="SnipScreenWindow">
 
-    <Grid x:Name="mainGrid">
-        <ItemsControl x:Name="PART_Canvas"
+    <Grid x:Name="PartGrid">
+        <ItemsControl x:Name="PartCanvas"
                       HorizontalContentAlignment="Center"
                       VerticalContentAlignment="Center"
                       VerticalAlignment="Top"
@@ -38,7 +38,7 @@
                 Background="{ThemeResource SystemChromeMediumColor}"
                 Padding="10"
                 CornerRadius="10"
-                x:Name="PART_Border">
+                x:Name="PartBorder">
             <StackPanel 
                     Background="Transparent"
                     Orientation="Horizontal"

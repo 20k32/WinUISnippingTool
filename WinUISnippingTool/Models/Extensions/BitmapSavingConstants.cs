@@ -9,8 +9,7 @@ namespace WinUISnippingTool.Models.Extensions;
 
 internal static class BitmapSavingConstants
 {
-    public const int DpiX = 96;
-    public const int DpiY = 96;
+    public const int Dpi = 96;
     public static readonly Guid EncoderId = BitmapEncoder.PngEncoderId;
     public const string FileExtension = ".png";
 }
