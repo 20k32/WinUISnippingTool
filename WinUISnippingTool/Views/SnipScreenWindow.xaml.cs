@@ -51,11 +51,14 @@ namespace WinUISnippingTool.Views
             ViewModel.SetCurrentMonitor(location.DeviceName);
             PartCanvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
-            await Task.Delay(100);
+            Debug.WriteLine($"Begin screenshot");
+
             var softwareBitmap = await ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
                 location.StartPoint,
                 System.Drawing.Point.Empty,
                 location.MonitorSize);
+
+            Debug.WriteLine($"End screenshot");
 
             var softwareBitmapSource = new SoftwareBitmapSource();
             await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
@@ -74,7 +77,6 @@ namespace WinUISnippingTool.Views
                 binding.Path = new(nameof(ViewModel.IsOverlayVisible));
                 binding.Source = ViewModel;
                 PartBorder.SetBinding(Border.VisibilityProperty, binding);
-
             }
 
             AppWindow.Move(new PointInt32(location.StartPoint.X, location.StartPoint.Y));

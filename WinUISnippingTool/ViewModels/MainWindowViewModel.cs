@@ -32,6 +32,9 @@ using Windows.Security.Cryptography.Certificates;
 using WinUISnippingTool.Models.MonitorInfo;
 using WinUISnippingTool.Models.PageParameters;
 using SharpDX.Direct3D11;
+using Microsoft.UI.Dispatching;
+using CommunityToolkit.WinUI;
+using System.Threading;
 namespace WinUISnippingTool.ViewModels;
 
 
@@ -139,8 +142,6 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
         snipScreenWindows.Clear();
 
-        OnSnippingModeExited?.Invoke(byShortcut);
-
         if (snipScreenWindowViewModel.CompleteRendering)
         {
             if (SnipControl.CaptureKind == CaptureType.Photo)
@@ -153,6 +154,8 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
                 await ShowVideoCaptureScreenAsync();
             }
         }
+
+        OnSnippingModeExited?.Invoke(byShortcut);
     }
 
     public void AddMonitorLocation(MonitorLocation location)
@@ -386,12 +389,19 @@ internal sealed partial class MainWindowViewModel : CanvasViewModelBase
 
         OnSnippingModeEntered?.Invoke();
 
+        Debug.WriteLine("Enter snipping mode");
+        
         foreach (var location in monitorLocations)
         {
             var window = new SnipScreenWindow();
-            await window.PrepareWindowAsync(snipScreenWindowViewModel, location, SelectedSnipKind, byShortcut);
             snipScreenWindows.Add(window);
+
+            await window.PrepareWindowAsync(snipScreenWindowViewModel, location, SelectedSnipKind, byShortcut);
+            
+            Debug.WriteLine($"location: {location.DeviceName}");
         }
+
+        Debug.WriteLine($"Activating devices");
 
         foreach (var item in snipScreenWindows)
         {

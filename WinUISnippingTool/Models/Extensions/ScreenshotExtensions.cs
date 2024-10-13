@@ -15,6 +15,9 @@ using Windows.Win32.Graphics.Gdi;
 using Windows.Graphics.DirectX;
 using Microsoft.UI.Dispatching;
 using CommunityToolkit.WinUI;
+using System.Threading;
+using System.Text;
+using SharpDX.Win32;
 
 
 namespace WinUISnippingTool.Models.Extensions;
@@ -56,12 +59,16 @@ internal static class ScreenshotExtensions
     /// <summary>
     /// slow, uses a bit memory
     /// </summary>
+    /// 
     public static async Task<SoftwareBitmap> GetSoftwareBitmapImageScreenshotForAreaAsync
         (Point upperLeftSource, Point upperLeftDestination, Windows.Foundation.Size size)
     {
         SoftwareBitmap softwareBitmap = null;
         using (var bmpScreenshot = new Bitmap((int)size.Width, (int)size.Height))
         {
+            Debug.WriteLine($"Bmp: [{bmpScreenshot.Size.Width}, {bmpScreenshot.Size.Height}]" +
+                $"\nCurr: [{size.Width}, {size.Height}]");
+
             using (var g = Graphics.FromImage(bmpScreenshot))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
@@ -70,13 +77,16 @@ internal static class ScreenshotExtensions
 
             using (var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream())
             {
-                using(var averageStream = stream.AsStream())
+                using (var averageStream = stream.AsStreamForWrite(8000))
                 {
                     bmpScreenshot.Save(averageStream, ImageFormat.Jpeg);
                     BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
-                    stream.Seek(0);
+
+                    Debug.WriteLine("Try get software bitmap");
 
                     softwareBitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+
+                    Debug.WriteLine($"Screenshot taken {DateTime.Now.ToLongTimeString()}");
                 }
             }
         }
@@ -114,8 +124,9 @@ internal static class ScreenshotExtensions
         session.Dispose();
 
         var surface = frame.Surface;
-        // todo if app crashes: access violation here.
-        softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(surface, BitmapAlphaMode.Premultiplied);
+
+        
+        softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(surface, BitmapAlphaMode.Premultiplied); // access violation here
 
         return softwareBitmap;
     }
