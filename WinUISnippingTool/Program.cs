@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using WinUISnippingTool.Models.Extensions;
+using WinUISnippingTool.Helpers;
 
 namespace WinUISnippingTool;
 

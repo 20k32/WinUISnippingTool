@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.DependencyInjection;
 using CommunityToolkit.WinUI;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Input;
@@ -16,12 +17,13 @@ using Windows.Foundation;
 using Windows.UI;
 using WinRT;
 using WinRT.Interop;
+using WinUISnippingTool.Helpers;
+using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.MonitorInfo;
 using WinUISnippingTool.Models.PageParameters;
 using WinUISnippingTool.ViewModels;
-using WinUISnippingTool.Views.UserControls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -64,16 +66,15 @@ internal sealed partial class MainPage : Page
     {
         base.OnNavigatedTo(e);
 
-        if(e.Parameter is MainPageActivatedParameter pageActivatedParamter)
+        if(e.Parameter is PageActivatedParameter pageActivatedParamter)
         {
             windowHandle = pageActivatedParamter.WindowHandle;
             pageWidth = pageActivatedParamter.StartSize.Width;
             pageHeight = pageActivatedParamter.StartSize.Height;
 
-            ViewModel = pageActivatedParamter.ViewModel;
-
             display = pageActivatedParamter.CurrentDisplayArea;
 
+            ViewModel = Ioc.Default.GetRequiredService<MainPageViewModel>();
             mainGrid.DataContext = ViewModel;
 
             foreach (var monitor in pageActivatedParamter.Monitors)

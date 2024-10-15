@@ -15,6 +15,10 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using System.Diagnostics;
 using WinUISnippingTool.Models.Extensions;
+using WinUISnippingTool.Helpers;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using WinUISnippingTool.Core;
+using Microsoft.Extensions.DependencyInjection;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,6 +42,17 @@ public sealed partial class App : Application
     public App()
     {
         this.InitializeComponent();
+
+        var existingCollection = new ServiceCollection();
+
+        existingCollection
+            .ConfigurePresentationLayer()
+            .AddSingleton<MainWindow>()
+            .AddSingleton<MainPage>();
+
+        var provider = existingCollection.BuildServiceProvider();
+
+        Ioc.Default.ConfigureServices(provider);
     }
 
     /// <summary>
@@ -112,8 +127,10 @@ public sealed partial class App : Application
             CheckForDirectXSupport();
 
             var monitors = Monitor.All.ToArray();
-            viewModel = new();
-            MainWindow = new();
+
+            MainWindow = Ioc.Default.GetRequiredService<MainWindow>();
+            viewModel = Ioc.Default.GetRequiredService<MainPageViewModel>();
+
             MainWindow.Closed += MainWindow_Closed;
 
             MainWindow.Prepare(viewModel, monitors);

@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.UI.WindowManagement;
 using WinUISnippingTool.ViewModels;
-using WinUISnippingTool.Models.Extensions;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using Windows.Storage;
@@ -22,6 +21,9 @@ using Windows.Devices.Enumeration;
 using WinUISnippingTool.Models.MonitorInfo;
 using Windows.Graphics;
 using Windows.UI.WebUI;
+using WinUISnippingTool.Helpers.Saving;
+using WinUISnippingTool.Core;
+using WinUISnippingTool.Helpers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -41,6 +43,7 @@ internal sealed partial class MainWindow : Window
     public MainWindow()
     {
         this.InitializeComponent();
+        
         this.ExtendsContentIntoTitleBar = true;
         this.Closed += MainWindow_Closed;
     }
@@ -79,8 +82,8 @@ internal sealed partial class MainWindow : Window
     public void NavigateToMainPage()
     {
         var displayArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
+        var parameter = new PageActivatedParameter(displayArea, monitors, startSize, windowHandle);
 
-        mainFrame.Navigate(typeof(MainPage),
-            new MainPageActivatedParameter(displayArea, monitors, viewModel, startSize, windowHandle));
+        mainFrame.Navigate(typeof(MainPage), parameter);
     }
 }

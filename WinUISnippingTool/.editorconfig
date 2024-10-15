@@ -193,3 +193,6 @@ dotnet_diagnostic.IDE0051.severity = none
 
 # IDE0057: Use range operator
 dotnet_diagnostic.IDE0057.severity = none
+
+# Default severity for all analyzer diagnostics
+dotnet_analyzer_diagnostic.severity = none

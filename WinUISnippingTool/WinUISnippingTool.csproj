@@ -20,11 +20,6 @@
     <None Remove="Resources\Styles\SimpleStyles.xaml" />
     <None Remove="Views\Pages\MainPage.xaml" />
     <None Remove="Views\Pages\Settings.xaml" />
-    <None Remove="Views\SnipScreenWindow.xaml" />
-    <None Remove="Views\UserControls\ColorPicker.xaml" />
-    <None Remove="Views\UserControls\SnipControl.xaml" />
-    <None Remove="Views\UserControls\VideoCaptureControl.xaml" />
-    <None Remove="Views\VideoCaptureWindow.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,17 +40,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.2.0" />
-    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240829007" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="2.0.9" />
-    <PackageReference Include="SharpDX" Version="4.2.0" />
-    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
-    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
@@ -68,14 +55,9 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <Page Update="Views\UserControls\VideoCaptureControl.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="Views\VideoCaptureWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <ProjectReference Include="..\WinUISnippingTool.Core\WinUISnippingTool.Core.csproj" />
+    <ProjectReference Include="..\WinUISnippingTool.SharedResources\WinUISnippingTool.SharedResources.csproj" />
+    <ProjectReference Include="..\WinUISnippingTool.ViewModels\WinUISnippingTool.ViewModels.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\Pages\MainPage.xaml">
@@ -83,22 +65,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="Views\UserControls\ColorPicker.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="Views\SnipScreenWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
     <Page Update="Resources\Styles\SimpleStyles.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="Views\UserControls\SnipControl.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
