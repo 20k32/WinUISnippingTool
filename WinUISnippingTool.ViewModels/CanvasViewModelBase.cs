@@ -13,8 +13,6 @@ namespace WinUISnippingTool.ViewModels;
 
 public abstract class CanvasViewModelBase : ViewModelBase
 {
-    protected static CaptureType CaptureType;
-
     protected Size DefaultWindowSize = new(500, 500);
     public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; protected set; }
 
@@ -63,6 +61,20 @@ public abstract class CanvasViewModelBase : ViewModelBase
         => NotifyOfPropertyChange(nameof(SelectedSnipKind));
 
     #endregion
+
+    private static CaptureType captureType;
+    public CaptureType CaptureType
+    {
+        get => captureType;
+        set
+        {
+            if (captureType != value)
+            {
+                captureType = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
 
     public virtual void SetWindowSize(Size newSize)
     {

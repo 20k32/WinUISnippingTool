@@ -150,9 +150,10 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         return result;
     }
 
-    public void SetSelectedItem(SnipShapeKind selectedKind)
+    public void SetSelectedItem(SnipShapeKind selectedKind, CaptureType selectedCapturType)
     {
         SelectedSnipKind = selectedKind;
+        CaptureType = selectedCapturType;
     }
 
     protected override void SelectionChangedCallback()
@@ -343,5 +344,18 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         {
             IsOverlayVisible = true;
         }
+    }
+
+    internal void PrepareModel(MonitorLocation location, SoftwareBitmap softwareBitmap, SoftwareBitmapSource softwareBitmapSource, SnipShapeKind selectedSnipKind, CaptureType captureType, bool byShortcut)
+    {
+        SetCurrentMonitor(location.DeviceName);
+        _ = GetOrAddCollectionForCurrentMonitor();
+        AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
+        AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
+        AddShapeSourceForCurrentMonitor();
+        SetWindowSize(location.MonitorSize);
+        SetResponceType(byShortcut);
+        SetImageSourceForCurrentMonitor();
+        SetSelectedItem(selectedSnipKind, captureType);
     }
 }

@@ -27,8 +27,6 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
 {
     private static SnipShapeKind tempSelectedSnipKind;
 
-    public static CaptureType CaptureKind;
-
     static SnipControl()
     { }
 
@@ -49,7 +47,20 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         }
     }
 
-    public bool IsDirectXSupported { get; set; }
+    private static bool isDirectXSupported;
+    public bool IsDirectXSupported
+    {
+        get => isDirectXSupported;
+        set
+        {
+            if(isDirectXSupported != value)
+            {
+                isDirectXSupported = value;
+                OnPropertyChanged();
+                VideoButtonClickCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
 
     private static bool isVideoButtonEnabled;
 
@@ -58,8 +69,11 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         get => isVideoButtonEnabled;
         set
         {
-            isVideoButtonEnabled = value;
-            OnPropertyChanged();
+            if(isVideoButtonEnabled != value)
+            {
+                isVideoButtonEnabled = value;
+                OnPropertyChanged();
+            }
         }
     }
 
@@ -93,7 +107,7 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     [RelayCommand]
     private void PhotoButtonClick()
     {
-        CaptureKind = CaptureType.Photo;
+        SelectedCaptureType = CaptureType.Photo;
         IsPhotoButtonEnabled = false;
         IsVideoButtonEnabled = true;
         IsPaintListEnabled = true;
@@ -103,7 +117,7 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     [RelayCommand(CanExecute = nameof(CanVideoButtonClick))]
     private void VideoButtonClick()
     {
-        CaptureKind = CaptureType.Video;
+        SelectedCaptureType = CaptureType.Video;
         IsPhotoButtonEnabled = true;
         IsVideoButtonEnabled = false;
         IsPaintListEnabled = false;
@@ -135,9 +149,19 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         set => SetValue(SelectedSnipKindProperty, value);
     }
 
+    public static readonly DependencyProperty SelectedCaptureTypeProperty = DependencyProperty.Register(
+        nameof(SelectedCaptureType),
+        typeof(CaptureType),
+        typeof(SnipControl),
+        new(default));
+
+    public CaptureType SelectedCaptureType
+    {
+        get => (CaptureType)GetValue(SelectedCaptureTypeProperty);
+        set => SetValue(SelectedCaptureTypeProperty, value);
+    }
+
     public event PropertyChangedEventHandler PropertyChanged;
-
-
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null)
     {

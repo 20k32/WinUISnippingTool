@@ -8,9 +8,9 @@ namespace WinUISnippingTool.Models;
 
 public static class CoreConstants
 {
-    public const int MinLargeWidth = 1154;
-    public const int MinMediumWidth = 954;
-    public const int MinSmallWidth = 754;
+    public const int MaxLargeWidth = 1154;
+    public const int MaxMediumWidth = 954;
+    public const int MaxSmallWidth = 754;
 
     public const int DefaultBitrate = 10_000_000;
     public const int DefaultFramerate = 60;

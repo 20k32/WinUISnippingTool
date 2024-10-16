@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\WinUISnippingTool.Core\WinUISnippingTool.Core.csproj" />
     <ProjectReference Include="..\WinUISnippingTool.Helpers\WinUISnippingTool.Helpers.csproj" />
     <ProjectReference Include="..\WinUISnippingTool.Models\WinUISnippingTool.Models.csproj" />
     <ProjectReference Include="..\WinUISnippingTool.SharedResources\WinUISnippingTool.SharedResources.csproj" />

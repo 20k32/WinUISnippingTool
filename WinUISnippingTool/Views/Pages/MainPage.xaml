@@ -8,20 +8,65 @@
     xmlns:toolkit="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Interactivity="using:Microsoft.Xaml.Interactivity" 
+    xmlns:Interactions="using:Microsoft.Xaml.Interactions.Core"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    SizeChanged="Page_SizeChanged"
     ActualThemeChanged="ThemeChanged"
     Unloaded="Page_Unloaded">
+
+    <Interactivity:Interaction.Behaviors>
+        <Interactions:EventTriggerBehavior EventName="SizeChanged">
+            <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.SizeChangedCommand}"/>
+        </Interactions:EventTriggerBehavior>
+    </Interactivity:Interaction.Behaviors>
 
     <Grid x:Name="mainGrid"
           KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
-            <KeyboardAccelerator Key="X" Modifiers="Shift,Control" Invoked="EnterSnippingModeByShortcut"/>
-            <KeyboardAccelerator Key="Z" Modifiers="Control" Invoked="GlobalUndoShortcut"/>
-            <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="GlobalRedoShortcut"/>
-            <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="SaveToClipboardShortcut"/>
-            <KeyboardAccelerator Key="S" Modifiers="Control" Invoked="SaveFileDialogShortcut"/>
+            
+            <KeyboardAccelerator Key="X" Modifiers="Shift,Control">
+                <Interactivity:Interaction.Behaviors>
+                    <Interactions:EventTriggerBehavior EventName="Invoked">
+                        <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.EnterSnippingModeCommand}"
+                                                          CommandParameter="True"/>
+                    </Interactions:EventTriggerBehavior>
+                </Interactivity:Interaction.Behaviors>
+            </KeyboardAccelerator>
+
+            <KeyboardAccelerator Key="Z" Modifiers="Control">
+                <Interactivity:Interaction.Behaviors>
+                    <Interactions:EventTriggerBehavior EventName="Invoked">
+                        <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.GlobalUndoCommand}"/>
+                    </Interactions:EventTriggerBehavior>
+                </Interactivity:Interaction.Behaviors>
+            </KeyboardAccelerator>
+
+            <KeyboardAccelerator Key="A" Modifiers="Control">
+                <Interactivity:Interaction.Behaviors>
+                    <Interactions:EventTriggerBehavior EventName="Invoked">
+                        <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.GlobalRedoCommand}"/>
+                    </Interactions:EventTriggerBehavior>
+                </Interactivity:Interaction.Behaviors>
+            </KeyboardAccelerator>
+
+            <KeyboardAccelerator Key="C" Modifiers="Control">
+                <Interactivity:Interaction.Behaviors>
+                    <Interactions:EventTriggerBehavior EventName="Invoked">
+                        <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.SaveBmpToClipboardCommand}"/>
+                    </Interactions:EventTriggerBehavior>
+                </Interactivity:Interaction.Behaviors>
+            </KeyboardAccelerator>
+
+            <KeyboardAccelerator Key="S" Modifiers="Control">
+
+                <Interactivity:Interaction.Behaviors>
+                    <Interactions:EventTriggerBehavior EventName="Invoked">
+                        <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.SaveFileDialogCommand}"/>
+                    </Interactions:EventTriggerBehavior>
+                </Interactivity:Interaction.Behaviors>
+                
+            </KeyboardAccelerator>
 
         </Grid.KeyboardAccelerators>
 
@@ -52,7 +97,8 @@
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
 
                 <Button Margin="0, 0, 15, 0"
-                        Click="SnippingModeButton_Click">
+                        Command="{x:Bind ViewModel.EnterSnippingModeCommand}"
+                        CommandParameter="False">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="5">
                         <FontIcon Glyph="&#xE710;"
@@ -66,9 +112,11 @@
 
                 <userControl:SnipControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
                                          SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"
+                                         SelectedCaptureType="{x:Bind ViewModel.CaptureType, Mode=TwoWay}"
                                          IsPhotoButtonEnabled="False"
                                          IsVideoButtonEnabled="True"
-                                         IsPaintListEnabled="True"/>
+                                         IsPaintListEnabled="True"
+                                         IsDirectXSupported="True"/>
             </StackPanel>
 
             <!-- Redact picture (Middle) pane -->
@@ -148,21 +196,21 @@
                 <Button Style="{StaticResource TransparentButton}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
-                        Click="CropButton_Click">
+                        Command="{x:Bind ViewModel.EnterCroppingModeCommand}">
                     <FontIcon Glyph="&#xE7A8;" />
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=True, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
-                        Click="CommitCropButton_Click">
+                        Command="{x:Bind ViewModel.CommitCropCommand}">
                     <FontIcon Glyph="&#xE73E;" />
                 </Button>
 
 
                 <Button Style="{StaticResource TransparentButton}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=True, Mode=OneWay}"
-                        Click="DecropButton_Click">
+                        Command="{x:Bind ViewModel.ExitCroppingModeCommand}">
                     <FontIcon Glyph="&#xE8BB;" />
                 </Button>
 
@@ -192,14 +240,16 @@
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
 
                 <Button Style="{StaticResource TransparentButton}"
-                        Click="SaveBmpToFile_Click"
+                        Command="{x:Bind ViewModel.SaveFileDialogCommand}"
+                        CommandParameter="False"
                         IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
                     <FontIcon Glyph="&#xE792;" />
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
-                        Click="SaveBmpToClipboard_Click">
+                        Command="{x:Bind ViewModel.SaveBmpToClipboardCommand}"
+                        CommandParameter="False">
                     <FontIcon Glyph="&#xE8C8;" />
                 </Button>
 
@@ -251,13 +301,35 @@
                     <ItemsPanelTemplate>
                         <Canvas Background="Transparent"
                                 RenderTransform="{Binding TransformSource, Mode=OneWay}"
-                                PointerPressed="Canvas_PointerPressed"
-                                PointerMoved="Canvas_PointerMoved"
-                                PointerReleased="Canvas_PointerReleased"
-                                PointerWheelChanged="Page_PointerWheelChanged"
                                 x:Name="parentCanvas"
                                 Width="{Binding CanvasWidth, Mode=OneWay}"
-                                Height="{Binding CanvasHeight, Mode=OneWay}"/>
+                                Height="{Binding CanvasHeight, Mode=OneWay}">
+                            
+                            <Interactivity:Interaction.Behaviors>
+
+                                <Interactions:EventTriggerBehavior EventName="PointerWheelChanged">
+                                    <Interactions:InvokeCommandAction 
+                                        Command="{Binding DataContext.ScaleCanvasCommand, ElementName=parentCanvas}" />
+                                </Interactions:EventTriggerBehavior>
+
+                                <Interactions:EventTriggerBehavior EventName="PointerMoved">
+                                    <Interactions:InvokeCommandAction 
+                                        Command="{Binding DataContext.PointerMovedCommand, ElementName=parentCanvas}" />
+                                </Interactions:EventTriggerBehavior>
+
+                                <Interactions:EventTriggerBehavior EventName="PointerPressed">
+                                    <Interactions:InvokeCommandAction 
+                                        Command="{Binding DataContext.PointerPressedCommand, ElementName=parentCanvas}" />
+                                </Interactions:EventTriggerBehavior>
+
+                                <Interactions:EventTriggerBehavior EventName="PointerReleased">
+                                    <Interactions:InvokeCommandAction 
+                                        Command="{Binding DataContext.PointerReleasedCommand, ElementName=parentCanvas}" />
+                                </Interactions:EventTriggerBehavior>
+
+                            </Interactivity:Interaction.Behaviors>
+                            
+                        </Canvas>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 

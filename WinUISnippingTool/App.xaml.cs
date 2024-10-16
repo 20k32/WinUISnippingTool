@@ -46,7 +46,8 @@ public sealed partial class App : Application
         var existingCollection = new ServiceCollection();
 
         existingCollection
-            .ConfigurePresentationLayer()
+            .RegisterViewModels()
+            .RegisterInnerWindows()
             .AddSingleton<MainWindow>()
             .AddSingleton<MainPage>();
 

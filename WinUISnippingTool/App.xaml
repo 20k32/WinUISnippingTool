@@ -9,7 +9,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="Resources/Styles/SimpleStyles.xaml"/>
+                <ResourceDictionary Source="ms-appx:///WinUISnippingTool.SharedResources/Resources/Styles/SimpleStyles.xaml"/>
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->

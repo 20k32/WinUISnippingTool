@@ -13,6 +13,7 @@
         <None Remove="Controls\ColorPicker.xaml" />
         <None Remove="Controls\SnipControl.xaml" />
         <None Remove="Controls\VideoCaptureControl.xaml" />
+        <None Remove="Resources\Styles\SimpleStyles.xaml" />
     </ItemGroup>
 
     <ItemGroup>
@@ -37,6 +38,10 @@
         <Page Update="Controls\VideoCaptureControl.xaml">
             <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
             <SubType>Designer</SubType>
+        </Page>
+        <Page Update="Resources\Styles\SimpleStyles.xaml">
+          <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+          <SubType>Designer</SubType>
         </Page>
     </ItemGroup>
 </Project>
