@@ -24,6 +24,9 @@ using Windows.UI.WebUI;
 using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.Core;
 using WinUISnippingTool.Helpers;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
+using WinUISnippingTool.ViewModels.Resources;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

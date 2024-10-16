@@ -59,13 +59,11 @@
             </KeyboardAccelerator>
 
             <KeyboardAccelerator Key="S" Modifiers="Control">
-
                 <Interactivity:Interaction.Behaviors>
                     <Interactions:EventTriggerBehavior EventName="Invoked">
                         <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.SaveFileDialogCommand}"/>
                     </Interactions:EventTriggerBehavior>
                 </Interactivity:Interaction.Behaviors>
-                
             </KeyboardAccelerator>
 
         </Grid.KeyboardAccelerators>
@@ -101,12 +99,22 @@
                         CommandParameter="False">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="5">
+
+                        <ToolTipService.ToolTip>
+                            <ToolTip Placement="Bottom">
+                                <TextBlock Text="{x:Bind ViewModel.TakeScreenshotTooltipButtonName}"/>
+                            </ToolTip>
+                        </ToolTipService.ToolTip>
+
+
                         <FontIcon Glyph="&#xE710;"
                                   x:Name="NewPictureIcon"
                                   VerticalAlignment="Center"/>
+                        
                         <TextBlock x:Name="PART_TakePictureButtonName"
                                    RelativePanel.RightOf="NewPictureIcon"
                                    Text="{x:Bind ViewModel.TakePhotoButtonName, Mode=OneWay}"/>
+
                     </StackPanel>
                 </Button>
 
@@ -130,6 +138,13 @@
                         Command="{x:Bind ViewModel.SetSimpleBrushCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.SimpleBrushButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <Button.Content>
                         <FontIcon Glyph="&#xED63;" />
                     </Button.Content>
@@ -154,6 +169,13 @@
                         Command="{x:Bind ViewModel.SetMarkerBrushCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.MarkerBrushButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <Button.Content>
                         <FontIcon Glyph="&#xED64;" />
                     </Button.Content>
@@ -178,7 +200,16 @@
                         Command="{x:Bind ViewModel.SetEraseBrushCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.EraseBrushButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <FontIcon Glyph="&#xED60;" />
+                    
+                    
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
@@ -197,7 +228,15 @@
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
                         Command="{x:Bind ViewModel.EnterCroppingModeCommand}">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.ImageCropperButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <FontIcon Glyph="&#xE7A8;" />
+                    
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
@@ -222,13 +261,29 @@
                 <Button Style="{StaticResource TransparentButton}"
                         Command="{x:Bind ViewModel.GlobalUndoCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.UndoButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <FontIcon Glyph="&#xE7A7;" />
+                    
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
                         Command="{x:Bind ViewModel.GlobalRedoCommand}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=False, Mode=OneWay}">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.RedoButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <FontIcon Glyph="&#xE7A6;" />
+                    
                 </Button>
             </StackPanel>
 
@@ -243,14 +298,30 @@
                         Command="{x:Bind ViewModel.SaveFileDialogCommand}"
                         CommandParameter="False"
                         IsEnabled="{x:Bind ViewModel.IsSnapshotTaken, Mode=OneWay}">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.SaveButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <FontIcon Glyph="&#xE792;" />
+                    
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
                         IsEnabled="{x:Bind ViewModel.IsImageLoaded, Mode=OneWay}"
                         Command="{x:Bind ViewModel.SaveBmpToClipboardCommand}"
                         CommandParameter="False">
+
+                    <ToolTipService.ToolTip>
+                        <ToolTip Placement="Bottom">
+                            <TextBlock Text="{x:Bind ViewModel.CopyButtonName}"/>
+                        </ToolTip>
+                    </ToolTipService.ToolTip>
+
                     <FontIcon Glyph="&#xE8C8;" />
+                    
                 </Button>
 
                 <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"

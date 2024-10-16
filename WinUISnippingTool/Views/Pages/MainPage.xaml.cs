@@ -97,7 +97,7 @@ internal sealed partial class MainPage : Page
         }
         else if (ViewModel.CanMinimizeWindow)
         {
-            ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize();
+            DispatcherQueue.TryEnqueue(() => ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize());
         }
     }
 

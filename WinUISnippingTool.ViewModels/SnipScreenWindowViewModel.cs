@@ -18,6 +18,9 @@ using CommunityToolkit.WinUI;
 using WinUISnippingTool.Models.MonitorInfo;
 using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.Helpers;
+using System.Diagnostics;
+using Microsoft.UI.Dispatching;
+using Windows.Services.Maps;
 
 
 namespace WinUISnippingTool.ViewModels;
@@ -37,7 +40,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     private string currentMonitorName;
     public MonitorLocation PrimaryMonitor { get; private set; }
 
-    public event Action OnExitFromWindow;
+    public event Func<Task> OnExitFromWindow;
     public Shape ResultFigure { get; private set; }
     public int ResultFigureActualWidth { get; private set; }
     public int ResultFigureActualHeight { get; private set; }
@@ -305,7 +308,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         }
     }
 
-    public void Exit()
+    public async Task ExitAsync()
     {
         foreach(var item in shapesDictionary)
         {
@@ -331,14 +334,18 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
             CurrentShapeBmp = null;
         }
 
-        OnExitFromWindow?.Invoke();
+        if(OnExitFromWindow is not null)
+        {
+
+            await OnExitFromWindow();
+        }
     }
 
-    public void TryExit()
+    public async Task TryExitAsync()
     {
         if (CompleteRendering)
         {
-            Exit();
+            await ExitAsync();
         }
         else
         {

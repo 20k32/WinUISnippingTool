@@ -28,6 +28,11 @@ using Microsoft.UI.Xaml.Input;
 using CommunityToolkit.WinUI.UI;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Core;
+using Microsoft.UI.Dispatching;
+using CommunityToolkit.WinUI;
+using System.Threading;
+using Windows.UI.Core;
+using Microsoft.Extensions.DependencyInjection;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : CanvasViewModelBase
@@ -155,12 +160,17 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         sizeManager.UnregisterHandlers();
     }
 
-    private async void OnExitFromWindow()
+    //todo: fix access violation when shortcut requested
+    private async Task OnExitFromWindow()
     {
+        var dispatcher = Ioc.Default.GetService<DispatcherQueue>();
+
+        
         foreach (var window in snipScreenWindows)
         {
-            window.Close();
+            dispatcher.TryEnqueue(window.Close); // here
         }
+        
 
         snipScreenWindows.Clear();
 
@@ -191,6 +201,16 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             BcpTag = bcpTag;
             TakePhotoButtonName = ResourceMap.GetValue("TakePhotoButtonName/Text")?.ValueAsString ?? "emtpy_value";
             SettingsButtonName = ResourceMap.GetValue("Settings/Text")?.ValueAsString ?? "empty_value";
+
+            SimpleBrushButtonName = ResourceMap.GetValue("SimpleBrush/Text")?.ValueAsString ?? "emtpy_value";
+            MarkerBrushButtonName = ResourceMap.GetValue("MarkerBrush/Text")?.ValueAsString ?? "emtpy_value";
+            EraseBrushButtonName = ResourceMap.GetValue("EraseBrush/Text")?.ValueAsString ?? "emtpy_value";
+            UndoButtonName = ResourceMap.GetValue("UndoButton/Text")?.ValueAsString ?? "emtpy_value";
+            RedoButtonName = ResourceMap.GetValue("RedoButton/Text")?.ValueAsString ?? "emtpy_value";
+            SaveButtonName = ResourceMap.GetValue("SaveDialogButton/Text")?.ValueAsString ?? "emtpy_value";
+            CopyButtonName = ResourceMap.GetValue("CopyButton/Text")?.ValueAsString ?? "emtpy_value";
+            ImageCropperButtonName = ResourceMap.GetValue("ImageCropperButton/Text")?.ValueAsString ?? "empty_value";
+            TakeScreenshotTooltipButtonName = ResourceMap.GetValue("TakePhotoButtonTooltip/Text")?.ValueAsString ?? "empty_value";
 
             snipScreenWindowViewModel.TrySetAndLoadLocalization(bcpTag);
         }
@@ -475,6 +495,9 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     [RelayCommand]
     public async Task EnterSnippingModeAsync(string byShortcut)
     {
+        var dispatcherQueue = Ioc.Default.GetService<DispatcherQueue>(); ;
+
+        Debug.WriteLine($"Thread id: {Thread.CurrentThread.ManagedThreadId}");
         var result = bool.Parse(byShortcut);
 
         this.byShortcut = result;
@@ -497,29 +520,28 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             var softwareBitmapSource = new SoftwareBitmapSource();
             await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
 
-            var window = Ioc.Default.GetService<SnipScreenWindow>();
-            snipScreenWindows.Add(window);
-
             snipScreenWindowViewModel.ResetModel();
 
             snipScreenWindowViewModel
-                .PrepareModel(location, 
+                .PrepareModel(location,
                 softwareBitmap,
-                softwareBitmapSource, 
-                SelectedSnipKind, 
+                softwareBitmapSource,
+                SelectedSnipKind,
                 CaptureType,
                 this.byShortcut);
-           
+
+            var window = Ioc.Default.GetService<SnipScreenWindow>();
+            snipScreenWindows.Add(window);
             window.PrepareWindow(location);
-            
+
             Debug.WriteLine($"location: {location.DeviceName}");
         }
 
         Debug.WriteLine($"Activating devices");
 
-        foreach (var item in snipScreenWindows)
+        foreach (var window in snipScreenWindows)
         {
-            item.Activate();
+            window.Activate();
         }
     }
 
@@ -997,6 +1019,137 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             }
         }
     }
+
+    #endregion
+
+    #region Tooltips
+
+    private string simpleBrushButtonName;
+    public string SimpleBrushButtonName
+    {
+        get => simpleBrushButtonName;
+        set
+        {
+            if(simpleBrushButtonName != value)
+            {
+                simpleBrushButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string markerBrushButtonName;
+    public string MarkerBrushButtonName
+    {
+        get => markerBrushButtonName;
+        set
+        {
+            if (markerBrushButtonName != value)
+            {
+                markerBrushButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string eraseBrushButtonName;
+    public string EraseBrushButtonName
+    {
+        get => eraseBrushButtonName;
+        set
+        {
+            if (eraseBrushButtonName != value)
+            {
+                eraseBrushButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string undoButtonName;
+    public string UndoButtonName
+    {
+        get => undoButtonName;
+        set
+        {
+            if (undoButtonName != value)
+            {
+                undoButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string redoButtonName;
+    public string RedoButtonName
+    {
+        get => redoButtonName;
+        set
+        {
+            if (redoButtonName != value)
+            {
+                redoButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string saveButtonName;
+    public string SaveButtonName
+    {
+        get => saveButtonName;
+        set
+        {
+            if (saveButtonName != value)
+            {
+                saveButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string copyButtonName;
+    public string CopyButtonName
+    {
+        get => copyButtonName;
+        set
+        {
+            if (copyButtonName != value)
+            {
+                copyButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string imageCropperButtonName;
+    public string ImageCropperButtonName
+    {
+        get => imageCropperButtonName;
+        set
+        {
+            if (imageCropperButtonName != value)
+            {
+                imageCropperButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private string takeScreenshotTooltipButtonName;
+    public string TakeScreenshotTooltipButtonName
+    {
+        get => takeScreenshotTooltipButtonName;
+        set
+        {
+            if (takeScreenshotTooltipButtonName != value)
+            {
+                takeScreenshotTooltipButtonName = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
 
     #endregion
 }

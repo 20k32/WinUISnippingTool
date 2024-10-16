@@ -153,4 +153,31 @@
   <data name="ChangeVideosLocationButton.Text" xml:space="preserve">
     <value>Change video location</value>
   </data>
+  <data name="SimpleBrush.Text" xml:space="preserve">
+    <value>Ballpoint pen</value>
+  </data>
+  <data name="MarkerBrush.Text" xml:space="preserve">
+    <value>Hightlighter</value>
+  </data>
+  <data name="EraseBrush.Text" xml:space="preserve">
+    <value>Eraser</value>
+  </data>
+  <data name="UndoButton.Text" xml:space="preserve">
+    <value>Undo (Ctrl+Z)</value>
+  </data>
+  <data name="RedoButton.Text" xml:space="preserve">
+    <value>Redo (Ctrl + A)</value>
+  </data>
+  <data name="SaveDialogButton.Text" xml:space="preserve">
+    <value>Save as (Ctrl + S)</value>
+  </data>
+  <data name="CopyButton.Text" xml:space="preserve">
+    <value>Copy (Ctrl + C)</value>
+  </data>
+  <data name="ImageCropperButton.Text" xml:space="preserve">
+    <value>Image cropper</value>
+  </data>
+  <data name="TakePhotoButtonTooltip.Text" xml:space="preserve">
+    <value>Take screenshot (Ctrl + Shift + X)</value>
+  </data>
 </root>

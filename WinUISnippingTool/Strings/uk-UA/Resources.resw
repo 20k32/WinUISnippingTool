@@ -150,4 +150,31 @@
   <data name="ChangeVideosLocationButton.Text" xml:space="preserve">
     <value>Обрати місце для відео</value>
   </data>
+  <data name="CopyButton.Text" xml:space="preserve">
+    <value>Копіювати (Ctrl + C)</value>
+  </data>
+  <data name="EraseBrush.Text" xml:space="preserve">
+    <value>Гумка</value>
+  </data>
+  <data name="MarkerBrush.Text" xml:space="preserve">
+    <value>Маркер</value>
+  </data>
+  <data name="SaveDialogButton.Text" xml:space="preserve">
+    <value>Зберегти як (Ctrl + S)</value>
+  </data>
+  <data name="SimpleBrush.Text" xml:space="preserve">
+    <value>Кулькова ручка</value>
+  </data>
+  <data name="UndoButton.Text" xml:space="preserve">
+    <value>Скасувати (Ctrl + Z)</value>
+  </data>
+  <data name="RedoButton.Text" xml:space="preserve">
+    <value> Повернути (Ctrl + A)</value>
+  </data>
+  <data name="ImageCropperButton.Text" xml:space="preserve">
+    <value>Обрізати зображення</value>
+  </data>
+  <data name="TakePhotoButtonTooltip.Text" xml:space="preserve">
+    <value>Зробити скріншот (Ctrl + Shift + X)</value>
+  </data>
 </root>

@@ -19,6 +19,8 @@ using WinUISnippingTool.Helpers;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using WinUISnippingTool.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Dispatching;
+using WinUISnippingTool.ViewModels.Resources;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -46,10 +48,14 @@ public sealed partial class App : Application
         var existingCollection = new ServiceCollection();
 
         existingCollection
-            .RegisterViewModels()
-            .RegisterInnerWindows()
-            .AddSingleton<MainWindow>()
-            .AddSingleton<MainPage>();
+            .AddSingleton(this)
+            .AddSingleton<MainPage>()
+            .AddSingleton<SnipScreenWindowViewModel>()
+            .AddSingleton<MainPageViewModel>()
+            .AddTransient<SnipScreenWindow>()
+            .AddTransient<VideoCaptureWindow>()
+            .AddSingleton(_ => MainWindow.DispatcherQueue)
+            .AddSingleton(_ => MainWindow.Dispatcher);
 
         var provider = existingCollection.BuildServiceProvider();
 
@@ -129,8 +135,7 @@ public sealed partial class App : Application
 
             var monitors = Monitor.All.ToArray();
 
-            MainWindow = Ioc.Default.GetRequiredService<MainWindow>();
-            viewModel = Ioc.Default.GetRequiredService<MainPageViewModel>();
+            MainWindow = new();
 
             MainWindow.Closed += MainWindow_Closed;
 

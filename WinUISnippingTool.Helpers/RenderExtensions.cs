@@ -81,7 +81,7 @@ public static class RenderExtensions
                 newBoundHeight = (float)(image.Bounds.Height * minScale);
 
                 drawingSession.DrawImage(image, (float)prevBoundWidth, 0);
-                prevBoundWidth += newBoundWidth;
+                prevBoundWidth += image.Bounds.Width;
             }
         }
 

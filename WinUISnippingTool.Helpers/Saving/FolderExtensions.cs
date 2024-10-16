@@ -2,6 +2,7 @@
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
@@ -21,11 +22,42 @@ public static class FolderExtensions
     public const string ScreenshotsFolderName = "Screenshots";
     public const string VideosFolderName = "Captures";
 
-    public static async Task<StorageFolder> GetDefaultScreenshotsFolderAsync() =>
-        picturesLibraryFolder ??= await KnownFolders.PicturesLibrary.GetFolderAsync(ScreenshotsFolderName);
+    public static async Task<StorageFolder> GetDefaultScreenshotsFolderAsync()
+    {
+        if(picturesLibraryFolder is null)
+        {
+            try
+            {
+                picturesLibraryFolder ??= await KnownFolders.PicturesLibrary.GetFolderAsync(ScreenshotsFolderName);
+            }
+            catch (FileNotFoundException)
+            {
+                picturesLibraryFolder ??= await KnownFolders.PicturesLibrary.CreateFolderAsync(ScreenshotsFolderName);
+            }
+        }
+        
+        return picturesLibraryFolder;
+    }
+       
 
-    public static async Task<StorageFolder> GetDefaultVideosFolderAsync() =>
-        videosLibraryFolder ??= await KnownFolders.VideosLibrary.GetFolderAsync(VideosFolderName);
+    public static async Task<StorageFolder> GetDefaultVideosFolderAsync()
+    {
+        if (videosLibraryFolder is null)
+        {
+            try
+            {
+                videosLibraryFolder = await KnownFolders.VideosLibrary.GetFolderAsync(VideosFolderName);
+            }
+            catch (FileNotFoundException)
+            {
+                videosLibraryFolder = await KnownFolders.VideosLibrary.CreateFolderAsync(VideosFolderName);
+            }
+        }
+        
+
+        return videosLibraryFolder;
+    }
+        
 
     private static async Task<StorageFolder> DefineFolderForPicturesAsync()
     {
