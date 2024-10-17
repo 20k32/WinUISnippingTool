@@ -52,6 +52,7 @@ public sealed partial class App : Application
             .AddSingleton<MainPage>()
             .AddSingleton<SnipScreenWindowViewModel>()
             .AddSingleton<MainPageViewModel>()
+            .AddSingleton(_ => MainWindow.DispatcherQueue)
             .AddTransient<SnipScreenWindow>()
             .AddTransient<VideoCaptureWindow>();
 

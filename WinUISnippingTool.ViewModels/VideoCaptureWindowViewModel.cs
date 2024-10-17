@@ -1,9 +1,15 @@
-﻿using Microsoft.UI.Xaml;
+﻿using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.WinUI;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 using System;
 using System.Diagnostics;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 using Windows.Graphics;
+using Windows.Storage;
 using WinUISnippingTool.Helpers;
+using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.VideoCapture;
 
@@ -75,10 +81,10 @@ public sealed class VideoCaptureWindowViewModel : ViewModelBase
     public void SetMonitorForCapturing(MonitorLocation monitor) => CurrentMonitor = monitor;
     public void SetFrameForMonitor(RectInt32 frame) => videoFrame = frame;
 
-    public Task StartCaptureAsync()
+    public Task StartCaptureAsync(StorageFile file)
     {
         StartTimer();
-        return captureHelper.StartScreenCaptureAsync(CurrentMonitor, videoFrame);
+        return captureHelper.StartScreenCaptureAsync(CurrentMonitor, videoFrame, file);
     }
 
     public void StopCapture()

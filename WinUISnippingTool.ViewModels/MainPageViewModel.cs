@@ -35,6 +35,7 @@ using Windows.UI.Core;
 using Microsoft.Extensions.DependencyInjection;
 using WinUISnippingTool.Models.Messages;
 using SharpDX;
+using WinUISnippingTool.Models.VideoCapture;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : CanvasViewModelBase
@@ -178,7 +179,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             }
             else if (CaptureType == CaptureType.Video)
             {
-                OnVideoModeEntered?.Invoke();
+                //OnVideoModeEntered?.Invoke();
                 await ShowVideoCaptureScreenAsync();
             }
         }
@@ -482,11 +483,13 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         videoCaptureWindowViewModel.SetCaptureSize((uint)currentMonitor.MonitorSize.Width, (uint)currentMonitor.MonitorSize.Height);
         videoCaptureWindowViewModel.SetFrameForMonitor(framePosition);
 
-        var videoCaptureWindow = Ioc.Default.GetService<VideoCaptureWindow>();
+        var videoCaptureWindow = new VideoCaptureWindow(videoCaptureWindowViewModel);
 
         videoCaptureWindow.PrepareWindow();
+        var dispatcher = Ioc.Default.GetService<DispatcherQueue>();
+        var file = await dispatcher.EnqueueAsync(VideoCaptureHelper.GetFileAsync);
 
-        await videoCaptureWindow.ActivateAndStartCaptureAsync();
+        await videoCaptureWindow.ActivateAndStartCaptureAsync(file);
 
         if (videoCaptureWindow.Exited)
         {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -44,7 +45,7 @@ public sealed class VideoCaptureHelper // models
         return this;
     }
 
-    private static async Task<StorageFile> GetFileAsync()
+    public static async Task<StorageFile> GetFileAsync()
     {
         var name = DateTime.Now.ToString("yyyyMMdd-HHmm-ss");
         var fileName = $"SnipT-{name}.mp4";
@@ -53,15 +54,15 @@ public sealed class VideoCaptureHelper // models
         return file;
     }
 
-    public async Task StartScreenCaptureAsync(MonitorLocation currentMonitor, RectInt32 videoFrameSize)
+    public async Task StartScreenCaptureAsync(MonitorLocation currentMonitor, RectInt32 videoFrameSize, StorageFile savingFile)
     {
         var graphicsCaptureItem = GraphicsCaptureItemExtensions.CreateItemForMonitor(currentMonitor.HandleMonitor);
         device = Direct3D11Helpers.CreateDevice();
-        var currentFile = await GetFileAsync();
 
+        var dispatcher = Ioc.Default.GetService<DispatcherQueue>();
         try
         {
-            using (var stream = await currentFile.OpenAsync(FileAccessMode.ReadWrite))
+            using (var stream = await savingFile.OpenAsync(FileAccessMode.ReadWrite))
             using (encoder = new Encoder(device, graphicsCaptureItem, videoFrameSize, options))
             {
                 await encoder.EncodeAsync(stream);
@@ -72,7 +73,7 @@ public sealed class VideoCaptureHelper // models
             Debug.WriteLine(ex.Message);
         }
 
-        CurrentVideoFileUri = new($"file:///{currentFile.Path}");
+        CurrentVideoFileUri = new($"file:///{savingFile.Path}");
     }
 
     public void StopScreenCapture()
