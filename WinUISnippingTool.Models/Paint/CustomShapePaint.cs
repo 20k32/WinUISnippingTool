@@ -1,4 +1,5 @@
-﻿using Microsoft.UI;
+﻿using CommunityToolkit.WinUI.Helpers;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -23,9 +24,11 @@ public class CustomShapePaint : SnipPaintBase
     private readonly SolidColorBrush strokeColor;
     private ImageBrush fillColor;
     private Polyline polyline;
+    private TranslateTransform translateTransform;
 
     public CustomShapePaint() : base()
     {
+        translateTransform = new();
         strokeColor = new SolidColorBrush(Colors.White);
     }
 
@@ -53,21 +56,72 @@ public class CustomShapePaint : SnipPaintBase
             AlignmentX alignmentX = (AlignmentX)column;
             AlignmentY alignmentY = (AlignmentY)row;
 
-            fillColor.AlignmentX = alignmentX;
-            fillColor.AlignmentY = alignmentY;
+            /* alignmentX = AlignmentX.Left;
+             alignmentY = AlignmentY.Top;*/
+
+            fillColor.Stretch = Stretch.None;
+            fillColor.AlignmentX = AlignmentX.Left;
+            fillColor.AlignmentY = AlignmentY.Top;
 
             previousPosition = position;
+            StartPoint = position;
 
             Shapes.Add(polyline);
+
+             translateTransform.X = -position.X;
+             translateTransform.Y = 0;
+
+            /*translateTransform.X = 0;
+            translateTransform.Y = 0;*/
         }
     }
 
+
+    // todo: finish this
     public override void OnPointerMoved(Point position)
     {
         if (IsDrawing 
             && CalculateDistance(previousPosition, position) > MinRenderDistance)
         {
             polyline.Points.Add(position);
+
+           /* if (StartPoint.X < position.X
+               && StartPoint.Y < position.Y)
+            {
+                translateTransform.X = StartPoint.X;
+                Debug.WriteLine("Bottom right");
+            }
+            else if (StartPoint.X < position.X
+                    && StartPoint.Y > position.Y)
+            {
+                translateTransform.X = StartPoint.X;
+                Debug.WriteLine("Top right");
+            }*/
+            if (StartPoint.X > position.X
+                    && StartPoint.Y < position.Y)
+            {
+                translateTransform.X = -StartPoint.X;
+
+                Debug.WriteLine("Bottom left");
+            }
+            else if (StartPoint.X > position.X
+                    && StartPoint.Y > position.Y)
+            {
+                translateTransform.X = -StartPoint.X;
+
+                Debug.WriteLine($"{DateTime.Now.ToLongTimeString()} Top left");
+            }
+            else if(StartPoint.X > position.X && StartPoint.Y == position.Y)
+            {
+                translateTransform.X = -StartPoint.X;
+            }
+            else if (StartPoint.Y > position.Y && StartPoint.X == position.X)
+            {
+                translateTransform.Y = -StartPoint.Y;
+            }
+
+            StartPoint = position;
+
             previousPosition = position;
         }
     }
@@ -108,6 +162,7 @@ public class CustomShapePaint : SnipPaintBase
             AlignmentX = AlignmentX.Left,
             AlignmentY = AlignmentY.Top,
             Opacity = 1,
+            Transform = translateTransform
         };
 
         fillColor.ImageSource = source;

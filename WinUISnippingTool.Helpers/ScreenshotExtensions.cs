@@ -63,7 +63,10 @@ public static class ScreenshotExtensions
 
             using (var g = Graphics.FromImage(bmpScreenshot))
             {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+                g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
                 g.CopyFromScreen(upperLeftSource, upperLeftDestination, bmpScreenshot.Size);
             }
 
@@ -71,7 +74,7 @@ public static class ScreenshotExtensions
             {
                 using (var averageStream = stream.AsStreamForWrite(8000))
                 {
-                    bmpScreenshot.Save(averageStream, ImageFormat.Jpeg);
+                    bmpScreenshot.Save(averageStream, ImageFormat.Png);
                     BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
 
                     Debug.WriteLine("Try get software bitmap");
