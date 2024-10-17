@@ -21,6 +21,7 @@ using WinUISnippingTool.Helpers;
 using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using Windows.Services.Maps;
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 
 namespace WinUISnippingTool.ViewModels;
@@ -310,35 +311,29 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public async Task ExitAsync()
     {
-        foreach(var item in shapesDictionary)
-        {
-            item.Value.Clear();
-        }
-
-        foreach(var item in imagesDictionary)
+        foreach (var item in imagesDictionary)
         {
             var softwareBitmapSource = (SoftwareBitmapSource)item.Value.Source;
             softwareBitmapSource.Dispose();
             item.Value.Source = null;
         }
 
-        foreach(var softwareBitmap in softwareBitmaps.Values)
+        foreach (var softwareBitmap in softwareBitmaps.Values)
         {
             softwareBitmap.Dispose();
         }
 
         softwareBitmaps.Clear();
+        imagesDictionary.Clear();
+        shapesDictionary.Clear();
 
         if (IsShortcutResponce)
         {
             CurrentShapeBmp = null;
         }
 
-        if(OnExitFromWindow is not null)
-        {
-
-            await OnExitFromWindow();
-        }
+        //todo: await
+        OnExitFromWindow();
     }
 
     public async Task TryExitAsync()

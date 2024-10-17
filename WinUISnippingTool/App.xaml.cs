@@ -53,9 +53,7 @@ public sealed partial class App : Application
             .AddSingleton<SnipScreenWindowViewModel>()
             .AddSingleton<MainPageViewModel>()
             .AddTransient<SnipScreenWindow>()
-            .AddTransient<VideoCaptureWindow>()
-            .AddSingleton(_ => MainWindow.DispatcherQueue)
-            .AddSingleton(_ => MainWindow.Dispatcher);
+            .AddTransient<VideoCaptureWindow>();
 
         var provider = existingCollection.BuildServiceProvider();
 
@@ -115,6 +113,8 @@ public sealed partial class App : Application
                             var width = int.Parse(args.Arguments["snapshotWidth"]);
                             var height = int.Parse(args.Arguments["snapshotHeight"]);
 
+                            viewModel ??= Ioc.Default.GetService<MainPageViewModel>();
+
                             viewModel.AddImageFromSource(bmpImage, width, height);
 
                             ((OverlappedPresenter)MainWindow.AppWindow.Presenter).Restore();
@@ -136,10 +136,11 @@ public sealed partial class App : Application
             var monitors = Monitor.All.ToArray();
 
             MainWindow = new();
+            //viewModel = Ioc.Default.GetService<MainPageViewModel>();
 
             MainWindow.Closed += MainWindow_Closed;
 
-            MainWindow.Prepare(viewModel, monitors);
+            MainWindow.Prepare(monitors);
 
             // Ensure the MainWindow is active
             MainWindow.Activate();

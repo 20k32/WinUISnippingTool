@@ -91,13 +91,11 @@ internal sealed partial class MainPage : Page
 
     private void ViewModel_OnSnippingModeExited(bool byShortcut)
     {
-        if (ViewModel.CanShowWindow)
+        WindowExtensions.ShowWindow(windowHandle);
+        
+        if(ViewModel.CanMinimizeWindow)
         {
-            WindowExtensions.ShowWindow(windowHandle);
-        }
-        else if (ViewModel.CanMinimizeWindow)
-        {
-            DispatcherQueue.TryEnqueue(() => ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize());
+            App.MainWindow.DispatcherQueue.TryEnqueue(() => ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize());
         }
     }
 

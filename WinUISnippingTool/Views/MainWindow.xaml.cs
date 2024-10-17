@@ -39,7 +39,6 @@ namespace WinUISnippingTool.Views;
 internal sealed partial class MainWindow : Window
 {
     private nint windowHandle;
-    private MainPageViewModel viewModel;
     private SizeInt32 startSize;
     private Monitor[] monitors;
 
@@ -53,15 +52,16 @@ internal sealed partial class MainWindow : Window
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
+        var viewModel = Ioc.Default.GetService<MainPageViewModel>();
+
         viewModel.UnregisterHandlers();
     }
 
-    public void Prepare(MainPageViewModel viewModel, Monitor[] monitors) 
+    public void Prepare(Monitor[] monitors) 
     {
         windowHandle = WindowNative.GetWindowHandle(this);
         FilePickerExtensions.SetWindowHandle(windowHandle);
 
-        this.viewModel = viewModel;
         this.monitors = monitors;
 
         WindowExtensions.SetMinSize(this, new(500, 500));
