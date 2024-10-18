@@ -25,7 +25,7 @@
           KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.KeyboardAccelerators>
 
-            <KeyboardAccelerator Key="X" Modifiers="Shift,Control">
+            <KeyboardAccelerator Key="X" Modifiers="Shift,Control" >
                 <Interactivity:Interaction.Behaviors>
                     <Interactions:EventTriggerBehavior EventName="Invoked">
                         <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.EnterSnippingModeCommand}"
@@ -33,7 +33,6 @@
                     </Interactions:EventTriggerBehavior>
                 </Interactivity:Interaction.Behaviors>
             </KeyboardAccelerator>
-
 
             <KeyboardAccelerator Key="Z" Modifiers="Control">
                 <Interactivity:Interaction.Behaviors>

@@ -1,15 +1,19 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Graphics;
 using Windows.Graphics.DirectX.Direct3D11;
 using Windows.Storage;
-using Windows.System;
 using WinUISnippingTool.Helpers;
 using WinUISnippingTool.Helpers.DirectX;
 using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.Models.MonitorInfo;
+using Microsoft.UI.Dispatching;
+using CommunityToolkit.WinUI;
+using CommunityToolkit.Mvvm.Messaging;
+using System.Threading;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
@@ -44,7 +48,7 @@ public sealed class VideoCaptureHelper // models
         return this;
     }
 
-    private static async Task<StorageFile> GetFileAsync()
+    public static async Task<StorageFile> GetFileAsync()
     {
         var name = DateTime.Now.ToString("yyyyMMdd-HHmm-ss");
         var fileName = $"SnipT-{name}.mp4";
@@ -53,26 +57,27 @@ public sealed class VideoCaptureHelper // models
         return file;
     }
 
-    public async Task StartScreenCaptureAsync(MonitorLocation currentMonitor, RectInt32 videoFrameSize)
+    public async Task StartScreenCaptureAsync(MonitorLocation currentMonitor, RectInt32 videoFrameSize, StorageFile file)
     {
         var graphicsCaptureItem = GraphicsCaptureItemExtensions.CreateItemForMonitor(currentMonitor.HandleMonitor);
         device = Direct3D11Helpers.CreateDevice();
-        var currentFile = await GetFileAsync();
 
         try
         {
-            using (var stream = await currentFile.OpenAsync(FileAccessMode.ReadWrite))
+            using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
             using (encoder = new Encoder(device, graphicsCaptureItem, videoFrameSize, options))
             {
                 await encoder.EncodeAsync(stream);
             }
+
+            CurrentVideoFileUri = new($"file:///{file.Path}");
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
-        }
 
-        CurrentVideoFileUri = new($"file:///{currentFile.Path}");
+            CurrentVideoFileUri = null;
+        }
     }
 
     public void StopScreenCapture()

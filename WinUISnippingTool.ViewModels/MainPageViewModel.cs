@@ -17,24 +17,11 @@ using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Windows.Media.Core;
 using Windows.Storage;
-using System.Diagnostics;
 using WinUISnippingTool.Helpers;
 using WinUISnippingTool.Helpers.Saving;
-using CommunityToolkit.Mvvm.Messaging;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using WinUISnippingTool.ViewModels.Resources;
-using Windows.Graphics.Imaging;
-using Microsoft.UI.Xaml.Input;
-using CommunityToolkit.WinUI.UI;
-using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Core;
-using Microsoft.UI.Dispatching;
-using CommunityToolkit.WinUI;
-using System.Threading;
-using Windows.UI.Core;
-using Microsoft.Extensions.DependencyInjection;
-using WinUISnippingTool.Models.Messages;
-using SharpDX;
+using WinUISnippingTool.Models.VideoCapture;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : CanvasViewModelBase
@@ -167,8 +154,14 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
     private async Task OnExitFromWindow()
     {
-        WeakReferenceMessenger.Default.Send<CloseWindowMessage>();
+        foreach (var window in snipScreenWindows)
+        {
+            window.Close();
+        }
+
         snipScreenWindows.Clear();
+
+        OnSnippingModeExited?.Invoke(byShortcut);
 
         if (snipScreenWindowViewModel.CompleteRendering)
         {
@@ -179,11 +172,10 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             else if (CaptureType == CaptureType.Video)
             {
                 OnVideoModeEntered?.Invoke();
-                await ShowVideoCaptureScreenAsync();
+                var file = await VideoCaptureHelper.GetFileAsync();
+                await ShowVideoCaptureScreenAsync(file);
             }
         }
-
-        OnSnippingModeExited?.Invoke(byShortcut);
     }
 
     private void AddImageCore()
@@ -473,7 +465,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
     #region Capture modes
 
-    private async Task ShowVideoCaptureScreenAsync()
+    private async Task ShowVideoCaptureScreenAsync(StorageFile file)
     {
         var framePosition = snipScreenWindowViewModel.VideoFramePosition;
         var currentMonitor = monitorLocations.First(monitor => monitor.DeviceName == snipScreenWindowViewModel.CurrentMonitorName);
@@ -482,20 +474,13 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         videoCaptureWindowViewModel.SetCaptureSize((uint)currentMonitor.MonitorSize.Width, (uint)currentMonitor.MonitorSize.Height);
         videoCaptureWindowViewModel.SetFrameForMonitor(framePosition);
 
-        var videoCaptureWindow = Ioc.Default.GetService<VideoCaptureWindow>();
+        var videoCaptureWindow = new VideoCaptureWindow(videoCaptureWindowViewModel);
 
         videoCaptureWindow.PrepareWindow();
 
-        await videoCaptureWindow.ActivateAndStartCaptureAsync();
+        videoCaptureWindow.Activate();
 
-        if (videoCaptureWindow.Exited)
-        {
-            var uri = videoCaptureWindowViewModel.GetVideoUri();
-
-            OnVideoModeExited?.Invoke(byShortcut);
-
-            AddMediaPlayerFromSource(uri);
-        }
+        await videoCaptureWindowViewModel.StartCaptureAsync(file);
     }
 
     public async Task EnterSnippingMode(bool byShortcut)
@@ -528,8 +513,9 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
             snipScreenWindows.Add(window);
             window.PrepareWindow(location);
-
         }
+
+
         foreach (var window in snipScreenWindows)
         {
             window.Activate();
@@ -540,41 +526,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     public async Task EnterSnippingModeAsync(string byShortcut)
     {
         var result = bool.Parse(byShortcut);
-
-        this.byShortcut = result;
-
-        OnSnippingModeEntered?.Invoke();
-
-        foreach (var location in monitorLocations)
-        {
-            var softwareBitmap = await ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
-                location.StartPoint,
-                System.Drawing.Point.Empty,
-                location.MonitorSize);
-
-            var softwareBitmapSource = new SoftwareBitmapSource();
-            await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
-
-            snipScreenWindowViewModel.ResetModel();
-
-            snipScreenWindowViewModel
-                .PrepareModel(location,
-                softwareBitmap,
-                softwareBitmapSource,
-                SelectedSnipKind,
-                CaptureType,
-                this.byShortcut);
-
-            var window = new SnipScreenWindow(snipScreenWindowViewModel);
-
-            snipScreenWindows.Add(window);
-            window.PrepareWindow(location);
-
-        }
-        foreach (var window in snipScreenWindows)
-        {
-            window.Activate();
-        }
+        await EnterSnippingMode(result);
     }
 
     #endregion

@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.AppNotifications;
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,7 +93,7 @@ internal sealed partial class MainPage : Page
     private void ViewModel_OnSnippingModeExited(bool byShortcut)
     {
         WindowExtensions.ShowWindow(windowHandle);
-        
+
         if(ViewModel.CanMinimizeWindow)
         {
             App.MainWindow.DispatcherQueue.TryEnqueue(() => ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize());

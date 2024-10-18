@@ -21,6 +21,9 @@ using WinUISnippingTool.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using WinUISnippingTool.ViewModels.Resources;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.WinUI;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -52,6 +55,7 @@ public sealed partial class App : Application
             .AddSingleton<MainPage>()
             .AddSingleton<SnipScreenWindowViewModel>()
             .AddSingleton<MainPageViewModel>()
+            .AddSingleton(_ => MainWindow.DispatcherQueue)
             .AddTransient<SnipScreenWindow>()
             .AddTransient<VideoCaptureWindow>();
 

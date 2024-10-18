@@ -332,8 +332,10 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
             CurrentShapeBmp = null;
         }
 
-        //todo: await
-        OnExitFromWindow();
+        if(OnExitFromWindow is not null)
+        {
+            await OnExitFromWindow();
+        }
     }
 
     public async Task TryExitAsync()
