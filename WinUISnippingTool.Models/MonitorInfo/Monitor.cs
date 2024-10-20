@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Graphics;
 
 namespace WinUISnippingTool.Models.MonitorInfo;
@@ -30,6 +27,8 @@ public sealed class Monitor
     public RectInt32 WorkingArea { get; }
     public RectInt32 Bounds { get; }
     public string DeviceName { get; }
+    public double ScaleFactor { get; }
+
 
     public static IEnumerable<Monitor> All
     {

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using WinUISnippingTool.Helpers;
 using WinUISnippingTool.Models;
 
 namespace WinUISnippingTool.Core;

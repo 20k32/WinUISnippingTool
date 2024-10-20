@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WinUISnippingTool.Models;
+namespace WinUISnippingTool.Helpers;
 
 public static class CoreConstants
 {
@@ -28,4 +28,6 @@ public static class CoreConstants
     public const double BottomPanelHeight = 32;
     public const double MarginLeftRight = 32;
     public const double MarginTopBottom = MarginLeftRight + BottomPanelHeight;
+
+    public const int DefaultMonitorDpi = 96;
 }

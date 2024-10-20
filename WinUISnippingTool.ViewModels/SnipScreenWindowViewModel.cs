@@ -112,22 +112,21 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public void SetShapeSourceForCurrentMonitor()
     {
-        var canvasItem = shapesDictionary[currentMonitorName];
+        var canvasItems = shapesDictionary[currentMonitorName];
 
-        windowPaintSource.SetShapeSource(canvasItem);
-        customShapePaint.SetShapeSource(canvasItem);
-        rectangleSelectionPaint.SetShapeSource(canvasItem);
+        windowPaintSource.SetShapeSource(canvasItems);
+        customShapePaint.SetShapeSource(canvasItems);
+        rectangleSelectionPaint.SetShapeSource(canvasItems);
     }
 
     public void AddImageSourceAndBrushFillForCurentMonitor(ImageSource source)
     {
-        var canvasItem = shapesDictionary[currentMonitorName];
+        var canvasItems = shapesDictionary[currentMonitorName];
 
         var image = imagesDictionary[currentMonitorName];
         image.Source = source;
         image.Opacity = 0.3;
-
-        canvasItem.Add(image);
+        canvasItems.Add(image);
     }
 
     public void AddShapeSourceForCurrentMonitor()

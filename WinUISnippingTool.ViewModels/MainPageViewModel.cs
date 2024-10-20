@@ -22,6 +22,9 @@ using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.ViewModels.Resources;
 using WinUISnippingTool.Core;
 using WinUISnippingTool.Models.VideoCapture;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using Windows.Graphics;
+using System.Diagnostics;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : CanvasViewModelBase
@@ -80,7 +83,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     public MainPageViewModel()
     { }
 
-    public MainPageViewModel(SnipScreenWindowViewModel snipScreenWindowViewModel)
+    public MainPageViewModel(SnipScreenWindowViewModel snipScreenWindowViewModel, VideoCaptureWindowViewModel videoCaptureWindowViewModel)
     {
         sizeManager = new(() => WorkingAreaSizeChanged());
         sizeManager.RegisterHandlers();
@@ -90,7 +93,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         this.snipScreenWindowViewModel = snipScreenWindowViewModel;
         this.snipScreenWindowViewModel.OnExitFromWindow += OnExitFromWindow;
 
-        videoCaptureWindowViewModel = new();
+        this.videoCaptureWindowViewModel = videoCaptureWindowViewModel;
 
         CanvasItems = new();
         monitorLocations = new();
@@ -221,15 +224,15 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         FolderExtensions.NewVideosSavingFolder = videos;
     }
 
-    public bool CanShowWindow =>
-        !byShortcut
-            && (CaptureType == CaptureType.Photo
+    private bool canShowWindowInternal =>
+        (CaptureType == CaptureType.Photo
                 || !snipScreenWindowViewModel.CompleteRendering);
 
+    public bool CanShowWindow =>
+        !byShortcut && canShowWindowInternal;
+
     public bool CanMinimizeWindow =>
-        byShortcut
-            && (CaptureType == CaptureType.Photo
-                || !snipScreenWindowViewModel.CompleteRendering);
+        byShortcut && canShowWindowInternal;
 
 
     /// <returns>true - image, false - video</returns>
@@ -260,7 +263,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     private void PointerPressed(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         e.Handled = true;
-        
+
         if (CanvasItems.Count > 0)
         {
             var source = CanvasItems[0].FindAscendantCached<Canvas>();
@@ -472,7 +475,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         videoCaptureWindowViewModel.SetCaptureSize((uint)currentMonitor.MonitorSize.Width, (uint)currentMonitor.MonitorSize.Height);
         videoCaptureWindowViewModel.SetFrameForMonitor(framePosition);
 
-        var videoCaptureWindow = new VideoCaptureWindow(videoCaptureWindowViewModel);
+        var videoCaptureWindow = Ioc.Default.GetService<VideoCaptureWindow>(); //new VideoCaptureWindow(videoCaptureWindowViewModel);
 
         videoCaptureWindow.PrepareWindow();
 
@@ -496,27 +499,40 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
         OnSnippingModeEntered?.Invoke();
 
+
         foreach (var location in monitorLocations)
         {
-            var softwareBitmap = await ScreenshotExtensions.GetSoftwareBitmapImageScreenshotForAreaAsync(
-                location.StartPoint,
-                System.Drawing.Point.Empty,
-                location.MonitorSize);
+             
+            var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(location);
+            
+            var softwareBitmap = await ScreenshotExtensions
+                .GetSoftwareBitmapImageScreenshotForAreaAsync(
+                     location.StartPoint,
+                     System.Drawing.Point.Empty,
+                     location.MonitorSize);
+
+            var newBitmap = softwareBitmap;
+
+            if(desiredSize != location.MonitorSize)
+            {
+                newBitmap = await ScreenshotExtensions
+                    .ChangeResolutionAsync(softwareBitmap, (int)desiredSize.Width, (int)desiredSize.Height);
+            }
 
             var softwareBitmapSource = new SoftwareBitmapSource();
-            await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
+            await softwareBitmapSource.SetBitmapAsync(newBitmap);
 
             snipScreenWindowViewModel.ResetModel();
 
             snipScreenWindowViewModel
                 .PrepareModel(location,
-                softwareBitmap,
+                newBitmap,
                 softwareBitmapSource,
                 SelectedSnipKind,
                 CaptureType,
                 byShortcut);
 
-            var window = new SnipScreenWindow(snipScreenWindowViewModel);
+            var window = Ioc.Default.GetService<SnipScreenWindow>();
 
             snipScreenWindows.Add(window);
             window.PrepareWindow(location);
@@ -728,6 +744,8 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
             sizeManager.OnSizeChanged(currentWindowSize);
             sizeChangingRequested = true;
+
+            Debug.WriteLine($"{args.NewSize.Width} {args.NewSize.Height}");
         }
     }
 
@@ -756,7 +774,6 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
                 transformManager.ResetTransform();
             }
         }
-
     }
 
     #endregion
@@ -950,19 +967,13 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     }
 
     [RelayCommand]
-    private void ExitCroppingMode(bool shouldRestoreBrush)
+    private void ExitCrop()
     {
         IsInCroppingMode = false;
         CanvasItems.Remove(imageCropper);
 
         drawBrush = tempBrush;
         tempBrush = null;
-
-        if (shouldRestoreBrush)
-        {
-            drawBrush = tempBrush;
-            tempBrush = null;
-        }
     }
 
     #endregion

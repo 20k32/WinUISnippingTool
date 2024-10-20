@@ -1,11 +1,14 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Composition;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Foundation;
 using Windows.Graphics;
 
 namespace WinUISnippingTool.Helpers;
@@ -39,6 +42,13 @@ public static class WindowExtensions
         GetMinMaxInfo = 0x0024,
     }
 
+    private enum DpiType
+    {
+        Effective = 0,
+        Angular = 1,
+        Raw = 2,
+    }
+
     private const int SwHide = 0;
     private const int SwShow = 5;
     private static SizeInt32 minSize;
@@ -49,6 +59,24 @@ public static class WindowExtensions
     public static bool ShowWindow(nint windowHandle) => ShowWindow(windowHandle, SwShow);
     public static bool HideWindow(nint windowHandle) => ShowWindow(windowHandle, SwHide);
 
+    public static Size CalculateDesiredSizeForMonitor(MonitorLocation location)
+    {
+        var dpiTuple = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
+
+        var scaleX = dpiTuple.dpiX / (double)CoreConstants.DefaultMonitorDpi;
+        var scaleY = dpiTuple.dpiY / (double)CoreConstants.DefaultMonitorDpi;
+
+        var newSize = new Size((int)(location.MonitorSize.Width / scaleX), (int)(location.MonitorSize.Height / scaleY));
+
+        return newSize;
+    }
+
+    public static (uint dpiX, uint dpiY) GetDpiForMonitor(nint handleMonitor)
+    {
+        GetDpiForMonitor(handleMonitor, DpiType.Effective, out var dpiX, out var dpiY);
+
+        return (dpiX, dpiY);
+    }
 
     //todo: libraryimport instead of dllimport
     [DllImport("user32.dll", SetLastError = true)]
@@ -57,6 +85,9 @@ public static class WindowExtensions
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("Shcore.dll")]
+    private static extern int GetDpiForMonitor(IntPtr hmonitor, DpiType dpiType, out uint dpiX, out uint dpiY);
 
     [DllImport("user32.dll")]
     public static extern int GetDpiForWindow(IntPtr hwnd);

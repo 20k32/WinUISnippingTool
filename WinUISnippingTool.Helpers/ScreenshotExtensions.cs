@@ -10,6 +10,10 @@ using Windows.Graphics.Capture;
 using Windows.Win32.Graphics.Gdi;
 using Windows.Graphics.DirectX;
 using WinUISnippingTool.Helpers.DirectX;
+using System.Runtime.Intrinsics.Arm;
+using System.Runtime.InteropServices;
+using Windows.Storage.Streams;
+using WinUISnippingTool.Helpers.Saving;
 
 
 namespace WinUISnippingTool.Helpers;
@@ -67,6 +71,7 @@ public static class ScreenshotExtensions
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
                 g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+
                 g.CopyFromScreen(upperLeftSource, upperLeftDestination, bmpScreenshot.Size);
             }
 
@@ -98,14 +103,15 @@ public static class ScreenshotExtensions
         SoftwareBitmap softwareBitmap = null;
         var graphicsItem = GraphicsCaptureItemExtensions.CreateItemForMonitor((HMONITOR)handleMonitor);
         var device3d = Direct3D11Helpers.CreateDevice();
-        
+
         var framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
                 device3d,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 1,
                 graphicsItem.Size);
-        var session = framePool.CreateCaptureSession(graphicsItem);
 
+        var session = framePool.CreateCaptureSession(graphicsItem);
+        
         var taskCompletion = new TaskCompletionSource<Direct3D11CaptureFrame>();
         framePool.FrameArrived += (s, a) =>
         {
@@ -120,9 +126,29 @@ public static class ScreenshotExtensions
 
         var surface = frame.Surface;
 
-        
         softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(surface, BitmapAlphaMode.Premultiplied); // access violation here
 
         return softwareBitmap;
     }
+
+    public static async Task<SoftwareBitmap> ChangeResolutionAsync(SoftwareBitmap originalBitmap, int targetWidth, int targetHeight)
+    {
+        using (var stream = new InMemoryRandomAccessStream())
+        {
+            var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+            encoder.SetSoftwareBitmap(originalBitmap);
+
+            encoder.BitmapTransform.ScaledWidth = (uint)targetWidth;
+            encoder.BitmapTransform.ScaledHeight = (uint)targetHeight;
+            encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Linear;
+
+            await encoder.FlushAsync();
+
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            var resizedBitmap = await decoder.GetSoftwareBitmapAsync(originalBitmap.BitmapPixelFormat, originalBitmap.BitmapAlphaMode);
+
+            return resizedBitmap;
+        }
+    }
+
 }

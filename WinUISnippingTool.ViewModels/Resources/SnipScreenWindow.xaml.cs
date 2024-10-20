@@ -18,6 +18,7 @@ using Windows.Foundation;
 using Windows.Graphics;
 using Windows.Graphics.Imaging;
 using WinUISnippingTool.Helpers;
+using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Models.Items;
@@ -51,7 +52,7 @@ public sealed partial class SnipScreenWindow : Window
     public void PrepareWindow(MonitorLocation location)
     {
         currentWindowLocation = location;
-        
+
         PartCanvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
         if (!location.IsPrimary)
@@ -68,7 +69,6 @@ public sealed partial class SnipScreenWindow : Window
             PartBorder.SetBinding(Border.VisibilityProperty, binding);
         }
 
-        var screenStartPoint = new PointInt32(location.StartPoint.X, location.StartPoint.Y);
         var rectInt32 = new RectInt32()
         {
             X = location.StartPoint.X,
@@ -76,7 +76,7 @@ public sealed partial class SnipScreenWindow : Window
             Height = (int)location.MonitorSize.Height,
             Width = (int)location.MonitorSize.Width
         };
-        
+
         this.ExtendsContentIntoTitleBar = true;
         AppWindow.MoveAndResize(rectInt32);
         SetupPresenter();
@@ -121,7 +121,8 @@ public sealed partial class SnipScreenWindow : Window
             ViewModel.SetImageSourceForCurrentMonitor();
             ViewModel.AddShapeSourceForCurrentMonitor();
 
-            ViewModel.SetWindowSize(currentWindowLocation.MonitorSize);
+            var size = WindowExtensions.CalculateDesiredSizeForMonitor(currentWindowLocation);
+            ViewModel.SetWindowSize(size);
         }
 
 

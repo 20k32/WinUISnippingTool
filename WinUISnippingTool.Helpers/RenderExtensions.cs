@@ -107,6 +107,8 @@ public static class RenderExtensions
 
     public static async Task<SoftwareBitmap> ProcessImagesAsync(MonitorLocation primaryMonitor, IEnumerable<SoftwareBitmap> images)
     {
+        var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(primaryMonitor);
+        
         SoftwareBitmap result = null;
 
         int height = images.First().PixelHeight;
@@ -122,8 +124,8 @@ public static class RenderExtensions
             }
         }
 
-        var scaleX = primaryMonitor.Location.Width / (double)width;
-        var scaleY = primaryMonitor.Location.Height / (double)height;
+        var scaleX = desiredSize.Width / (double)width;
+        var scaleY = desiredSize.Height / (double)height;
         var minScale = Math.Min(scaleX, scaleY);
 
         var newHeight = height * minScale;
@@ -139,10 +141,8 @@ public static class RenderExtensions
             var firstBmp = images.Last();
 
             var firstImage = CanvasBitmap.CreateFromSoftwareBitmap(device, firstBmp);
-            var newBoundWidth = (float)(firstImage.Bounds.Width * minScale);
-            var newBoundHeight = (float)(firstImage.Bounds.Height * minScale);
 
-            var matrix = System.Numerics.Matrix3x2.CreateScale((float)minScale, (float)minScale);
+            var matrix = System.Numerics.Matrix3x2.CreateScale((float)minScale);
             drawingSession.Transform = matrix;
 
             drawingSession.DrawImage(firstImage, 0, 0);
@@ -153,12 +153,11 @@ public static class RenderExtensions
             {
                 var image = CanvasBitmap.CreateFromSoftwareBitmap(device, bitmap);
 
-                newBoundWidth = (float)(image.Bounds.Width * minScale);
-                newBoundHeight = (float)(image.Bounds.Height * minScale);
-
                 drawingSession.DrawImage(image, (float)prevBoundWidth, 0);
                 prevBoundWidth += image.Bounds.Width;
             }
+
+            drawingSession.Transform = Matrix3x2.CreateTranslation((float)(prevBoundWidth / 2), 0);
         }
 
         using (var stream = new InMemoryRandomAccessStream())
