@@ -20,6 +20,7 @@
             <Interactions:InvokeCommandAction Command="{x:Bind ViewModel.SizeChangedCommand}"/>
         </Interactions:EventTriggerBehavior>
     </Interactivity:Interaction.Behaviors>
+    
 
     <Grid x:Name="mainGrid"
           KeyboardAcceleratorPlacementMode="Hidden">
@@ -103,7 +104,7 @@
 
                         <ToolTipService.ToolTip>
                             <ToolTip Placement="Bottom">
-                                <TextBlock Text="{x:Bind ViewModel.TakeScreenshotTooltipButtonName}"/>
+                                <TextBlock Text="{x:Bind ViewModel.TakeScreenshotTooltipButtonName, Mode=OneWay}"/>
                             </ToolTip>
                         </ToolTipService.ToolTip>
 
@@ -111,7 +112,7 @@
                         <FontIcon Glyph="&#xE710;"
                                   x:Name="NewPictureIcon"
                                   VerticalAlignment="Center"/>
-                        
+
                         <TextBlock x:Name="PART_TakePictureButtonName"
                                    RelativePanel.RightOf="NewPictureIcon"
                                    Text="{x:Bind ViewModel.TakePhotoButtonName, Mode=OneWay}"/>
@@ -142,7 +143,7 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.SimpleBrushButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.SimpleBrushButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
@@ -173,7 +174,7 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.MarkerBrushButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.MarkerBrushButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
@@ -204,13 +205,13 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.EraseBrushButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.EraseBrushButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
                     <FontIcon Glyph="&#xED60;" />
-                    
-                    
+
+
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
@@ -232,12 +233,12 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.ImageCropperButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.ImageCropperButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
                     <FontIcon Glyph="&#xE7A8;" />
-                    
+
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
@@ -250,7 +251,7 @@
 
                 <Button Style="{StaticResource TransparentButton}"
                         Visibility="{x:Bind ViewModel.IsInCroppingMode, Converter={StaticResource VisibilityConverter}, ConverterParameter=True, Mode=OneWay}"
-                        Command="{x:Bind ViewModel.ExitCroppingModeCommand}">
+                        Command="{x:Bind ViewModel.ExitCropCommand}">
                     <FontIcon Glyph="&#xE8BB;" />
                 </Button>
 
@@ -265,12 +266,12 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.UndoButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.UndoButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
                     <FontIcon Glyph="&#xE7A7;" />
-                    
+
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
@@ -279,12 +280,12 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.RedoButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.RedoButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
                     <FontIcon Glyph="&#xE7A6;" />
-                    
+
                 </Button>
             </StackPanel>
 
@@ -302,12 +303,12 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.SaveButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.SaveButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
                     <FontIcon Glyph="&#xE792;" />
-                    
+
                 </Button>
 
                 <Button Style="{StaticResource TransparentButton}"
@@ -317,12 +318,12 @@
 
                     <ToolTipService.ToolTip>
                         <ToolTip Placement="Bottom">
-                            <TextBlock Text="{x:Bind ViewModel.CopyButtonName}"/>
+                            <TextBlock Text="{x:Bind ViewModel.CopyButtonName, Mode=OneWay}"/>
                         </ToolTip>
                     </ToolTipService.ToolTip>
 
                     <FontIcon Glyph="&#xE8C8;" />
-                    
+
                 </Button>
 
                 <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
@@ -374,33 +375,32 @@
                         <Canvas Background="Transparent"
                                 RenderTransform="{Binding TransformSource, Mode=OneWay}"
                                 Width="{Binding CanvasWidth, Mode=OneWay}"
-                                Height="{Binding CanvasHeight, Mode=OneWay}"
-                                PointerPressed="Canvas_PointerPressed">
-                            
+                                Height="{Binding CanvasHeight, Mode=OneWay}">
                             <Interactivity:Interaction.Behaviors>
 
                                 <Interactions:EventTriggerBehavior EventName="PointerWheelChanged">
                                     <Interactions:InvokeCommandAction 
-                                        Command="{Binding DataContext.ScaleCanvasCommand, ElementName=parentCanvas}" />
+                                        Command="{Binding DataContext.ScaleCanvasCommand, ElementName=PART_Canvas}" />
                                 </Interactions:EventTriggerBehavior>
 
                                 <Interactions:EventTriggerBehavior EventName="PointerMoved">
                                     <Interactions:InvokeCommandAction 
-                                        Command="{Binding DataContext.PointerMovedCommand, ElementName=parentCanvas}" />
+                                        Command="{Binding DataContext.PointerMovedCommand, ElementName=PART_Canvas}" />
                                 </Interactions:EventTriggerBehavior>
 
                                 <Interactions:EventTriggerBehavior EventName="PointerPressed">
                                     <Interactions:InvokeCommandAction 
-                                        Command="{Binding DataContext.PointerPressedCommand, ElementName=parentCanvas}" />
+                                        Command="{Binding DataContext.PointerPressedCommand, ElementName=PART_Canvas}" />
                                 </Interactions:EventTriggerBehavior>
 
                                 <Interactions:EventTriggerBehavior EventName="PointerReleased">
                                     <Interactions:InvokeCommandAction 
-                                        Command="{Binding DataContext.PointerReleasedCommand, ElementName=parentCanvas}" />
+                                        Command="{Binding DataContext.PointerReleasedCommand, ElementName=PART_Canvas}" />
                                 </Interactions:EventTriggerBehavior>
 
                             </Interactivity:Interaction.Behaviors>
-                            
+
+
                         </Canvas>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>

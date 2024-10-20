@@ -256,7 +256,6 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
     #region Drawing
 
-
     [RelayCommand]
     private void PointerPressed(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {

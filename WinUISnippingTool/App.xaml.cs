@@ -53,11 +53,8 @@ public sealed partial class App : Application
         existingCollection
             .AddSingleton(this)
             .AddSingleton<MainPage>()
-            .AddSingleton<SnipScreenWindowViewModel>()
-            .AddSingleton<MainPageViewModel>()
-            .AddSingleton(_ => MainWindow.DispatcherQueue)
-            .AddTransient<SnipScreenWindow>()
-            .AddTransient<VideoCaptureWindow>();
+            .RegisterViewModels()
+            .RegisterInnerWindows();
 
         var provider = existingCollection.BuildServiceProvider();
 

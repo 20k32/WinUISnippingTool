@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="WinUISnippingTool.ViewModels.Resources.SnipScreenWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:userControl="using:WinUISnippingTool.SharedResources.Controls"
+    mc:Ignorable="d"
+    Title="SnipScreenWindow">
+
+    <Grid x:Name="PartGrid">
+        <ItemsControl x:Name="PartCanvas"
+                      HorizontalContentAlignment="Center"
+                      VerticalContentAlignment="Center"
+                      VerticalAlignment="Top"
+                      HorizontalAlignment="Left"
+                      Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
+                      Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
+                      Background="#FFE6E6E6">
+
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Background="Transparent"
+                            PointerPressed="Canvas_PointerPressed"
+                            PointerMoved="Canvas_PointerMoved"
+                            PointerReleased="Canvas_PointerReleased"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0, 40, 0, 0"
+                Background="{ThemeResource SystemChromeMediumColor}"
+                Padding="10"
+                CornerRadius="10"
+                x:Name="PartBorder">
+            <StackPanel 
+                    Background="Transparent"
+                    Orientation="Horizontal"
+                    Spacing="5">
+
+                <userControl:SnipControl SnipKinds="{Binding SnipShapeKinds}"
+                                         SelectedSnipKind="{Binding SelectedSnipKind, Mode=TwoWay}"
+                                         SelectedCaptureType="{x:Bind ViewModel.CaptureType, Mode=TwoWay}"/>
+                
+                <Button Click="ExitButton_Click">
+                    <FontIcon Glyph="&#xE8BB;" />
+                </Button>
+            </StackPanel>
+        </Border>
+
+
+    </Grid>
+
+</Window>

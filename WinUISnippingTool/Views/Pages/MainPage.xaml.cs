@@ -184,9 +184,4 @@ internal sealed partial class MainPage : Page
 
         ViewModel.OnBitmapRequested -= RenderBmpCoreAsync;
     }
-
-    private void Canvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
-    {
-        var a = 1;
-    }
 }
