@@ -37,8 +37,6 @@ namespace WinUISnippingTool.Views.Pages;
 internal sealed partial class MainPage : Page
 {
     private nint windowHandle;
-
-    private Canvas parentCanvas;
     private DisplayArea display;
 
     public MainPageViewModel ViewModel { get; private set; }
@@ -92,11 +90,13 @@ internal sealed partial class MainPage : Page
 
     private void ViewModel_OnSnippingModeExited(bool byShortcut)
     {
-        WindowExtensions.ShowWindow(windowHandle);
-
-        if(ViewModel.CanMinimizeWindow)
+        if (ViewModel.CanShowWindow)
         {
-            App.MainWindow.DispatcherQueue.TryEnqueue(() => ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize());
+            WindowExtensions.ShowWindow(windowHandle);
+        }
+        else if(ViewModel.CanMinimizeWindow)
+        {
+            ((OverlappedPresenter)App.MainWindow.AppWindow.Presenter).Minimize();
         }
     }
 
@@ -124,11 +124,6 @@ internal sealed partial class MainPage : Page
         var renderBitmap = new RenderTargetBitmap();
         await renderBitmap.RenderAsync(PART_Canvas, (int)ViewModel.CanvasWidth, (int)ViewModel.CanvasHeight);
         return renderBitmap;
-    }
-
-    private void PART_Canvas_Loaded(object sender, RoutedEventArgs e)
-    {
-        parentCanvas = (Canvas)PART_Canvas.ItemsPanelRoot;
     }
 
     private void MenuFlyoutItem_Click(object sender, RoutedEventArgs e)
@@ -188,5 +183,10 @@ internal sealed partial class MainPage : Page
         ViewModel.OnSmallSizeChanged -= ViewModel_OnSmallSizeChanged;
 
         ViewModel.OnBitmapRequested -= RenderBmpCoreAsync;
+    }
+
+    private void Canvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        var a = 1;
     }
 }

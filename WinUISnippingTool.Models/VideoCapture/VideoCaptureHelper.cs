@@ -48,7 +48,7 @@ public sealed class VideoCaptureHelper // models
         return this;
     }
 
-    public static async Task<StorageFile> GetFileAsync()
+    private static async Task<StorageFile> GetFileAsync()
     {
         var name = DateTime.Now.ToString("yyyyMMdd-HHmm-ss");
         var fileName = $"SnipT-{name}.mp4";
@@ -57,10 +57,11 @@ public sealed class VideoCaptureHelper // models
         return file;
     }
 
-    public async Task StartScreenCaptureAsync(MonitorLocation currentMonitor, RectInt32 videoFrameSize, StorageFile file)
+    public async Task StartScreenCaptureAsync(MonitorLocation currentMonitor, RectInt32 videoFrameSize)
     {
         var graphicsCaptureItem = GraphicsCaptureItemExtensions.CreateItemForMonitor(currentMonitor.HandleMonitor);
         device = Direct3D11Helpers.CreateDevice();
+        var file = await GetFileAsync();
 
         try
         {

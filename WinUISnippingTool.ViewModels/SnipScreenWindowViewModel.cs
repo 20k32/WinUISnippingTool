@@ -22,6 +22,18 @@ using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using Windows.Services.Maps;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Windows.Devices.PointOfService.Provider;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Geometry;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.UI;
+using System.Numerics;
+using SharpDX;
+using Windows.Storage.Streams;
+using Microsoft.Graphics.Canvas.Brushes;
+using Windows.Foundation;
+using Microsoft.UI.Composition;
 
 
 namespace WinUISnippingTool.ViewModels;
@@ -30,7 +42,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 {
     private readonly Dictionary<string, NotifyOnCompletionCollection<UIElement>> shapesDictionary;
     private readonly Dictionary<string, Microsoft.UI.Xaml.Controls.Image> imagesDictionary;
-    private readonly Dictionary<MonitorLocation, SoftwareBitmap> softwareBitmaps;
+    private readonly Dictionary<string, SoftwareBitmap> softwareBitmaps;
 
     private readonly SnipPaintBase windowPaint;
     private readonly SnipPaintBase customShapePaint;
@@ -52,7 +64,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     public string CurrentMonitorName => currentMonitorName;
     public bool IsShortcutResponce { get; private set; }
     public bool CompleteRendering { get; private set; }
-   
+
     public void SetCurrentMonitor(string monitorName) => currentMonitorName = monitorName;
 
     public void TrySetAndLoadLocalization(string bcpTag) => LoadLocalization(bcpTag);
@@ -95,7 +107,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public void AddSoftwareBitmapForCurrentMonitor(MonitorLocation location, SoftwareBitmap bitmap)
     {
-        softwareBitmaps.Add(location, bitmap);
+        softwareBitmaps.Add(location.DeviceName, bitmap);
     }
 
     public void SetShapeSourceForCurrentMonitor()
@@ -114,7 +126,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         var image = imagesDictionary[currentMonitorName];
         image.Source = source;
         image.Opacity = 0.3;
-        
+
         canvasItem.Add(image);
     }
 
@@ -130,10 +142,8 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     public void SetImageSourceForCurrentMonitor()
     {
         var source = (SoftwareBitmapSource)imagesDictionary[currentMonitorName].Source;
-        
         rectangleSelectionPaint.SetImageFill(source);
         windowPaint.SetImageFill(source);
-        customShapePaint.SetImageFill(source);
     }
 
     public NotifyOnCompletionCollection<UIElement> GetOrAddCollectionForCurrentMonitor()
@@ -209,35 +219,46 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
                         }
                     });
 
-        var clipboardTask =  ClipboardExtensions.CopyAsync(softwareBitmap);
+        var clipboardTask = ClipboardExtensions.CopyAsync(softwareBitmap);
 
         return Task.WhenAll(saveToFolderTask, clipboardTask);
     }
 
     private async Task<SoftwareBitmap> GetSingleMonitorSnapshot()
     {
-        var softwareBitmap = await RenderExtensions.ProcessShapeAsync(ResultFigure);
+        SoftwareBitmap result;
+
+        if(SelectedSnipKind.Kind == SnipKinds.CustomShape)
+        {
+            var figure = (Polyline)ResultFigure;
+            var softwarebitmap = softwareBitmaps[currentMonitorName];
+
+            result = await RenderExtensions.ProcessPointsAsync(figure.Points, softwarebitmap);
+        }
+        else
+        {
+            result = await RenderExtensions.ProcessShapeAsync(ResultFigure);
+        }
 
         paintSnipKind.Clear();
-        ResultFigureActualWidth = softwareBitmap.PixelWidth;
-        ResultFigureActualHeight = softwareBitmap.PixelHeight;
 
         var source = new SoftwareBitmapSource();
-        await source.SetBitmapAsync(softwareBitmap);
-
+        await source.SetBitmapAsync(result);
         CurrentShapeBmp = source;
+        ResultFigureActualWidth = result.PixelWidth;
+        ResultFigureActualHeight = result.PixelHeight;
 
-        return softwareBitmap;
+        return result;
     }
 
     private async Task<SoftwareBitmap> GetAllMonitorsSnapshot()
     {
         var images = softwareBitmaps.Values.AsEnumerable();
         var softwareBitmap = await RenderExtensions.ProcessImagesAsync(PrimaryMonitor, images);
-        
+
         var source = new SoftwareBitmapSource();
         await source.SetBitmapAsync(softwareBitmap);
-        
+
         CurrentShapeBmp = source;
 
         ResultFigureActualWidth = softwareBitmap.PixelWidth;
@@ -250,10 +271,10 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         if (paintSnipKind is not null && !CompleteRendering)
         {
             ResultFigure = paintSnipKind.OnPointerReleased(position);
-            
+
             if (ResultFigure is not null)
             {
-                if(CaptureType == CaptureType.Photo 
+                if (CaptureType == CaptureType.Photo
                     && SelectedSnipKind.Kind != SnipKinds.AllWindows)
                 {
                     var sbitmap = await GetSingleMonitorSnapshot();
@@ -266,13 +287,13 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
                     var width = paintSnipKind.ActualSize.Width;
                     var height = paintSnipKind.ActualSize.Height;
 
-                    if(width < 0)
+                    if (width < 0)
                     {
                         startX += width;
                         width = Math.Abs(width);
                     }
 
-                    if(height < 0)
+                    if (height < 0)
                     {
                         startY += height;
                         height = Math.Abs(height);
@@ -332,7 +353,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
             CurrentShapeBmp = null;
         }
 
-        if(OnExitFromWindow is not null)
+        if (OnExitFromWindow is not null)
         {
             await OnExitFromWindow();
         }

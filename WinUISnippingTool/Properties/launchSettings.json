@@ -2,7 +2,7 @@
   "profiles": {
     "WinUISnippingTool (Package)": {
         "commandName": "MsixPackage",
-        "nativeDebugging": true
+        "nativeDebugging": false
     },
     "WinUISnippingTool (Unpackaged)": {
       "commandName": "Project"

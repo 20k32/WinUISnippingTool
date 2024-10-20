@@ -80,10 +80,10 @@ public sealed class VideoCaptureWindowViewModel : ViewModelBase
     public void SetMonitorForCapturing(MonitorLocation monitor) => CurrentMonitor = monitor;
     public void SetFrameForMonitor(RectInt32 frame) => videoFrame = frame;
 
-    public Task StartCaptureAsync(StorageFile file)
+    public Task StartCaptureAsync()
     {
         StartTimer();
-        return captureHelper.StartScreenCaptureAsync(CurrentMonitor, videoFrame, file);
+        return captureHelper.StartScreenCaptureAsync(CurrentMonitor, videoFrame);
     }
 
     public void StopCapture()

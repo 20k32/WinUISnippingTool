@@ -364,18 +364,18 @@
                           VerticalContentAlignment="Center"
                           VerticalAlignment="Center"
                           HorizontalAlignment="Center"
+                          DataContext="{x:Bind ViewModel}"
                           Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
                           Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
-                          Loaded="PART_Canvas_Loaded"
                           x:Name="PART_Canvas">
 
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Canvas Background="Transparent"
                                 RenderTransform="{Binding TransformSource, Mode=OneWay}"
-                                x:Name="parentCanvas"
                                 Width="{Binding CanvasWidth, Mode=OneWay}"
-                                Height="{Binding CanvasHeight, Mode=OneWay}">
+                                Height="{Binding CanvasHeight, Mode=OneWay}"
+                                PointerPressed="Canvas_PointerPressed">
                             
                             <Interactivity:Interaction.Behaviors>
 

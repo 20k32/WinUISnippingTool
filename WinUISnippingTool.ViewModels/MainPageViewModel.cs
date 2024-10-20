@@ -172,8 +172,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             else if (CaptureType == CaptureType.Video)
             {
                 OnVideoModeEntered?.Invoke();
-                var file = await VideoCaptureHelper.GetFileAsync();
-                await ShowVideoCaptureScreenAsync(file);
+                await ShowVideoCaptureScreenAsync();
             }
         }
     }
@@ -262,7 +261,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     private void PointerPressed(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         e.Handled = true;
-
+        
         if (CanvasItems.Count > 0)
         {
             var source = CanvasItems[0].FindAscendantCached<Canvas>();
@@ -465,7 +464,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
     #region Capture modes
 
-    private async Task ShowVideoCaptureScreenAsync(StorageFile file)
+    private async Task ShowVideoCaptureScreenAsync()
     {
         var framePosition = snipScreenWindowViewModel.VideoFramePosition;
         var currentMonitor = monitorLocations.First(monitor => monitor.DeviceName == snipScreenWindowViewModel.CurrentMonitorName);
@@ -480,7 +479,16 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
         videoCaptureWindow.Activate();
 
-        await videoCaptureWindowViewModel.StartCaptureAsync(file);
+        await videoCaptureWindowViewModel.StartCaptureAsync();
+
+        if (videoCaptureWindow.Exited)
+        {
+            var uri = videoCaptureWindowViewModel.GetVideoUri();
+
+            OnVideoModeExited?.Invoke(byShortcut);
+
+            AddMediaPlayerFromSource(uri);
+        }
     }
 
     public async Task EnterSnippingMode(bool byShortcut)
@@ -717,11 +725,10 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         if (args.NewSize.Width > 0
             && args.NewSize.Height > 0)
         {
-            sizeChangingRequested = true;
-
             currentWindowSize = args.NewSize;
 
             sizeManager.OnSizeChanged(currentWindowSize);
+            sizeChangingRequested = true;
         }
     }
 
@@ -731,11 +738,11 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         {
             sizeChangingRequested = false;
 
-            if (currentWindowSize.Width + CoreConstants.MarginLeftRight <= CanvasWidth
-            || currentWindowSize.Height - CoreConstants.MarginTopBottom <= CanvasHeight)
+            if (sizeManager.NewWidth + CoreConstants.MarginLeftRight <= CanvasWidth
+            || sizeManager.NewHeight - CoreConstants.MarginTopBottom <= CanvasHeight)
             {
-                var currentSize = new Size(currentWindowSize.Width - CoreConstants.MarginLeftRight,
-                    currentWindowSize.Height - CoreConstants.MarginTopBottom);
+                var currentSize = new Size(sizeManager.NewWidth - CoreConstants.MarginLeftRight,
+                    sizeManager.NewHeight - CoreConstants.MarginTopBottom);
 
                 transformManager.Transform(currentSize);
 
@@ -944,18 +951,19 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     }
 
     [RelayCommand]
-    private void ExitCroppingMode(/*bool shouldRestoreBrush*/)
+    private void ExitCroppingMode(bool shouldRestoreBrush)
     {
         IsInCroppingMode = false;
         CanvasItems.Remove(imageCropper);
 
         drawBrush = tempBrush;
         tempBrush = null;
-        /*if (shouldRestoreBrush)
+
+        if (shouldRestoreBrush)
         {
             drawBrush = tempBrush;
             tempBrush = null;
-        }*/
+        }
     }
 
     #endregion

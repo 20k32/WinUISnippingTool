@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.WinUI.Helpers;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
@@ -13,6 +14,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Graphics.Imaging;
 using Windows.Security.Credentials;
 using Windows.Services.Maps;
 
@@ -20,11 +22,15 @@ namespace WinUISnippingTool.Models.Paint;
 
 public class CustomShapePaint : SnipPaintBase
 {
+    private Point thisPosition;
     private Point previousPosition;
     private readonly SolidColorBrush strokeColor;
-    private ImageBrush fillColor;
+    private SolidColorBrush fillColor;
     private Polyline polyline;
     private TranslateTransform translateTransform;
+
+    private double deltaX;
+    private double deltaY;
 
     public CustomShapePaint() : base()
     {
@@ -41,38 +47,27 @@ public class CustomShapePaint : SnipPaintBase
             polyline = new()
             {
                 Stroke = strokeColor,
-                Fill = fillColor,
                 StrokeThickness = 4,
+                Fill = fillColor,
                 FillRule = FillRule.EvenOdd,
                 StrokeLineJoin = PenLineJoin.Round,
                 StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round
+                StrokeEndLineCap = PenLineCap.Round,
             };
-             var widthCoeff = WindowSize.Width / 3;
-             var heightCoeff = WindowSize.Height / 3;
-             int column = (int)(position.X / widthCoeff);
-             int row = (int)(position.Y / heightCoeff);
 
-            AlignmentX alignmentX = (AlignmentX)column;
-            AlignmentY alignmentY = (AlignmentY)row;
-
-            /* alignmentX = AlignmentX.Left;
-             alignmentY = AlignmentY.Top;*/
-
-            fillColor.Stretch = Stretch.None;
-            fillColor.AlignmentX = AlignmentX.Left;
-            fillColor.AlignmentY = AlignmentY.Top;
-
+            thisPosition = position;
             previousPosition = position;
             StartPoint = position;
 
             Shapes.Add(polyline);
 
-             translateTransform.X = -position.X;
-             translateTransform.Y = 0;
+            //translateTransform.X = -StartPoint.X;
+            //translateTransform.Y = -StartPoint.Y;
 
-            /*translateTransform.X = 0;
-            translateTransform.Y = 0;*/
+            //polyline.RenderTransformOrigin = new Point(0, 0);
+            
+            /*deltaX = -StartPoint.X - 100;
+            deltaY = -StartPoint.Y - 100;*/
         }
     }
 
@@ -83,46 +78,8 @@ public class CustomShapePaint : SnipPaintBase
         if (IsDrawing 
             && CalculateDistance(previousPosition, position) > MinRenderDistance)
         {
-            polyline.Points.Add(position);
-
-           /* if (StartPoint.X < position.X
-               && StartPoint.Y < position.Y)
-            {
-                translateTransform.X = StartPoint.X;
-                Debug.WriteLine("Bottom right");
-            }
-            else if (StartPoint.X < position.X
-                    && StartPoint.Y > position.Y)
-            {
-                translateTransform.X = StartPoint.X;
-                Debug.WriteLine("Top right");
-            }*/
-            if (StartPoint.X > position.X
-                    && StartPoint.Y < position.Y)
-            {
-                translateTransform.X = -StartPoint.X;
-
-                Debug.WriteLine("Bottom left");
-            }
-            else if (StartPoint.X > position.X
-                    && StartPoint.Y > position.Y)
-            {
-                translateTransform.X = -StartPoint.X;
-
-                Debug.WriteLine($"{DateTime.Now.ToLongTimeString()} Top left");
-            }
-            else if(StartPoint.X > position.X && StartPoint.Y == position.Y)
-            {
-                translateTransform.X = -StartPoint.X;
-            }
-            else if (StartPoint.Y > position.Y && StartPoint.X == position.X)
-            {
-                translateTransform.Y = -StartPoint.Y;
-            }
-
-            StartPoint = position;
-
-            previousPosition = position;
+            
+             polyline.Points.Add(position);
         }
     }
 
@@ -154,17 +111,8 @@ public class CustomShapePaint : SnipPaintBase
         Shapes.Clear();
     }
 
-    public override void SetImageFill(ImageSource source)
+    public override void SetImageFill(ImageSource _)
     {
-        fillColor = new ImageBrush()
-        {
-            Stretch = Stretch.None,
-            AlignmentX = AlignmentX.Left,
-            AlignmentY = AlignmentY.Top,
-            Opacity = 1,
-            Transform = translateTransform
-        };
-
-        fillColor.ImageSource = source;
+        fillColor = new SolidColorBrush(Colors.Transparent);
     }
 }

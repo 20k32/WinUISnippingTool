@@ -6,6 +6,7 @@ using Windows.Graphics;
 using Windows.Graphics.DirectX;
 using SharpDX.Direct3D11;
 using WinUISnippingTool.Helpers.DirectX;
+using Microsoft.UI.Xaml.Media;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
