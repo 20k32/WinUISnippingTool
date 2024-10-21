@@ -27,6 +27,7 @@ using WinUISnippingTool.Helpers;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using WinUISnippingTool.ViewModels.Resources;
+using Windows.Devices.Custom;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -57,12 +58,12 @@ internal sealed partial class MainWindow : Window
         viewModel.UnregisterHandlers();
     }
 
-    public void Prepare(Monitor[] monitors) 
+    public void Prepare() 
     {
         windowHandle = WindowNative.GetWindowHandle(this);
         FilePickerExtensions.SetWindowHandle(windowHandle);
 
-        this.monitors = monitors;
+        monitors = Ioc.Default.GetService<Monitor[]>();
 
         WindowExtensions.SetMinSize(this, new(500, 500));
         startSize = new(800, 700);

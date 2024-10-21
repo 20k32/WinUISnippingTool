@@ -59,6 +59,19 @@ public static class WindowExtensions
     public static bool ShowWindow(nint windowHandle) => ShowWindow(windowHandle, SwShow);
     public static bool HideWindow(nint windowHandle) => ShowWindow(windowHandle, SwHide);
 
+    public static Size CalculateDesiredSizeForMonitor(MonitorLocation location, out (uint dpiX, uint dpiY) dpiTuple)
+    {
+        dpiTuple = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
+
+        var scaleX = dpiTuple.dpiX / (double)CoreConstants.DefaultMonitorDpi;
+        var scaleY = dpiTuple.dpiY / (double)CoreConstants.DefaultMonitorDpi;
+
+        var newSize = new Size((int)(location.MonitorSize.Width / scaleX), (int)(location.MonitorSize.Height / scaleY));
+
+        return newSize;
+    }
+
+
     public static Size CalculateDesiredSizeForMonitor(MonitorLocation location)
     {
         var dpiTuple = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
@@ -70,6 +83,21 @@ public static class WindowExtensions
 
         return newSize;
     }
+
+    public static Size CalculateActualSizeForMonitor(MonitorLocation location)
+    {
+        var dpiTuple = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
+
+        var scaleX = (double)CoreConstants.DefaultMonitorDpi / dpiTuple.dpiX;
+        var scaleY = (double)CoreConstants.DefaultMonitorDpi / dpiTuple.dpiY;
+
+        var newSize = new Size((int)(location.MonitorSize.Width / scaleX), (int)(location.MonitorSize.Height / scaleY));
+
+        return newSize;
+    }
+
+    [DllImport("Shcore.dll")]
+    private static extern int GetDpiForMonitor(IntPtr hmonitor, DpiType dpiType, out uint dpiX, out uint dpiY);
 
     public static (uint dpiX, uint dpiY) GetDpiForMonitor(nint handleMonitor)
     {
@@ -85,9 +113,6 @@ public static class WindowExtensions
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    [DllImport("Shcore.dll")]
-    private static extern int GetDpiForMonitor(IntPtr hmonitor, DpiType dpiType, out uint dpiX, out uint dpiY);
 
     [DllImport("user32.dll")]
     public static extern int GetDpiForWindow(IntPtr hwnd);

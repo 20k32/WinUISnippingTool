@@ -34,6 +34,7 @@ using Windows.Storage.Streams;
 using Microsoft.Graphics.Canvas.Brushes;
 using Windows.Foundation;
 using Microsoft.UI.Composition;
+using System.Collections.Frozen;
 
 
 namespace WinUISnippingTool.ViewModels;
@@ -252,7 +253,9 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     private async Task<SoftwareBitmap> GetAllMonitorsSnapshot()
     {
+       
         var images = softwareBitmaps.Values.AsEnumerable();
+
         var softwareBitmap = await RenderExtensions.ProcessImagesAsync(PrimaryMonitor, images);
 
         var source = new SoftwareBitmapSource();

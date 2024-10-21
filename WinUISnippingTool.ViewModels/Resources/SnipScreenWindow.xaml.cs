@@ -16,8 +16,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Graphics;
+using Windows.Graphics.Capture;
 using Windows.Graphics.Imaging;
 using WinUISnippingTool.Helpers;
+using WinUISnippingTool.Helpers.DirectX;
 using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.Models;
 using WinUISnippingTool.Models.Extensions;
@@ -68,6 +70,7 @@ public sealed partial class SnipScreenWindow : Window
             binding.Source = ViewModel;
             PartBorder.SetBinding(Border.VisibilityProperty, binding);
         }
+
 
         var rectInt32 = new RectInt32()
         {

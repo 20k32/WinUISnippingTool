@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinUISnippingTool.Models", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinUISnippingTool.Core", "..\WinUISnippingTool.Core\WinUISnippingTool.Core.csproj", "{B3F7436C-E5F2-4579-8841-12A79BF5EA97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinUISnippingTool.SharedResources", "..\WinUISnippingTool.SharedResources\WinUISnippingTool.SharedResources.csproj", "{5A48838F-0794-4701-AFA9-22D556E6F1C1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinUISnippingTool.SharedResources", "..\WinUISnippingTool.SharedResources\WinUISnippingTool.SharedResources.csproj", "{5A48838F-0794-4701-AFA9-22D556E6F1C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

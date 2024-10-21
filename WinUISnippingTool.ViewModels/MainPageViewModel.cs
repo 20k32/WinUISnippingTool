@@ -25,6 +25,8 @@ using WinUISnippingTool.Models.VideoCapture;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Windows.Graphics;
 using System.Diagnostics;
+using Windows.Graphics.Capture;
+using WinUISnippingTool.Helpers.DirectX;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : CanvasViewModelBase
@@ -475,7 +477,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         videoCaptureWindowViewModel.SetCaptureSize((uint)currentMonitor.MonitorSize.Width, (uint)currentMonitor.MonitorSize.Height);
         videoCaptureWindowViewModel.SetFrameForMonitor(framePosition);
 
-        var videoCaptureWindow = Ioc.Default.GetService<VideoCaptureWindow>(); //new VideoCaptureWindow(videoCaptureWindowViewModel);
+        var videoCaptureWindow = Ioc.Default.GetService<VideoCaptureWindow>();
 
         videoCaptureWindow.PrepareWindow();
 
@@ -502,31 +504,26 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
         foreach (var location in monitorLocations)
         {
-             
-            var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(location);
-            
+            var graphicsItem = GraphicsCaptureItemExtensions.CreateItemForMonitor(location.HandleMonitor);
+            var desiredSize = new Size((double)graphicsItem.Size.Width, (double)graphicsItem.Size.Height);
+
             var softwareBitmap = await ScreenshotExtensions
                 .GetSoftwareBitmapImageScreenshotForAreaAsync(
                      location.StartPoint,
                      System.Drawing.Point.Empty,
+                     desiredSize,
                      location.MonitorSize);
 
-            var newBitmap = softwareBitmap;
-
-            if(desiredSize != location.MonitorSize)
-            {
-                newBitmap = await ScreenshotExtensions
-                    .ChangeResolutionAsync(softwareBitmap, (int)desiredSize.Width, (int)desiredSize.Height);
-            }
+            await ClipboardExtensions.CopyAsync(softwareBitmap);
 
             var softwareBitmapSource = new SoftwareBitmapSource();
-            await softwareBitmapSource.SetBitmapAsync(newBitmap);
+            await softwareBitmapSource.SetBitmapAsync(softwareBitmap);
 
             snipScreenWindowViewModel.ResetModel();
 
             snipScreenWindowViewModel
                 .PrepareModel(location,
-                newBitmap,
+                softwareBitmap,
                 softwareBitmapSource,
                 SelectedSnipKind,
                 CaptureType,
@@ -937,7 +934,9 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         var pixels = await renderTargetBitmap.GetPixelsAsync();
         var pixelsArr = pixels.ToArray();
 
-        var writeableBitmap = new WriteableBitmap(renderTargetBitmap.PixelWidth, renderTargetBitmap.PixelHeight);
+        var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(snipScreenWindowViewModel.PrimaryMonitor);
+
+        var writeableBitmap = new WriteableBitmap((int)renderTargetBitmap.PixelWidth, (int)renderTargetBitmap.PixelHeight);
         using (Stream stream = writeableBitmap.PixelBuffer.AsStream())
         {
             await stream.WriteAsync(pixelsArr);

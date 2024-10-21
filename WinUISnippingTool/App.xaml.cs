@@ -24,6 +24,7 @@ using WinUISnippingTool.ViewModels.Resources;
 using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.WinUI;
 using System.Threading.Tasks;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -48,11 +49,15 @@ public sealed partial class App : Application
     {
         this.InitializeComponent();
 
+        var monitors = Monitor.All.ToArray();
+
         var existingCollection = new ServiceCollection();
+
 
         existingCollection
             .AddSingleton(this)
             .AddSingleton<MainPage>()
+            .AddSingleton(monitors)
             .RegisterViewModels()
             .RegisterInnerWindows();
 
@@ -76,7 +81,7 @@ public sealed partial class App : Application
 
         var activatedArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
         var activationKind = activatedArgs.Kind;
-        
+
         if (activationKind != ExtendedActivationKind.AppNotification)
         {
             LaunchAndBringToForegroundIfNeeded();
@@ -134,14 +139,12 @@ public sealed partial class App : Application
         {
             CheckForDirectXSupport();
 
-            var monitors = Monitor.All.ToArray();
-
             MainWindow = new();
             //viewModel = Ioc.Default.GetService<MainPageViewModel>();
 
             MainWindow.Closed += MainWindow_Closed;
 
-            MainWindow.Prepare(monitors);
+            MainWindow.Prepare();
 
             // Ensure the MainWindow is active
             MainWindow.Activate();

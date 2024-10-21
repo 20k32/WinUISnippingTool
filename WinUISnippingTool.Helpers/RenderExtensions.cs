@@ -1,4 +1,5 @@
-﻿using Microsoft.Graphics.Canvas;
+﻿using CommunityToolkit.WinUI.UI;
+using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
@@ -10,10 +11,12 @@ using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Numerics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
@@ -22,36 +25,7 @@ using WinUISnippingTool.Helpers.Saving;
 namespace WinUISnippingTool.Helpers;
 
 public static class RenderExtensions
-{
-    private static double minX;
-    private static double minY;
-    private static double maxX;
-    private static double maxY;
-
-    private static void ResetBounds()
-    {
-        minX = double.MaxValue;
-        minY = double.MaxValue;
-        maxX = double.MinValue;
-        maxY = double.MinValue;
-    }
-
-    private static void CalculateNewBounds(Point point)
-    {
-        minX = Math.Min(minX, point.X);
-        minY = Math.Min(minY, point.Y);
-        maxX = Math.Max(maxX, point.X);
-        maxY = Math.Max(maxY, point.Y);
-
-        /*if (point.X < minX) minX = point.X;
-        if (point.Y < minY) minY = point.Y;
-        if (point.X > maxX) maxX = point.X;
-        if (point.Y > maxY) maxY = point.Y;*/
-    }
-
-    private static Rect GetBounds() 
-        => new Rect(minX, minY, maxX - minX, maxY - minY);
-
+{ 
     public static async Task<SoftwareBitmap> ProcessShapeAsync(Shape element)
     {
         var renderTargetBitmap = new RenderTargetBitmap();
@@ -63,17 +37,24 @@ public static class RenderExtensions
 
     public static async Task<SoftwareBitmap> ProcessPointsAsync(PointCollection points, SoftwareBitmap bitmap)
     {
-        ResetBounds();
+        var minX = double.MaxValue;
+        var minY = double.MaxValue;
+        var maxX = double.MinValue;
+        var maxY = double.MinValue;
 
         var vectorPoints = new List<Vector2>(points.Count);
 
         foreach (var point in points)
         {
             vectorPoints.Add(new((float)point.X, (float)point.Y));
-            CalculateNewBounds(point);
+
+            minX = Math.Min(minX, point.X);
+            minY = Math.Min(minY, point.Y);
+            maxX = Math.Max(maxX, point.X);
+            maxY = Math.Max(maxY, point.Y);
         }
 
-        var bounds = GetBounds();
+        var bounds = new Rect(minX, minY, maxX - minX, maxY - minY);
         var device = CanvasDevice.GetSharedDevice();
 
         var canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, bitmap);
@@ -107,57 +88,54 @@ public static class RenderExtensions
 
     public static async Task<SoftwareBitmap> ProcessImagesAsync(MonitorLocation primaryMonitor, IEnumerable<SoftwareBitmap> images)
     {
-        var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(primaryMonitor);
-        
+        var device = CanvasDevice.GetSharedDevice();
+
+        var canvasBitmaps = new List<CanvasBitmap>();
+
+        var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(primaryMonitor, out var dpiTuple);
+
         SoftwareBitmap result = null;
 
-        int height = images.First().PixelHeight;
-        int width = images.First().PixelWidth;
+        var height = -1;
+        var width = default(int);
+        var prevBoundWidth = default(double);
 
-        foreach (var item in images.Skip(1))
+        foreach (var image in images)
         {
-            width += item.PixelWidth;
+            width += image.PixelWidth;
 
-            if (height < item.PixelHeight)
+            if (height < image.PixelHeight)
             {
-                height = item.PixelHeight;
+                height = image.PixelHeight;
             }
+
+            var canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, image);
+            canvasBitmaps.Add(canvasBitmap);
+            prevBoundWidth += canvasBitmap.Bounds.Width;
         }
 
-        var scaleX = desiredSize.Width / (double)width;
-        var scaleY = desiredSize.Height / (double)height;
+        var scaleX = desiredSize.Width / width;
+        var scaleY = desiredSize.Height / height;
         var minScale = Math.Min(scaleX, scaleY);
+        var matrix3x2 = Matrix3x2.CreateScale((float)minScale);
+        var croppedHeight = height * minScale;
+        var croppedWidth = prevBoundWidth * minScale;
 
-        var newHeight = height * minScale;
-        var newWidth = width * minScale;
-
-        var device = CanvasDevice.GetSharedDevice();
-        var renderTarget = new CanvasRenderTarget(device, (int)newWidth, (int)newHeight, BitmapSavingConstants.Dpi);
+        var renderTarget = new CanvasRenderTarget(device, (int)croppedWidth, (int)croppedHeight, dpiTuple.dpiX);
 
         using (var drawingSession = renderTarget.CreateDrawingSession())
         {
             drawingSession.Clear(Colors.Transparent);
 
-            var firstBmp = images.Last();
+            drawingSession.Transform = matrix3x2;
+            canvasBitmaps.Reverse();
 
-            var firstImage = CanvasBitmap.CreateFromSoftwareBitmap(device, firstBmp);
-
-            var matrix = System.Numerics.Matrix3x2.CreateScale((float)minScale);
-            drawingSession.Transform = matrix;
-
-            drawingSession.DrawImage(firstImage, 0, 0);
-
-            var prevBoundWidth = firstImage.Bounds.Width;
-
-            foreach (var bitmap in images.Reverse().Skip(1))
+            prevBoundWidth = default(double);
+            foreach (var bitmap in canvasBitmaps)
             {
-                var image = CanvasBitmap.CreateFromSoftwareBitmap(device, bitmap);
-
-                drawingSession.DrawImage(image, (float)prevBoundWidth, 0);
-                prevBoundWidth += image.Bounds.Width;
+                drawingSession.DrawImage(bitmap, (float)prevBoundWidth, 0);
+                prevBoundWidth += bitmap.Bounds.Width;
             }
-
-            drawingSession.Transform = Matrix3x2.CreateTranslation((float)(prevBoundWidth / 2), 0);
         }
 
         using (var stream = new InMemoryRandomAccessStream())
@@ -166,7 +144,26 @@ public static class RenderExtensions
             BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
             result = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
         }
-
         return result;
+    }
+
+    public static async Task<SoftwareBitmap> ChangeResolutionAsync(SoftwareBitmap originalBitmap, int targetWidth, int targetHeight)
+    {
+        using (var stream = new InMemoryRandomAccessStream())
+        {
+            var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
+            encoder.SetSoftwareBitmap(originalBitmap);
+
+            encoder.BitmapTransform.ScaledWidth = (uint)targetWidth;
+            encoder.BitmapTransform.ScaledHeight = (uint)targetHeight;
+            encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Linear;
+
+            await encoder.FlushAsync();
+
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            var resizedBitmap = await decoder.GetSoftwareBitmapAsync(originalBitmap.BitmapPixelFormat, originalBitmap.BitmapAlphaMode);
+
+            return resizedBitmap;
+        }
     }
 }

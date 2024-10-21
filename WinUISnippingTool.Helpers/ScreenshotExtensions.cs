@@ -68,8 +68,8 @@ public static class ScreenshotExtensions
             using (var g = Graphics.FromImage(bmpScreenshot))
             {
                 g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
-                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.None;
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
 
                 g.CopyFromScreen(upperLeftSource, upperLeftDestination, bmpScreenshot.Size);
@@ -92,6 +92,19 @@ public static class ScreenshotExtensions
         }
 
         return softwareBitmap;
+    }
+
+    public static async Task<SoftwareBitmap> GetSoftwareBitmapImageScreenshotForAreaAsync
+        (Point upperLeftSource, Point upperLeftDestination, Windows.Foundation.Size actualSize, Windows.Foundation.Size desiredSize)
+    {
+        var screenshot = await GetSoftwareBitmapImageScreenshotForAreaAsync(upperLeftSource, upperLeftDestination, actualSize);
+
+        if(actualSize != desiredSize)
+        {
+            screenshot = await RenderExtensions.ChangeResolutionAsync(screenshot, (int)desiredSize.Width, (int)desiredSize.Height);
+        }
+
+        return screenshot;
     }
 
     /// <summary>
@@ -130,25 +143,4 @@ public static class ScreenshotExtensions
 
         return softwareBitmap;
     }
-
-    public static async Task<SoftwareBitmap> ChangeResolutionAsync(SoftwareBitmap originalBitmap, int targetWidth, int targetHeight)
-    {
-        using (var stream = new InMemoryRandomAccessStream())
-        {
-            var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
-            encoder.SetSoftwareBitmap(originalBitmap);
-
-            encoder.BitmapTransform.ScaledWidth = (uint)targetWidth;
-            encoder.BitmapTransform.ScaledHeight = (uint)targetHeight;
-            encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Linear;
-
-            await encoder.FlushAsync();
-
-            var decoder = await BitmapDecoder.CreateAsync(stream);
-            var resizedBitmap = await decoder.GetSoftwareBitmapAsync(originalBitmap.BitmapPixelFormat, originalBitmap.BitmapAlphaMode);
-
-            return resizedBitmap;
-        }
-    }
-
 }
