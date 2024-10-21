@@ -17,7 +17,6 @@ using System.Diagnostics;
 using WinUISnippingTool.Models.Extensions;
 using WinUISnippingTool.Helpers;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using WinUISnippingTool.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Dispatching;
 using WinUISnippingTool.ViewModels.Resources;
@@ -52,7 +51,6 @@ public sealed partial class App : Application
         var monitors = Monitor.All.ToArray();
 
         var existingCollection = new ServiceCollection();
-
 
         existingCollection
             .AddSingleton(this)

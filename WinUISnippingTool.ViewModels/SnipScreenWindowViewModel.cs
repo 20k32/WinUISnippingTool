@@ -35,15 +35,24 @@ using Microsoft.Graphics.Canvas.Brushes;
 using Windows.Foundation;
 using Microsoft.UI.Composition;
 using System.Collections.Frozen;
+using Microsoft.UI.Xaml.Input;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Input;
+using Windows.UI.Core;
+using WinUISnippingTool.Models.Extensions;
+using CommunityToolkit.WinUI.UI;
+using System.Runtime.CompilerServices;
 
 
 namespace WinUISnippingTool.ViewModels;
 
-public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
+public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
 {
+    private readonly WeakReference<Image> ImageRelativeToWindow;
     private readonly Dictionary<string, NotifyOnCompletionCollection<UIElement>> shapesDictionary;
-    private readonly Dictionary<string, Microsoft.UI.Xaml.Controls.Image> imagesDictionary;
+    private readonly Dictionary<string, Image> imagesDictionary;
     private readonly Dictionary<string, SoftwareBitmap> softwareBitmaps;
+    private readonly Dictionary<int, MonitorLocation> locations;
 
     private readonly SnipPaintBase windowPaint;
     private readonly SnipPaintBase customShapePaint;
@@ -70,7 +79,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public void TrySetAndLoadLocalization(string bcpTag) => LoadLocalization(bcpTag);
 
-    public override void SetWindowSize(Windows.Foundation.Size newSize)
+    public override void SetWindowSize(Size newSize)
     {
         base.SetWindowSize(newSize);
         windowPaintSource.SetWindowSize(newSize);
@@ -90,6 +99,8 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
     {
         LoadLocalization(CoreConstants.DefaultLocalizationBcp);
         IsOverlayVisible = true;
+        ImageRelativeToWindow = new(null);
+        locations = new();
         shapesDictionary = new();
         imagesDictionary = new();
         softwareBitmaps = new();
@@ -104,6 +115,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         CompleteRendering = false;
         IsOverlayVisible = true;
         CurrentShapeBmp = null;
+        ResultFigure = null;
     }
 
     public void AddSoftwareBitmapForCurrentMonitor(MonitorLocation location, SoftwareBitmap bitmap)
@@ -120,7 +132,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         rectangleSelectionPaint.SetShapeSource(canvasItems);
     }
 
-    public void AddImageSourceAndBrushFillForCurentMonitor(ImageSource source)
+    public Image AddImageSourceAndBrushFillForCurentMonitor(ImageSource source)
     {
         var canvasItems = shapesDictionary[currentMonitorName];
 
@@ -128,6 +140,8 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         image.Source = source;
         image.Opacity = 0.3;
         canvasItems.Add(image);
+
+        return image;
     }
 
     public void AddShapeSourceForCurrentMonitor()
@@ -144,6 +158,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         var source = (SoftwareBitmapSource)imagesDictionary[currentMonitorName].Source;
         rectangleSelectionPaint.SetImageFill(source);
         windowPaint.SetImageFill(source);
+        customShapePaint.SetImageFill(null!);
     }
 
     public NotifyOnCompletionCollection<UIElement> GetOrAddCollectionForCurrentMonitor()
@@ -253,7 +268,6 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
 
     private async Task<SoftwareBitmap> GetAllMonitorsSnapshot()
     {
-       
         var images = softwareBitmaps.Values.AsEnumerable();
 
         var softwareBitmap = await RenderExtensions.ProcessImagesAsync(PrimaryMonitor, images);
@@ -332,7 +346,8 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         }
     }
 
-    public async Task ExitAsync()
+    [RelayCommand]
+    private async Task ExitAsync()
     {
         foreach (var item in imagesDictionary)
         {
@@ -349,6 +364,7 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         softwareBitmaps.Clear();
         imagesDictionary.Clear();
         shapesDictionary.Clear();
+        locations.Clear();
 
         if (IsShortcutResponce)
         {
@@ -373,11 +389,80 @@ public sealed class SnipScreenWindowViewModel : CanvasViewModelBase
         }
     }
 
+    [RelayCommand]
+    private void PointerPressed(PointerRoutedEventArgs e)
+    {
+        e.Handled = true;
+
+        if(e.OriginalSource is Image image)
+        {
+            ImageRelativeToWindow.SetTarget(image);
+        }
+        else
+        {
+            var imageParent = ((UIElement)e.OriginalSource).FindAscendant<Image>();
+            ImageRelativeToWindow.SetTarget(imageParent);
+        }
+
+        ImageRelativeToWindow.TryGetTarget(out var existingImage);
+        var hash = existingImage.GetHashCode();
+        var newMonitor = locations[hash];
+
+        if (newMonitor.DeviceName != CurrentMonitorName)
+        {
+            SetCurrentMonitor(newMonitor.DeviceName);
+            SetImageSourceForCurrentMonitor();
+            AddShapeSourceForCurrentMonitor();
+
+            var size = WindowExtensions.CalculateDesiredSizeForMonitor(newMonitor);
+            SetWindowSize(size);
+        }
+
+        var currentLocation = e.GetCurrentPoint(existingImage);
+
+        OnPointerPressed(currentLocation.Position);
+    }
+
+    [RelayCommand]
+    private void PointerMoved(PointerRoutedEventArgs e)
+    {
+        e.Handled = true;
+
+        if(ImageRelativeToWindow is not null 
+            && ImageRelativeToWindow.TryGetTarget(out var image))
+        {
+            var currentLocation = e.GetCurrentPoint(image);
+            OnPointerMoved(currentLocation.Position);
+        }
+    }
+
+    [RelayCommand]
+    private async Task PointerReleased(PointerRoutedEventArgs e)
+    {
+        e.Handled = true;
+
+        if (ImageRelativeToWindow is not null 
+            && ImageRelativeToWindow.TryGetTarget(out var image)) // user can release mouse when image is not loaded
+        {
+            var currentLocation = e.GetCurrentPoint(image);
+
+            await OnPointerReleased(currentLocation.Position);
+
+            await TryExitAsync();
+        }
+    }
+
+    private void AddLocation(int hash, MonitorLocation location) => locations.Add(hash, location);
+
     internal void PrepareModel(MonitorLocation location, SoftwareBitmap softwareBitmap, SoftwareBitmapSource softwareBitmapSource, SnipShapeKind selectedSnipKind, CaptureType captureType, bool byShortcut)
     {
         SetCurrentMonitor(location.DeviceName);
         _ = GetOrAddCollectionForCurrentMonitor();
-        AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
+        
+        var image = AddImageSourceAndBrushFillForCurentMonitor(softwareBitmapSource);
+        var hash = image.GetHashCode();
+        
+        AddLocation(hash, location);
         AddSoftwareBitmapForCurrentMonitor(location, softwareBitmap);
         AddShapeSourceForCurrentMonitor();
         SetWindowSize(location.MonitorSize);

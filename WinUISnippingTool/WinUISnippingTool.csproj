@@ -50,7 +50,6 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WinUISnippingTool.Core\WinUISnippingTool.Core.csproj" />
     <ProjectReference Include="..\WinUISnippingTool.SharedResources\WinUISnippingTool.SharedResources.csproj" />
     <ProjectReference Include="..\WinUISnippingTool.ViewModels\WinUISnippingTool.ViewModels.csproj" />
   </ItemGroup>

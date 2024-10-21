@@ -22,7 +22,6 @@ using WinUISnippingTool.Models.MonitorInfo;
 using Windows.Graphics;
 using Windows.UI.WebUI;
 using WinUISnippingTool.Helpers.Saving;
-using WinUISnippingTool.Core;
 using WinUISnippingTool.Helpers;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;

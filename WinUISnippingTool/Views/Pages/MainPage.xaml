@@ -376,6 +376,7 @@
                                 RenderTransform="{Binding TransformSource, Mode=OneWay}"
                                 Width="{Binding CanvasWidth, Mode=OneWay}"
                                 Height="{Binding CanvasHeight, Mode=OneWay}">
+                            
                             <Interactivity:Interaction.Behaviors>
 
                                 <Interactions:EventTriggerBehavior EventName="PointerWheelChanged">

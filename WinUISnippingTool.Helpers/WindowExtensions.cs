@@ -15,6 +15,7 @@ namespace WinUISnippingTool.Helpers;
 
 public static class WindowExtensions
 {
+    [StructLayout(LayoutKind.Sequential)]
     private struct POINT
     {
         public int X;
@@ -47,6 +48,13 @@ public static class WindowExtensions
         Effective = 0,
         Angular = 1,
         Raw = 2,
+    }
+
+    private enum DwFlags : uint
+    {
+        DefaultToNull,
+        DefaultToPrimary,
+        DefaultToNearest
     }
 
     private const int SwHide = 0;

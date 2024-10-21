@@ -6,6 +6,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:userControl="using:WinUISnippingTool.SharedResources.Controls"
+    xmlns:Interactivity="using:Microsoft.Xaml.Interactivity" 
+    xmlns:Interactions="using:Microsoft.Xaml.Interactions.Core"
     mc:Ignorable="d"
     Title="SnipScreenWindow">
 
@@ -21,10 +23,26 @@
 
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <Canvas Background="Transparent"
-                            PointerPressed="Canvas_PointerPressed"
-                            PointerMoved="Canvas_PointerMoved"
-                            PointerReleased="Canvas_PointerReleased"/>
+                    <Canvas Background="Transparent">
+                        <Interactivity:Interaction.Behaviors>
+                            
+                            <Interactions:EventTriggerBehavior EventName="PointerMoved">
+                                <Interactions:InvokeCommandAction 
+                                        Command="{Binding DataContext.PointerMovedCommand, ElementName=PartCanvas}" />
+                            </Interactions:EventTriggerBehavior>
+
+                            <Interactions:EventTriggerBehavior EventName="PointerPressed">
+                                <Interactions:InvokeCommandAction 
+                                        Command="{Binding DataContext.PointerPressedCommand, ElementName=PartCanvas}" />
+                            </Interactions:EventTriggerBehavior>
+
+                            <Interactions:EventTriggerBehavior EventName="PointerReleased">
+                                <Interactions:InvokeCommandAction 
+                                        Command="{Binding DataContext.PointerReleasedCommand, ElementName=PartCanvas}" />
+                            </Interactions:EventTriggerBehavior>
+
+                        </Interactivity:Interaction.Behaviors>
+                    </Canvas>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
         </ItemsControl>
@@ -45,7 +63,7 @@
                                          SelectedSnipKind="{Binding SelectedSnipKind, Mode=TwoWay}"
                                          SelectedCaptureType="{x:Bind ViewModel.CaptureType, Mode=TwoWay}"/>
                 
-                <Button Click="ExitButton_Click">
+                <Button Command="{x:Bind ViewModel.ExitCommand}">
                     <FontIcon Glyph="&#xE8BB;" />
                 </Button>
             </StackPanel>

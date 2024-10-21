@@ -22,19 +22,13 @@ namespace WinUISnippingTool.Models.Paint;
 
 public class CustomShapePaint : SnipPaintBase
 {
-    private Point thisPosition;
     private Point previousPosition;
     private readonly SolidColorBrush strokeColor;
     private SolidColorBrush fillColor;
     private Polyline polyline;
-    private TranslateTransform translateTransform;
-
-    private double deltaX;
-    private double deltaY;
 
     public CustomShapePaint() : base()
     {
-        translateTransform = new();
         strokeColor = new SolidColorBrush(Colors.White);
     }
 
@@ -55,30 +49,18 @@ public class CustomShapePaint : SnipPaintBase
                 StrokeEndLineCap = PenLineCap.Round,
             };
 
-            thisPosition = position;
             previousPosition = position;
             StartPoint = position;
 
             Shapes.Add(polyline);
-
-            //translateTransform.X = -StartPoint.X;
-            //translateTransform.Y = -StartPoint.Y;
-
-            //polyline.RenderTransformOrigin = new Point(0, 0);
-            
-            /*deltaX = -StartPoint.X - 100;
-            deltaY = -StartPoint.Y - 100;*/
         }
     }
 
-
-    // todo: finish this
     public override void OnPointerMoved(Point position)
     {
         if (IsDrawing 
             && CalculateDistance(previousPosition, position) > MinRenderDistance)
         {
-            
              polyline.Points.Add(position);
         }
     }
@@ -113,6 +95,7 @@ public class CustomShapePaint : SnipPaintBase
 
     public override void SetImageFill(ImageSource _)
     {
-        fillColor = new SolidColorBrush(Colors.Transparent);
+        fillColor = new SolidColorBrush(Colors.LightSkyBlue);
+        fillColor.Opacity = 0.2;
     }
 }

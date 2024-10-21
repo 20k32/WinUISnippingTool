@@ -20,13 +20,10 @@ using Windows.Storage;
 using WinUISnippingTool.Helpers;
 using WinUISnippingTool.Helpers.Saving;
 using WinUISnippingTool.ViewModels.Resources;
-using WinUISnippingTool.Core;
-using WinUISnippingTool.Models.VideoCapture;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using Windows.Graphics;
 using System.Diagnostics;
-using Windows.Graphics.Capture;
 using WinUISnippingTool.Helpers.DirectX;
+using CommunityToolkit.WinUI.UI;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : CanvasViewModelBase
@@ -268,7 +265,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
         if (CanvasItems.Count > 0)
         {
-            var source = CanvasItems[0].FindAscendantCached<Canvas>();
+            var source = CanvasItems[0].FindAscendant<Canvas>();
             var point = e.GetCurrentPoint(source);
 
             if (point.Properties.IsMiddleButtonPressed && scaleRequested)
@@ -933,7 +930,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
         var pixels = await renderTargetBitmap.GetPixelsAsync();
         var pixelsArr = pixels.ToArray();
-
+        
         var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(snipScreenWindowViewModel.PrimaryMonitor);
 
         var writeableBitmap = new WriteableBitmap((int)renderTargetBitmap.PixelWidth, (int)renderTargetBitmap.PixelHeight);

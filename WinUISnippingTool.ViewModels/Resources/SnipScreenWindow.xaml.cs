@@ -40,8 +40,6 @@ public sealed partial class SnipScreenWindow : Window
 {
     public bool IsClosed { get; private set; }
 
-    private MonitorLocation currentWindowLocation;
-
     public SnipScreenWindowViewModel ViewModel { get; private set; }
 
     public SnipScreenWindow(SnipScreenWindowViewModel viewModel)
@@ -51,10 +49,9 @@ public sealed partial class SnipScreenWindow : Window
         PartGrid.DataContext = viewModel;
     }
 
+
     public void PrepareWindow(MonitorLocation location)
     {
-        currentWindowLocation = location;
-
         PartCanvas.ItemsSource = ViewModel.GetOrAddCollectionForCurrentMonitor();
 
         if (!location.IsPrimary)
@@ -106,44 +103,5 @@ public sealed partial class SnipScreenWindow : Window
 #endif
         AppWindow.IsShownInSwitchers = false;
         presenter.SetBorderAndTitleBar(false, false);
-    }
-
-    private async void ExitButton_Click(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.ExitAsync();
-    }
-
-    private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        e.Handled = true;
-
-        if (currentWindowLocation.DeviceName != ViewModel.CurrentMonitorName)
-        {
-            ViewModel.SetCurrentMonitor(currentWindowLocation.DeviceName);
-
-            ViewModel.SetImageSourceForCurrentMonitor();
-            ViewModel.AddShapeSourceForCurrentMonitor();
-
-            var size = WindowExtensions.CalculateDesiredSizeForMonitor(currentWindowLocation);
-            ViewModel.SetWindowSize(size);
-        }
-
-
-        ViewModel.OnPointerPressed(e.GetPositionRelativeToCanvas((Canvas)sender));
-    }
-
-    private void Canvas_PointerMoved(object sender, PointerRoutedEventArgs e)
-    {
-        e.Handled = true;
-        ViewModel.OnPointerMoved(e.GetPositionRelativeToCanvas((Canvas)sender));
-    }
-
-    private async void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        e.Handled = true;
-
-        await ViewModel.OnPointerReleased(e.GetPositionRelativeToCanvas((Canvas)sender));
-
-        await ViewModel.TryExitAsync();
     }
 }
