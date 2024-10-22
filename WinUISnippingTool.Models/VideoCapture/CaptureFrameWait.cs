@@ -154,8 +154,8 @@ internal sealed class CaptureFrameWait : IDisposable
             {
                 var croppedDescription = new Texture2DDescription
                 {
-                    Width = currentFrame.Surface.Description.Width,
-                    Height = currentFrame.Surface.Description.Height,
+                    Width = currentFrame.ContentSize.Width,
+                    Height = currentFrame.ContentSize.Height,
                     MipLevels = 1,
                     ArraySize = 1,
                     Format = sourceTexture.Description.Format,
@@ -177,8 +177,7 @@ internal sealed class CaptureFrameWait : IDisposable
                         frameRect.Height + frameRect.Y,
                         1);
 
-                    d3dDevice.ImmediateContext.CopyResource(blankTexture, croppedTexture);
-                    d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, centerFrameCoords.X, centerFrameCoords.Y);
+                    d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, 215, 0);
 
                     // Create the surface from the cropped texture
                     result.Surface = Direct3D11Helpers.CreateDirect3DSurfaceFromSharpDXTexture(croppedTexture);
@@ -188,7 +187,6 @@ internal sealed class CaptureFrameWait : IDisposable
 
         return result;
     }
-
 
     public void Dispose()
     {

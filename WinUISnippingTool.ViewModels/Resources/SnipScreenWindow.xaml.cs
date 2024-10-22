@@ -76,7 +76,6 @@ public sealed partial class SnipScreenWindow : Window
             Height = (int)location.MonitorSize.Height,
             Width = (int)location.MonitorSize.Width
         };
-
         this.ExtendsContentIntoTitleBar = true;
         AppWindow.MoveAndResize(rectInt32);
         SetupPresenter();

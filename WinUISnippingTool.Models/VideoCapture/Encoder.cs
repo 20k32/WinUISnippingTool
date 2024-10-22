@@ -28,6 +28,7 @@ internal sealed class Encoder : IDisposable
 
     public Encoder(IDirect3DDevice device, GraphicsCaptureItem item, RectInt32 frameSize, VideoCaptureOptions options)
     {
+        
         this.device = device;
         captureItem = item;
         isRecording = false;

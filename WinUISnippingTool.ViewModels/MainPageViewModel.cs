@@ -507,11 +507,9 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             var softwareBitmap = await ScreenshotExtensions
                 .GetSoftwareBitmapImageScreenshotForAreaAsync(
                      location.StartPoint,
-                     System.Drawing.Point.Empty,
+                     location.HandleMonitor,
                      desiredSize,
                      location.MonitorSize);
-
-            await ClipboardExtensions.CopyAsync(softwareBitmap);
 
             var softwareBitmapSource = new SoftwareBitmapSource();
             await softwareBitmapSource.SetBitmapAsync(softwareBitmap);

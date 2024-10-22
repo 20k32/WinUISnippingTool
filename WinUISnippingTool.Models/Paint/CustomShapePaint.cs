@@ -61,7 +61,8 @@ public class CustomShapePaint : SnipPaintBase
         if (IsDrawing 
             && CalculateDistance(previousPosition, position) > MinRenderDistance)
         {
-             polyline.Points.Add(position);
+            polyline.Points.Add(position);
+            previousPosition = position;
         }
     }
 

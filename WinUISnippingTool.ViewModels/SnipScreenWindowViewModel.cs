@@ -181,7 +181,15 @@ public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
 
     public void SetSelectedItem(SnipShapeKind selectedKind, CaptureType selectedCapturType)
     {
-        SelectedSnipKind = selectedKind;
+        if(CaptureType != CaptureType.Video)
+        {
+            SelectedSnipKind = selectedKind;
+        }
+        else
+        {
+            SelectedSnipKind = SnipShapeKinds.First();
+        }
+
         CaptureType = selectedCapturType;
     }
 
@@ -211,6 +219,7 @@ public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
     public void OnPointerMoved(Windows.Foundation.Point position)
     {
         paintSnipKind?.OnPointerMoved(position);
+        Debug.WriteLine(TimeOnly.FromDateTime(DateTime.Now).Millisecond);
     }
 
     private Task CreateSaveBmpToAllPlacesTask(SoftwareBitmap softwareBitmap)
@@ -246,9 +255,10 @@ public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
         if(SelectedSnipKind.Kind == SnipKinds.CustomShape)
         {
             var figure = (Polyline)ResultFigure;
-            var softwarebitmap = softwareBitmaps[currentMonitorName];
-
-            result = await RenderExtensions.ProcessPointsAsync(figure.Points, softwarebitmap);
+            using (var softwarebitmap = softwareBitmaps[currentMonitorName])
+            {
+                result = await RenderExtensions.ProcessPointsAsync(figure.Points, softwarebitmap);
+            }
         }
         else
         {
@@ -293,8 +303,10 @@ public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
                 if (CaptureType == CaptureType.Photo
                     && SelectedSnipKind.Kind != SnipKinds.AllWindows)
                 {
-                    var sbitmap = await GetSingleMonitorSnapshot();
-                    await CreateSaveBmpToAllPlacesTask(sbitmap);
+                    using (var softwareBitmap = await GetSingleMonitorSnapshot())
+                    {
+                        await CreateSaveBmpToAllPlacesTask(softwareBitmap);
+                    }
                 }
                 else if (CaptureType == CaptureType.Video)
                 {
@@ -323,9 +335,11 @@ public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
         }
         else if (SelectedSnipKind.Kind == SnipKinds.AllWindows)
         {
-            var sbitmap = await GetAllMonitorsSnapshot();
-            _ = Task.Run(() => Console.Beep(500, 200));
-            await CreateSaveBmpToAllPlacesTask(sbitmap);
+            using(var softwareBitmap = await GetAllMonitorsSnapshot())
+            {
+                _ = Task.Run(() => Console.Beep(500, 200));
+                await CreateSaveBmpToAllPlacesTask(softwareBitmap);
+            }
 
             CompleteRendering = true;
         }
@@ -349,11 +363,11 @@ public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
     [RelayCommand]
     private async Task ExitAsync()
     {
-        foreach (var item in imagesDictionary)
+        foreach (var item in imagesDictionary.Values)
         {
-            var softwareBitmapSource = (SoftwareBitmapSource)item.Value.Source;
+            var softwareBitmapSource = (SoftwareBitmapSource)item.Source;
             softwareBitmapSource.Dispose();
-            item.Value.Source = null;
+            item.Source = null;
         }
 
         foreach (var softwareBitmap in softwareBitmaps.Values)
@@ -469,5 +483,8 @@ public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
         SetResponceType(byShortcut);
         SetImageSourceForCurrentMonitor();
         SetSelectedItem(selectedSnipKind, captureType);
+
+        CanvasWidth = location.MonitorSize.Width;
+        CanvasHeight = location.MonitorSize.Height;
     }
 }

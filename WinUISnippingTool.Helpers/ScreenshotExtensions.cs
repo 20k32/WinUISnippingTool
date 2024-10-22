@@ -95,13 +95,20 @@ public static class ScreenshotExtensions
     }
 
     public static async Task<SoftwareBitmap> GetSoftwareBitmapImageScreenshotForAreaAsync
-        (Point upperLeftSource, Point upperLeftDestination, Windows.Foundation.Size actualSize, Windows.Foundation.Size desiredSize)
+        (Point upperLeftSource, nint handleMonitor, Windows.Foundation.Size actualSize, Windows.Foundation.Size desiredSize)
     {
-        var screenshot = await GetSoftwareBitmapImageScreenshotForAreaAsync(upperLeftSource, upperLeftDestination, actualSize);
+        SoftwareBitmap screenshot;
 
-        if(actualSize != desiredSize)
+        var tempScreenshot = await GetSoftwareBitmapImageScreenshotForAreaAsync(upperLeftSource, handleMonitor);
+
+        if (actualSize != desiredSize)
         {
-            screenshot = await RenderExtensions.ChangeResolutionAsync(screenshot, (int)desiredSize.Width, (int)desiredSize.Height);
+            screenshot = await RenderExtensions.ChangeResolutionAsync(tempScreenshot, (int)desiredSize.Width, (int)desiredSize.Height);
+            tempScreenshot.Dispose();
+        }
+        else
+        {
+            screenshot = tempScreenshot;
         }
 
         return screenshot;
@@ -114,32 +121,31 @@ public static class ScreenshotExtensions
         (Point upperLeftSource, nint handleMonitor)
     {
         SoftwareBitmap softwareBitmap = null;
-        var graphicsItem = GraphicsCaptureItemExtensions.CreateItemForMonitor((HMONITOR)handleMonitor);
-        var device3d = Direct3D11Helpers.CreateDevice();
 
-        var framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
+        var graphicsItem = GraphicsCaptureItemExtensions.CreateItemForMonitor((HMONITOR)handleMonitor);
+        using (var device3d = Direct3D11Helpers.CreateDevice())
+        using (var framePool = Direct3D11CaptureFramePool.CreateFreeThreaded(
                 device3d,
                 DirectXPixelFormat.B8G8R8A8UIntNormalized,
                 1,
-                graphicsItem.Size);
-
-        var session = framePool.CreateCaptureSession(graphicsItem);
-        
-        var taskCompletion = new TaskCompletionSource<Direct3D11CaptureFrame>();
-        framePool.FrameArrived += (s, a) =>
+                graphicsItem.Size))
+        using (var session = framePool.CreateCaptureSession(graphicsItem))
         {
-            var frame = s.TryGetNextFrame();
-            taskCompletion.SetResult(frame);
-        };
-        session.StartCapture();
+            var taskCompletion = new TaskCompletionSource<Direct3D11CaptureFrame>();
+            framePool.FrameArrived += (s, a) =>
+            {
+                var frame = s.TryGetNextFrame();
+                taskCompletion.SetResult(frame);
+            };
 
-        var frame = await taskCompletion.Task;
-        framePool.Dispose();
-        session.Dispose();
+            session.StartCapture();
 
-        var surface = frame.Surface;
-
-        softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(surface, BitmapAlphaMode.Premultiplied); // access violation here
+            using (var frame = await taskCompletion.Task)
+            using (var surface = frame.Surface)
+            {
+                softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(surface, BitmapAlphaMode.Premultiplied);
+            }
+        }
 
         return softwareBitmap;
     }

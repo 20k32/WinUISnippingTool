@@ -17,7 +17,7 @@ using System.Threading;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
-public sealed class VideoCaptureHelper // models
+public sealed class VideoCaptureHelper
 {
     public Uri CurrentVideoFileUri { get; private set; }
 

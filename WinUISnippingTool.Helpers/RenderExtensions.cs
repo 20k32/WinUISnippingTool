@@ -37,16 +37,20 @@ public static class RenderExtensions
 
     public static async Task<SoftwareBitmap> ProcessPointsAsync(PointCollection points, SoftwareBitmap bitmap)
     {
+        SoftwareBitmap result = null;
+
         var minX = double.MaxValue;
         var minY = double.MaxValue;
         var maxX = double.MinValue;
         var maxY = double.MinValue;
 
-        var vectorPoints = new List<Vector2>(points.Count);
+        var vectorPointsArray = new Vector2[points.Count];
+        var index = default(int);
 
         foreach (var point in points)
         {
-            vectorPoints.Add(new((float)point.X, (float)point.Y));
+            var vectorPoint = new Vector2((float)point.X, (float)point.Y);
+            vectorPointsArray[index++] = vectorPoint;
 
             minX = Math.Min(minX, point.X);
             minY = Math.Min(minY, point.Y);
@@ -55,32 +59,30 @@ public static class RenderExtensions
         }
 
         var bounds = new Rect(minX, minY, maxX - minX, maxY - minY);
-        var device = CanvasDevice.GetSharedDevice();
 
-        var canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, bitmap);
-        var renderTarget = new CanvasRenderTarget(device, (float)bounds.Width, (float)bounds.Height, BitmapSavingConstants.Dpi);
-
-        using (var drawingSession = renderTarget.CreateDrawingSession())
+        using (var device = CanvasDevice.GetSharedDevice())
+        using (var canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, bitmap))
+        using (var renderTarget = new CanvasRenderTarget(device, (float)bounds.Width, (float)bounds.Height, 96))
         {
-            drawingSession.Clear(Colors.Transparent);
-
-            var vectorPointsArray = vectorPoints.ToArray();
-            var canvasGeometry = CanvasGeometry.CreatePolygon(device, vectorPointsArray);
-
-            var matrix = Matrix3x2.CreateTranslation((float)-bounds.X, (float)-bounds.Y);
-
-            using (var layer = drawingSession.CreateLayer(1.0f, canvasGeometry, matrix))
+            using (var drawingSession = renderTarget.CreateDrawingSession())
             {
-                drawingSession.DrawImage(canvasBitmap, 0, 0, bounds);
-            }
-        }
+                drawingSession.Clear(Colors.Transparent);
 
-        SoftwareBitmap result = null;
-        using (var stream = new InMemoryRandomAccessStream())
-        {
-            await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
-            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
-            result = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                var matrix = Matrix3x2.CreateTranslation((float)-bounds.X, (float)-bounds.Y);
+
+                using (var canvasGeometry = CanvasGeometry.CreatePolygon(device, vectorPointsArray))
+                using (var layer = drawingSession.CreateLayer(1.0f, canvasGeometry, matrix))
+                {
+                    drawingSession.DrawImage(canvasBitmap, 0, 0, bounds);
+                }
+            }
+
+            using (var stream = new InMemoryRandomAccessStream())
+            {
+                await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
+                BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+                result = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+            }
         }
 
         return result;
@@ -88,62 +90,67 @@ public static class RenderExtensions
 
     public static async Task<SoftwareBitmap> ProcessImagesAsync(MonitorLocation primaryMonitor, IEnumerable<SoftwareBitmap> images)
     {
-        var device = CanvasDevice.GetSharedDevice();
-
-        var canvasBitmaps = new List<CanvasBitmap>();
-
-        var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(primaryMonitor, out var dpiTuple);
-
         SoftwareBitmap result = null;
-
+        var canvasBitmaps = new List<CanvasBitmap>();
+        var desiredSize = WindowExtensions.CalculateDesiredSizeForMonitor(primaryMonitor, out var dpiTuple);
+        
         var height = -1;
         var width = default(int);
         var prevBoundWidth = default(double);
 
-        foreach (var image in images)
+        using (var device = CanvasDevice.GetSharedDevice())
         {
-            width += image.PixelWidth;
-
-            if (height < image.PixelHeight)
+            foreach (var image in images)
             {
-                height = image.PixelHeight;
+                width += image.PixelWidth;
+
+                if (height < image.PixelHeight)
+                {
+                    height = image.PixelHeight;
+                }
+
+                var canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, image);
+                canvasBitmaps.Add(canvasBitmap);
+                prevBoundWidth += canvasBitmap.Bounds.Width;
             }
 
-            var canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, image);
-            canvasBitmaps.Add(canvasBitmap);
-            prevBoundWidth += canvasBitmap.Bounds.Width;
-        }
+            var scaleX = desiredSize.Width / width;
+            var scaleY = desiredSize.Height / height;
+            var minScale = Math.Min(scaleX, scaleY);
+            var matrix3x2 = Matrix3x2.CreateScale((float)minScale);
+            var croppedHeight = height * minScale;
+            var croppedWidth = prevBoundWidth * minScale;
 
-        var scaleX = desiredSize.Width / width;
-        var scaleY = desiredSize.Height / height;
-        var minScale = Math.Min(scaleX, scaleY);
-        var matrix3x2 = Matrix3x2.CreateScale((float)minScale);
-        var croppedHeight = height * minScale;
-        var croppedWidth = prevBoundWidth * minScale;
 
-        var renderTarget = new CanvasRenderTarget(device, (int)croppedWidth, (int)croppedHeight, dpiTuple.dpiX);
-
-        using (var drawingSession = renderTarget.CreateDrawingSession())
-        {
-            drawingSession.Clear(Colors.Transparent);
-
-            drawingSession.Transform = matrix3x2;
-            canvasBitmaps.Reverse();
-
-            prevBoundWidth = default(double);
-            foreach (var bitmap in canvasBitmaps)
+            using (var renderTarget = new CanvasRenderTarget(device, (int)croppedWidth, (int)croppedHeight, dpiTuple.dpiX))
             {
-                drawingSession.DrawImage(bitmap, (float)prevBoundWidth, 0);
-                prevBoundWidth += bitmap.Bounds.Width;
+                using (var drawingSession = renderTarget.CreateDrawingSession())
+                {
+                    drawingSession.Clear(Colors.Transparent);
+
+                    drawingSession.Transform = matrix3x2;
+                    canvasBitmaps.Reverse();
+
+                    prevBoundWidth = default(double);
+                    foreach (var bitmap in canvasBitmaps)
+                    {
+                        using (bitmap)
+                        {
+                            drawingSession.DrawImage(bitmap, (float)prevBoundWidth, 0);
+                            prevBoundWidth += bitmap.Bounds.Width;
+                        }
+                    }
+                }
+
+                using (var stream = new InMemoryRandomAccessStream())
+                {
+                    await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
+                    BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+                    result = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+                }
             }
         }
-
-        using (var stream = new InMemoryRandomAccessStream())
-        {
-            await renderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
-            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
-            result = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
-        }
+        
         return result;
     }
 
@@ -153,7 +160,6 @@ public static class RenderExtensions
         {
             var encoder = await BitmapEncoder.CreateAsync(BitmapSavingConstants.EncoderId, stream);
             encoder.SetSoftwareBitmap(originalBitmap);
-
             encoder.BitmapTransform.ScaledWidth = (uint)targetWidth;
             encoder.BitmapTransform.ScaledHeight = (uint)targetHeight;
             encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Linear;

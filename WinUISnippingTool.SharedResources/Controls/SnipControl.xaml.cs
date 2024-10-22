@@ -69,11 +69,8 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         get => isVideoButtonEnabled;
         set
         {
-            if(isVideoButtonEnabled != value)
-            {
-                isVideoButtonEnabled = value;
-                OnPropertyChanged();
-            }
+            isVideoButtonEnabled = value;
+            OnPropertyChanged();
         }
     }
 
@@ -103,14 +100,19 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         }
     }
 
+    private void ChangeButtonsState(bool isPhotoMode)
+    {
+        IsPhotoButtonEnabled = !isPhotoMode;
+        IsVideoButtonEnabled = isPhotoMode;
+        IsPaintListEnabled = isPhotoMode;
+    }
+
 
     [RelayCommand]
     private void PhotoButtonClick()
     {
         SelectedCaptureType = CaptureType.Photo;
-        IsPhotoButtonEnabled = false;
-        IsVideoButtonEnabled = true;
-        IsPaintListEnabled = true;
+        ChangeButtonsState(true);
     }
 
 
@@ -118,9 +120,7 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     private void VideoButtonClick()
     {
         SelectedCaptureType = CaptureType.Video;
-        IsPhotoButtonEnabled = true;
-        IsVideoButtonEnabled = false;
-        IsPaintListEnabled = false;
+        ChangeButtonsState(false);
     }
 
     private bool CanVideoButtonClick() => IsDirectXSupported; 

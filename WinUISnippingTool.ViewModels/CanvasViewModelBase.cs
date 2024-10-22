@@ -62,7 +62,7 @@ public abstract class CanvasViewModelBase : ViewModelBase
 
     #endregion
 
-    private static CaptureType captureType;
+    private CaptureType captureType;
     public CaptureType CaptureType
     {
         get => captureType;
