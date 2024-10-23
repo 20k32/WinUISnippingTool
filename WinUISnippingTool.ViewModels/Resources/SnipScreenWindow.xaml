@@ -61,7 +61,10 @@
 
                 <userControl:SnipControl SnipKinds="{Binding SnipShapeKinds}"
                                          SelectedSnipKind="{Binding SelectedSnipKind, Mode=TwoWay}"
-                                         SelectedCaptureType="{x:Bind ViewModel.CaptureType, Mode=TwoWay}"/>
+                                         SelectedCaptureType="{x:Bind ViewModel.CaptureType, Mode=TwoWay}"
+                                         IsPhotoButtonEnabled="{x:Bind ViewModel.IsPhotoButtonEnabled}"
+                                         IsVideoButtonEnabled="{x:Bind ViewModel.IsVideoButtonEnabled}"
+                                         IsPaintListEnabled="{x:Bind ViewModel.IsPaintListEnabled}"/>
                 
                 <Button Command="{x:Bind ViewModel.ExitCommand}">
                     <FontIcon Glyph="&#xE8BB;" />

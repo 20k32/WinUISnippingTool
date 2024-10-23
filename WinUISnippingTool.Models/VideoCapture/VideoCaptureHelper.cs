@@ -14,6 +14,9 @@ using Microsoft.UI.Dispatching;
 using CommunityToolkit.WinUI;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Threading;
+using System.Runtime.InteropServices;
+using System.Linq;
+using System.Collections.Frozen;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
@@ -60,9 +63,12 @@ public sealed class VideoCaptureHelper
     public async Task StartScreenCaptureAsync(MonitorLocation currentMonitor, RectInt32 videoFrameSize)
     {
         var graphicsCaptureItem = GraphicsCaptureItemExtensions.CreateItemForMonitor(currentMonitor.HandleMonitor);
+        
+        options.DpiDependentPixelScaleX = (float)(graphicsCaptureItem.Size.Width / currentMonitor.MonitorSize.Width);
+        options.DpiDependentPixelScaleY = (float)(graphicsCaptureItem.Size.Height / currentMonitor.MonitorSize.Height);
+
         device = Direct3D11Helpers.CreateDevice();
         var file = await GetFileAsync();
-
         try
         {
             using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))

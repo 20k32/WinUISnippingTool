@@ -62,10 +62,10 @@ public sealed partial class SnipScreenWindow : Window
         {
             ViewModel.SetPrimaryMonitor(location);
 
-            var binding = new Binding();
-            binding.Path = new(nameof(ViewModel.IsOverlayVisible));
-            binding.Source = ViewModel;
-            PartBorder.SetBinding(Border.VisibilityProperty, binding);
+            var borderVisibilityBinding = new Binding();
+            borderVisibilityBinding.Path = new(nameof(ViewModel.IsOverlayVisible));
+            borderVisibilityBinding.Source = ViewModel;
+            PartBorder.SetBinding(Border.VisibilityProperty, borderVisibilityBinding);
         }
 
 

@@ -100,11 +100,18 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         }
     }
 
+    private static void ChangeButtonsStateStatic(bool isPhotoMode)
+    {
+        isPhotoButtonEnabled = isPhotoMode;
+        isVideoButtonEnabled = !isPhotoMode;
+        isPaintListEnabled = !isPhotoMode;
+    }
+
     private void ChangeButtonsState(bool isPhotoMode)
     {
-        IsPhotoButtonEnabled = !isPhotoMode;
-        IsVideoButtonEnabled = isPhotoMode;
-        IsPaintListEnabled = isPhotoMode;
+        IsPhotoButtonEnabled = isPhotoMode;
+        IsVideoButtonEnabled = !isPhotoMode;
+        IsPaintListEnabled = !isPhotoMode;
     }
 
 
@@ -112,7 +119,7 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     private void PhotoButtonClick()
     {
         SelectedCaptureType = CaptureType.Photo;
-        ChangeButtonsState(true);
+        ChangeButtonsState(false);
     }
 
 
@@ -120,7 +127,7 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     private void VideoButtonClick()
     {
         SelectedCaptureType = CaptureType.Video;
-        ChangeButtonsState(false);
+        ChangeButtonsState(true);
     }
 
     private bool CanVideoButtonClick() => IsDirectXSupported; 
@@ -154,6 +161,20 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         typeof(CaptureType),
         typeof(SnipControl),
         new(default));
+
+    private static void SelectedCaptureTypePropertyChangedCallback(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+    {
+        var newCaptureType = (CaptureType)e.NewValue;
+
+        if(newCaptureType == CaptureType.Photo)
+        {
+            ChangeButtonsStateStatic(isPhotoMode: false);
+        }
+        else
+        {
+            ChangeButtonsStateStatic(isPhotoMode: true);
+        }
+    }
 
     public CaptureType SelectedCaptureType
     {

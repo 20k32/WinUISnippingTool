@@ -56,6 +56,7 @@ public sealed partial class App : Application
             .AddSingleton(this)
             .AddSingleton<MainPage>()
             .AddSingleton(monitors)
+            .AddSingleton(_ => MainWindow.Compositor)
             .RegisterViewModels()
             .RegisterInnerWindows();
 

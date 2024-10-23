@@ -40,10 +40,10 @@ internal sealed class Encoder : IDisposable
 
     public IAsyncAction EncodeAsync(IRandomAccessStream stream)
     {
-        return EncodeInternalAsync(stream, options.Width, options.Height, options.Bitrate, options.Framerate).AsAsyncAction();
+        return EncodeInternalAsync(stream).AsAsyncAction();
     }
 
-    private async Task EncodeInternalAsync(IRandomAccessStream stream, uint width, uint height, uint bitrateInBps, uint frameRate)
+    private async Task EncodeInternalAsync(IRandomAccessStream stream)
     {
         if (!isRecording)
         {
@@ -53,7 +53,9 @@ internal sealed class Encoder : IDisposable
                 device,
                 captureItem,
                 captureItem.Size,
-                frameSize);
+                frameSize,
+                options.DpiDependentPixelScaleX,
+                options.DpiDependentPixelScaleY);
 
             using (frameGenerator)
             {
@@ -113,7 +115,7 @@ internal sealed class Encoder : IDisposable
         mediaStreamSource.BufferTime = TimeSpan.FromSeconds(0);
         mediaStreamSource.Starting += OnMediaStreamSourceStarting;
         mediaStreamSource.SampleRequested += OnMediaStreamSourceSampleRequested;
-
+        
         transcoder = new MediaTranscoder();
         transcoder.HardwareAccelerationEnabled = true;
     }

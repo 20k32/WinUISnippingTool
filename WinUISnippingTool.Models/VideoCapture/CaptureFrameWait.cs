@@ -7,14 +7,31 @@ using Windows.Graphics.DirectX;
 using SharpDX.Direct3D11;
 using WinUISnippingTool.Helpers.DirectX;
 using Microsoft.UI.Xaml.Media;
+using SharpDX.DXGI;
+using SharpDX;
+using System.Drawing.Imaging;
+using Microsoft.UI.Xaml;
+using Windows.Devices.HumanInterfaceDevice;
+using Microsoft.Graphics.Canvas;
+using System.Drawing;
+using Windows.Win32;
+using SharpDX.D3DCompiler;
+using System.Numerics;
+using System.Runtime.InteropServices;
+using Windows.Win32.Graphics.Direct3D11;
+using SharpDX.Direct3D;
+using SharpDX.Direct2D1;
+using SharpDX.Mathematics.Interop;
+using ABI.Windows.Foundation;
+using Windows.Foundation;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
 internal sealed class CaptureFrameWait : IDisposable
 {
     private IDirect3DDevice device;
-    private Device d3dDevice;
-    private readonly Multithread multithread;
+    private SharpDX.Direct3D11.Device d3dDevice;
+    private readonly SharpDX.Direct3D11.Multithread multithread;
     private Texture2D blankTexture;
 
     private readonly ManualResetEvent[] events;
@@ -26,19 +43,21 @@ internal sealed class CaptureFrameWait : IDisposable
     private GraphicsCaptureSession session;
     private Direct3D11CaptureFramePool framePool;
 
-    private RectInt32 frameRect;
+    private Windows.Foundation.Rect frameRect;
     private PointInt32 centerFrameCoords;
 
     public CaptureFrameWait(
         IDirect3DDevice device,
         GraphicsCaptureItem item,
         SizeInt32 size,
-        RectInt32 frameRect)
+        RectInt32 frameRect,
+        float pixelScaleX,
+        float pixelScaleY)
     {
         this.device = device;
         d3dDevice = Direct3D11Helpers.CreateSharpDXDevice(device);
-        
-        multithread = d3dDevice.QueryInterface<Multithread>();
+
+        multithread = d3dDevice.QueryInterface<SharpDX.Direct3D11.Multithread>();
         multithread.SetMultithreadProtected(true);
         this.item = item;
         frameEvent = new ManualResetEvent(false);
@@ -48,7 +67,15 @@ internal sealed class CaptureFrameWait : IDisposable
         InitializeBlankTexture(size);
         InitializeCapture(size);
 
-        this.frameRect = frameRect;
+        
+        this.frameRect = new();
+
+        this.frameRect.X = frameRect.X * pixelScaleX;
+        this.frameRect.Width = frameRect.Width * pixelScaleX;
+
+        this.frameRect.Y = frameRect.Y * pixelScaleY;
+        this.frameRect.Height = frameRect.Height * pixelScaleY;
+
         centerFrameCoords = new PointInt32();
         centerFrameCoords.X = (size.Width - frameRect.Width) / 2;
         centerFrameCoords.Y = (size.Height - frameRect.Height) / 2;
@@ -75,8 +102,8 @@ internal sealed class CaptureFrameWait : IDisposable
             Height = size.Height,
             MipLevels = 1,
             ArraySize = 1,
-            Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
-            SampleDescription = new SharpDX.DXGI.SampleDescription()
+            Format = Format.B8G8R8A8_UNorm,
+            SampleDescription = new SampleDescription()
             {
                 Count = 1,
                 Quality = 0
@@ -86,12 +113,11 @@ internal sealed class CaptureFrameWait : IDisposable
             CpuAccessFlags = CpuAccessFlags.None,
             OptionFlags = ResourceOptionFlags.None
         };
-
         blankTexture = new Texture2D(d3dDevice, description);
-        
+
         using (var renderTargetView = new RenderTargetView(d3dDevice, blankTexture))
         {
-            d3dDevice.ImmediateContext.ClearRenderTargetView(renderTargetView, new SharpDX.Mathematics.Interop.RawColor4(0, 0, 0, 1));
+            d3dDevice.ImmediateContext.ClearRenderTargetView(renderTargetView, new RawColor4(0, 0, 0, 1));
         }
     }
 
@@ -119,17 +145,27 @@ internal sealed class CaptureFrameWait : IDisposable
     private void Cleanup()
     {
         framePool?.Dispose();
+        
         session?.Dispose();
+         
         if (item != null)
         {
             item.Closed -= OnClosed;
         }
-        item = null;
+
+        device?.Dispose();
         device = null;
+        
+        d3dDevice?.Dispose();
         d3dDevice = null;
+
+        multithread?.Dispose();
+
+        item = null;
         blankTexture?.Dispose();
         blankTexture = null;
         currentFrame?.Dispose();
+        currentFrame = null;
     }
 
     public SurfaceWithInfo WaitForNewFrame()
@@ -154,12 +190,12 @@ internal sealed class CaptureFrameWait : IDisposable
             {
                 var croppedDescription = new Texture2DDescription
                 {
-                    Width = currentFrame.ContentSize.Width,
-                    Height = currentFrame.ContentSize.Height,
+                    Width = (int)frameRect.Width,
+                    Height = (int)frameRect.Height,
                     MipLevels = 1,
                     ArraySize = 1,
                     Format = sourceTexture.Description.Format,
-                    SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
+                    SampleDescription = new SampleDescription(1, 0),
                     Usage = ResourceUsage.Default,
                     BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
                     CpuAccessFlags = CpuAccessFlags.None,
@@ -168,24 +204,92 @@ internal sealed class CaptureFrameWait : IDisposable
 
                 using (var croppedTexture = new Texture2D(d3dDevice, croppedDescription))
                 {
-
                     var region = new ResourceRegion(
-                        frameRect.X,
-                        frameRect.Y,
-                        0,
-                        frameRect.Width + frameRect.X,
-                        frameRect.Height + frameRect.Y,
-                        1);
+                        (int)frameRect.X,
+                        (int)frameRect.Y,
+                        front: 0,
+                        (int)(frameRect.X + frameRect.Width),
+                        (int)(frameRect.Y + frameRect.Height),
+                        back: 1);
 
-                    d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, 215, 0);
+                    d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, 0, 0);
 
-                    // Create the surface from the cropped texture
-                    result.Surface = Direct3D11Helpers.CreateDirect3DSurfaceFromSharpDXTexture(croppedTexture);
+                    using (var scaledTexture = GetScaledTexture2D(currentFrame.ContentSize, croppedTexture))
+                    {
+                        var scaledSurface = Direct3D11Helpers.CreateDirect3DSurfaceFromSharpDXTexture(scaledTexture);
+                        result.Surface = scaledSurface;
+                    }
                 }
             }
         }
 
         return result;
+    }
+
+    private Texture2D GetScaledTexture2D(SizeInt32 originalSize, Texture2D croppedTexture)
+    {
+        var resizedTextureDesc = new Texture2DDescription
+        {
+            Width = originalSize.Width,
+            Height = originalSize.Height,
+            ArraySize = 1,
+            BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
+            Usage = ResourceUsage.Default,
+            CpuAccessFlags = CpuAccessFlags.None,
+            Format = Format.B8G8R8A8_UNorm,
+            MipLevels = 1,
+            OptionFlags = ResourceOptionFlags.None,
+            SampleDescription = new SampleDescription(1, 0),
+        };
+
+        var resizedTexture = new Texture2D(d3dDevice, resizedTextureDesc);
+
+        using (var factory = new SharpDX.Direct2D1.Factory())
+        using (var surface = resizedTexture.QueryInterface<Surface>())
+        {
+            var renderProperties = new RenderTargetProperties(RenderTargetType.Default,
+                   new SharpDX.Direct2D1.PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied), 0, 0, RenderTargetUsage.None, SharpDX.Direct2D1.FeatureLevel.Level_10);
+
+            using (var renderTarget = new RenderTarget(factory, surface, renderProperties))
+            {
+                var bitmapProperties = new BitmapProperties(new SharpDX.Direct2D1.PixelFormat(Format.B8G8R8A8_UNorm, SharpDX.Direct2D1.AlphaMode.Premultiplied));
+
+                using (var smallerSurface = croppedTexture.QueryInterface<Surface>())
+                using (var smallerBitmap = new SharpDX.Direct2D1.Bitmap(renderTarget, smallerSurface, bitmapProperties))
+                {
+                    float originalWidth = croppedTexture.Description.Width;
+                    float originalHeight = croppedTexture.Description.Height;
+
+                    var originalAspectRatio = originalWidth / originalHeight;
+                    var targetAspectRatio = originalSize.Width / (float)originalSize.Height;
+
+                    float scaledWidth, scaledHeight;
+
+                    if (originalAspectRatio > targetAspectRatio)
+                    {
+                        scaledWidth = originalSize.Width;
+                        scaledHeight = originalSize.Width / originalAspectRatio;
+                    }
+                    else
+                    {
+                        scaledHeight = originalSize.Height;
+                        scaledWidth = originalSize.Height * originalAspectRatio;
+                    }
+
+                    var xOffset = (originalSize.Width - scaledWidth) / 2;
+                    var yOffset = (originalSize.Height - scaledHeight) / 2;
+
+                    RawRectangleF destinationRectangle = new RawRectangleF(xOffset, yOffset, xOffset + scaledWidth, yOffset + scaledHeight);
+                    RawRectangleF sourceRectangle = new RawRectangleF(0, 0, originalWidth, originalHeight);
+
+                    renderTarget.BeginDraw();
+                    renderTarget.DrawBitmap(smallerBitmap, destinationRectangle, 1.0f, BitmapInterpolationMode.Linear, sourceRectangle);
+                    renderTarget.EndDraw();
+                }
+            }
+        }
+
+        return resizedTexture;
     }
 
     public void Dispose()

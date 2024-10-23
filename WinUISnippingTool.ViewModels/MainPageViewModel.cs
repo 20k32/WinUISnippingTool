@@ -24,6 +24,14 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using System.Diagnostics;
 using WinUISnippingTool.Helpers.DirectX;
 using CommunityToolkit.WinUI.UI;
+using ABI.Windows.UI;
+using Microsoft.UI;
+using Windows.Media.Playback;
+using Microsoft.UI.Composition;
+using ABI.System.Numerics;
+using Microsoft.UI.Xaml.Hosting;
+using System.Threading;
+using WinUISnippingTool.Models.MonitorInfo;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : CanvasViewModelBase
@@ -167,11 +175,11 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
         if (snipScreenWindowViewModel.CompleteRendering)
         {
-            if (CaptureType == CaptureType.Photo)
+            if (snipScreenWindowViewModel.CaptureType == CaptureType.Photo)
             {
                 AddImageCore();
             }
-            else if (CaptureType == CaptureType.Video)
+            else if (snipScreenWindowViewModel.CaptureType == CaptureType.Video)
             {
                 OnVideoModeEntered?.Invoke();
                 await ShowVideoCaptureScreenAsync();
@@ -224,7 +232,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
     }
 
     private bool canShowWindowInternal =>
-        (CaptureType == CaptureType.Photo
+        (snipScreenWindowViewModel.CaptureType == CaptureType.Photo
                 || !snipScreenWindowViewModel.CompleteRendering);
 
     public bool CanShowWindow =>
@@ -557,7 +565,7 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
         IsSnapshotTaken = true;
         IsImageLoaded = false;
 
-        OnNewImageAdded?.Invoke();
+        WorkingAreaSizeChanged(force: true);
     }
 
     private void TryAddMediaPlayerToCanvas(Uri source)
@@ -577,22 +585,25 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
             mediaPlayer.TransportControls.IsCompact = true;
             mediaPlayer.TransportControls.IsVolumeEnabled = false;
             mediaPlayer.TransportControls.IsVolumeButtonVisible = false;
-            mediaPlayer.Source = mediaSource;
-
-            mediaPlayer.Stretch = Stretch.UniformToFill;
+            mediaPlayer.Stretch = Stretch.None;
 
             mediaPlayer.HorizontalContentAlignment = HorizontalAlignment.Center;
             mediaPlayer.VerticalContentAlignment = VerticalAlignment.Center;
-
+            
             CanvasItems.Clear();
             CanvasItems.Add(mediaPlayer);
         }
 
         mediaPlayer.Source = mediaSource;
-        var tempWidth = snipScreenWindowViewModel.VideoFramePosition.Width;
 
-        mediaPlayer.Width = Math.Max(CoreConstants.MinVideoPlayerWidth, tempWidth);
-        mediaPlayer.Height = Math.Max(CoreConstants.MinVideoPlayerHeight, snipScreenWindowViewModel.VideoFramePosition.Height);
+        var monitors = Ioc.Default.GetService<Models.MonitorInfo.Monitor[]>();
+        var currentMonitor = monitors.First(monitor => monitor.DeviceName == snipScreenWindowViewModel.CurrentMonitorName);
+
+        var tempWidth = currentMonitor.Bounds.Width;
+        var tempHeight = currentMonitor.Bounds.Height;
+
+        mediaPlayer.Width = tempWidth;
+        mediaPlayer.Height = tempHeight;
 
         CanvasWidth = mediaPlayer.Width;
         CanvasHeight = mediaPlayer.Height;

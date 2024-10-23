@@ -48,8 +48,9 @@ public abstract class CanvasViewModelBase : ViewModelBase
         get => selectedSnipKind;
         set
         {
-            if (selectedSnipKind != value
-                && value is not null)
+            if (value is not null 
+                && (selectedSnipKind is null 
+                    || !selectedSnipKind.Equals(value)))
             {
                 selectedSnipKind = value;
                 SelectionChangedCallback();

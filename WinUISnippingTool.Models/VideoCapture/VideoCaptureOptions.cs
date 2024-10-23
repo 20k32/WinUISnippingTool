@@ -6,6 +6,8 @@ internal struct VideoCaptureOptions
     public uint Height;
     public uint Bitrate;
     public uint Framerate;
+    public float DpiDependentPixelScaleX;
+    public float DpiDependentPixelScaleY;
 
     public VideoCaptureOptions(uint width, uint height, uint bitrate, uint framerate)
         => (Width, Height, Bitrate, Framerate) = (width, height, bitrate, framerate);
