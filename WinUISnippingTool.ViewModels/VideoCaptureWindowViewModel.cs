@@ -4,6 +4,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Windows.Graphics;
@@ -16,9 +17,13 @@ namespace WinUISnippingTool.ViewModels;
 
 public sealed class VideoCaptureWindowViewModel : ViewModelBase
 {
+    private readonly DispatcherTimer frameTimer;
+    private Pen pen;
+    private Graphics graphics;
+    private nint deviceContextHandle;
     private readonly VideoCaptureHelper captureHelper;
     public MonitorLocation CurrentMonitor;
-    private RectInt32 videoFrame;
+    public RectInt32 videoFrame;
 
     private string timeString = "00:00:00";
 
@@ -36,13 +41,16 @@ public sealed class VideoCaptureWindowViewModel : ViewModelBase
     }
 
     private readonly Stopwatch stopwatch;
-    private readonly DispatcherTimer timer;
+    private readonly DispatcherTimer videoTimer;
 
     public VideoCaptureWindowViewModel()
     {
-        timer = new();
+        videoTimer = new();
+        frameTimer = new();
         stopwatch = new();
-        timer.Interval = TimeSpan.FromSeconds(1);
+
+        videoTimer.Interval = TimeSpan.FromSeconds(1);
+        frameTimer.Interval = TimeSpan.FromMilliseconds(200);
         
         captureHelper = new();
         captureHelper
@@ -50,22 +58,46 @@ public sealed class VideoCaptureWindowViewModel : ViewModelBase
             .SetBitrate(CoreConstants.DefaultBitrate);
     }
 
-    private void Timer_Tick(object sender, object e)
+    private void FrameTimerTick(object sender, object e)
+    {
+        graphics.DrawRectangle(pen, videoFrame.X, videoFrame.Y, videoFrame.Width, videoFrame.Height);
+    }
+
+    private void VideoTimerTick(object sender, object e)
     {
         TimeString = $"{stopwatch.Elapsed.Hours:00}:{stopwatch.Elapsed.Minutes:00}:{stopwatch.Elapsed.Seconds:00}";
     }
 
-    public void StartTimer()
+    private void CreateContext()
     {
-        timer.Tick += Timer_Tick;
-        timer.Start();
+        deviceContextHandle = WindowExtensions.CreateDeviceContext("DISPLAY", CurrentMonitor.DeviceName);
+        graphics = Graphics.FromHdc(deviceContextHandle);
+        pen = new Pen(Brushes.Red);
+    }
+
+    private void DisposeContext()
+    {
+        WindowExtensions.ReleaseDeviceContext(deviceContextHandle);
+        graphics.Dispose();
+        pen.Dispose();
+        pen = null;
+    }
+
+    public void StartTimers()
+    {
+        videoTimer.Tick += VideoTimerTick;
+        frameTimer.Tick += FrameTimerTick;
+        frameTimer.Start();
+        videoTimer.Start();
         stopwatch.Start();
     }
 
-    public void StopTimer()
+    public void StopTimers()
     {
-        timer.Tick -= Timer_Tick;
-        timer.Stop();
+        videoTimer.Tick -= VideoTimerTick;
+        frameTimer.Tick -= FrameTimerTick;
+        frameTimer.Stop();
+        videoTimer.Stop();
         stopwatch.Reset();
     }
 
@@ -82,13 +114,15 @@ public sealed class VideoCaptureWindowViewModel : ViewModelBase
 
     public Task StartCaptureAsync()
     {
-        StartTimer();
+        CreateContext();
+        StartTimers();
         return captureHelper.StartScreenCaptureAsync(CurrentMonitor, videoFrame);
     }
 
     public void StopCapture()
     {
-        StopTimer();
+        StopTimers();
+        DisposeContext();
         captureHelper.StopScreenCapture();
     }
 

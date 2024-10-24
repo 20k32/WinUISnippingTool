@@ -4,16 +4,25 @@ using System.Threading.Tasks;
 using Microsoft.UI.Windowing;
 using Windows.UI.WindowManagement;
 using System;
-using WinUISnippingTool.Helpers;
-using CommunityToolkit.WinUI;
-using Windows.AI.MachineLearning.Preview;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.UI.Dispatching;
-using WinUISnippingTool.Helpers.Saving;
-using WinUISnippingTool.Models.VideoCapture;
-using Windows.Storage;
-using CommunityToolkit.Mvvm.Messaging;
-using System.Diagnostics;
+using Windows.Win32.Graphics.Direct3D11;
+using System.Runtime.InteropServices;
+using SharpDX.Direct2D1;
+using SharpDX.Mathematics.Interop;
+using Microsoft.UI.Xaml.Media;
+using SharpDX.DirectWrite;
+using SharpDX.Direct3D11;
+using WinUISnippingTool.Helpers.DirectX;
+using System.Drawing;
+using SharpDX.DXGI;
+using SharpDX;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using System.Threading;
+using System.Linq;
+using WinRT.Interop;
+using WinUISnippingTool.Models.MonitorInfo;
+using System.Net.WebSockets;
+using Windows.UI.WebUI;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,9 +35,11 @@ public sealed partial class VideoCaptureWindow : Window
     private bool exitRequested;
     public bool Exited { get; private set; }
 
+
     public VideoCaptureWindow(VideoCaptureWindowViewModel viewModel)
     {
         this.InitializeComponent();
+
         this.viewModel = viewModel;
         mainPanel.DataContext = viewModel;
         mainPanel.Loaded += MainPanel_Loaded;
@@ -39,7 +50,7 @@ public sealed partial class VideoCaptureWindow : Window
 
     private void ExitCore()
     {
-        DispatcherQueue.TryEnqueue(() => 
+        DispatcherQueue.TryEnqueue(() =>
         {
             Exited = true;
             viewModel.StopCapture();
@@ -65,8 +76,8 @@ public sealed partial class VideoCaptureWindow : Window
         var sign = Math.Sign(viewModel.CurrentMonitor.StartPoint.X);
         sign = sign >= 0 ? 1 : sign;
 
-        var actualWindth = viewModel.CurrentMonitor.Location.X == 0 
-            ? viewModel.CurrentMonitor.Location.Width 
+        var actualWindth = viewModel.CurrentMonitor.Location.X == 0
+            ? viewModel.CurrentMonitor.Location.Width
             : viewModel.CurrentMonitor.Location.X;
 
         var absX = Math.Abs(actualWindth);
@@ -81,7 +92,7 @@ public sealed partial class VideoCaptureWindow : Window
     public void PrepareWindow()
     {
         AppWindow.IsShownInSwitchers = false;
-        
+
         var presenter = ((OverlappedPresenter)AppWindow.Presenter);
         presenter.Minimize();
         presenter.IsMinimizable = false;

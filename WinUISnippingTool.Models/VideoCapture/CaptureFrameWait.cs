@@ -24,6 +24,8 @@ using SharpDX.Direct2D1;
 using SharpDX.Mathematics.Interop;
 using ABI.Windows.Foundation;
 using Windows.Foundation;
+using WinUISnippingTool.Helpers;
+using CommunityToolkit.Mvvm.DependencyInjection;
 
 namespace WinUISnippingTool.Models.VideoCapture;
 
@@ -212,6 +214,7 @@ internal sealed class CaptureFrameWait : IDisposable
                         (int)(frameRect.Y + frameRect.Height),
                         back: 1);
 
+                    
                     d3dDevice.ImmediateContext.CopySubresourceRegion(sourceTexture, 0, region, croppedTexture, 0, 0, 0);
 
                     using (var scaledTexture = GetScaledTexture2D(currentFrame.ContentSize, croppedTexture))

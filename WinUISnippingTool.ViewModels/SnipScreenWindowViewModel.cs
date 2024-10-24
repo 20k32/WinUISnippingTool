@@ -179,49 +179,6 @@ public sealed partial class SnipScreenWindowViewModel : SnipViewModelBase
         return result;
     }
 
-
-    private bool isVideoButtonEnabled;
-    public bool IsVideoButtonEnabled
-    {
-        get => isVideoButtonEnabled;
-        set
-        {
-            if(isVideoButtonEnabled != value)
-            {
-                isVideoButtonEnabled = value;
-                NotifyOfPropertyChange();
-            }
-        }
-    }
-
-    private bool isPhotoButtonEnabled;
-    public bool IsPhotoButtonEnabled
-    {
-        get => isPhotoButtonEnabled;
-        set
-        {
-            if (isPhotoButtonEnabled != value)
-            {
-                isPhotoButtonEnabled = value;
-                NotifyOfPropertyChange();
-            }
-        }
-    }
-
-    private bool isPaintListEnabled;
-    public bool IsPaintListEnabled
-    {
-        get => isPaintListEnabled;
-        set
-        {
-            if (isPaintListEnabled != value)
-            {
-                isPaintListEnabled = value;
-                NotifyOfPropertyChange();
-            }
-        }
-    }
-
     public void SetSelectedItem(SnipShapeKind selectedKind, CaptureType selectedCapturType)
     {
         if(CaptureType != CaptureType.Video)

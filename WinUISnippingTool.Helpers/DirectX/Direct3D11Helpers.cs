@@ -23,6 +23,7 @@ public interface IDirect3DDxgiInterfaceAccess
 
 public static class Direct3D11Helpers
 {
+    internal static Guid ID2D1Factory = new("06152291-69C8-4675-9F29-9A33B4A7B1D6");
     internal static Guid IDXGIDevice = new("54ec77fa-1377-44e6-8c32-88fd5f44c84c");
     internal static Guid IInspectable = new("AF86E2E0-B12D-4c6a-9C5A-D7AA65101E90");
     internal static Guid ID3D11Resource = new("dc8e63f3-d12b-4952-b47b-5e45026a862d");
@@ -56,7 +57,7 @@ public static class Direct3D11Helpers
     {
         unsafe
         {
-            D3D11CreateDevice(null, driverType, new EmptyHandle(), flags, null, D3D11_SDK_VERSION, out var device, null, out var context);
+            D3D11CreateDevice(null, driverType, new EmptyHandle(), flags, null, D3D11_SDK_VERSION, out var device, null, out var _);
             return device;
         }
     }
@@ -149,11 +150,11 @@ public static class Direct3D11Helpers
         return surface;
     }
 
-    public static Device CreateSharpDXDevice(IDirect3DDevice device)
+    public static SharpDX.Direct3D11.Device CreateSharpDXDevice(IDirect3DDevice device)
     {
         var access = device.As<IDirect3DDxgiInterfaceAccess>();
         var d3dPointer = access.GetInterface(ID3D11Device);
-        var d3dDevice = new Device(d3dPointer);
+        var d3dDevice = new SharpDX.Direct3D11.Device(d3dPointer);
 
         return d3dDevice;
     }
@@ -164,5 +165,27 @@ public static class Direct3D11Helpers
         var d3dPointer = access.GetInterface(ID3D11Texture2D);
         var d3dSurface = new Texture2D(d3dPointer);
         return d3dSurface;
+    }
+
+
+    public enum D2D1_FACTORY_TYPE
+    {
+        SingleThreaded = 0,
+        MultiThreaded = 1
+    }
+
+    public enum D2D1_DEBUG_LEVEL
+    {
+        None = 0,
+        Error = 1,
+        Warning = 2,
+        Information = 3
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct D2D1_FACTORY_OPTIONS
+    {
+        public D2D1_FACTORY_TYPE Type;
+        public D2D1_DEBUG_LEVEL DebugLevel;
     }
 }

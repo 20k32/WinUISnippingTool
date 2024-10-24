@@ -13,8 +13,6 @@ namespace WinUISnippingTool.ViewModels;
 
 public abstract class SnipViewModelBase : ViewModelBase
 {
-    private static SnipShapeKind tempSelectedSnipKind;
-
     private static bool isPhotoButtonEnabled;
 
     public bool IsPhotoButtonEnabled

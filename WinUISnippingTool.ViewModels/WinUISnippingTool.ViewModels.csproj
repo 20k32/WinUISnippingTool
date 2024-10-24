@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\SnipScreenWindow.xaml" />
+    <None Remove="Resources\TestWindow.xaml" />
     <None Remove="Resources\VideoCaptureWindow.xaml" />
   </ItemGroup>
 
@@ -29,6 +30,12 @@
     <ProjectReference Include="..\WinUISnippingTool.Helpers\WinUISnippingTool.Helpers.csproj" />
     <ProjectReference Include="..\WinUISnippingTool.Models\WinUISnippingTool.Models.csproj" />
     <ProjectReference Include="..\WinUISnippingTool.SharedResources\WinUISnippingTool.SharedResources.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Resources\TestWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

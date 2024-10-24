@@ -82,10 +82,10 @@ public static class WindowExtensions
 
     public static Size CalculateDesiredSizeForMonitor(MonitorLocation location)
     {
-        var dpiTuple = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
+        (uint dpiX, uint dpiY) = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
 
-        var scaleX = dpiTuple.dpiX / (double)CoreConstants.DefaultMonitorDpi;
-        var scaleY = dpiTuple.dpiY / (double)CoreConstants.DefaultMonitorDpi;
+        var scaleX = dpiX / (double)CoreConstants.DefaultMonitorDpi;
+        var scaleY = dpiY / (double)CoreConstants.DefaultMonitorDpi;
 
         var newSize = new Size((int)(location.MonitorSize.Width / scaleX), (int)(location.MonitorSize.Height / scaleY));
 
@@ -94,15 +94,25 @@ public static class WindowExtensions
 
     public static Size CalculateActualSizeForMonitor(MonitorLocation location)
     {
-        var dpiTuple = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
+        (uint dpiX, uint dpiY) = WindowExtensions.GetDpiForMonitor(location.HandleMonitor);
 
-        var scaleX = (double)CoreConstants.DefaultMonitorDpi / dpiTuple.dpiX;
-        var scaleY = (double)CoreConstants.DefaultMonitorDpi / dpiTuple.dpiY;
+        var scaleX = (double)CoreConstants.DefaultMonitorDpi / dpiX;
+        var scaleY = (double)CoreConstants.DefaultMonitorDpi / dpiY;
 
         var newSize = new Size((int)(location.MonitorSize.Width / scaleX), (int)(location.MonitorSize.Height / scaleY));
 
         return newSize;
     }
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateDC(string lpszDriver, string lpszDevice, string lpszOutput, IntPtr pDevMode);
+
+    public static nint CreateDeviceContext(string driver, string deviceName) => CreateDC(driver, deviceName, null, IntPtr.Zero);
+
+    [DllImport("user32.dll")]
+    private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+    public static nint ReleaseDeviceContext(IntPtr context) => ReleaseDC(IntPtr.Zero, context);
 
     [DllImport("Shcore.dll")]
     private static extern int GetDpiForMonitor(IntPtr hmonitor, DpiType dpiType, out uint dpiX, out uint dpiY);

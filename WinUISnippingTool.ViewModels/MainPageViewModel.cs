@@ -24,6 +24,7 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using System.Diagnostics;
 using WinUISnippingTool.Helpers.DirectX;
 using CommunityToolkit.WinUI.UI;
+using SharpDX.Direct3D11;
 namespace WinUISnippingTool.ViewModels;
 
 public sealed partial class MainPageViewModel : SnipViewModelBase
@@ -40,7 +41,6 @@ public sealed partial class MainPageViewModel : SnipViewModelBase
     private readonly WindowSizeManager sizeManager;
     private Size? actualSize;
 
-    private double scaleFactor;
     private double tempScaleFactor;
     private double scaleStep;
 
@@ -50,7 +50,6 @@ public sealed partial class MainPageViewModel : SnipViewModelBase
     public NotifyOnCompletionCollection<UIElement> CanvasItems { get; private set; }
     public string BcpTag { get; private set; }
 
-    public event Action OnNewImageAdded;
     public event Action OnSnippingModeEntered;
     public event Action<bool> OnSnippingModeExited;
     public event Action OnVideoModeEntered;
@@ -143,7 +142,6 @@ public sealed partial class MainPageViewModel : SnipViewModelBase
 
     public void ResetScaleValues()
     {
-        scaleFactor = CoreConstants.ScaleFactor;
         tempScaleFactor = CoreConstants.ScaleFactor;
         scaleStep = CoreConstants.ScaleStep;
     }
