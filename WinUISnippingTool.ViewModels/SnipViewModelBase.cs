@@ -11,12 +11,67 @@ using System.Diagnostics;
 
 namespace WinUISnippingTool.ViewModels;
 
-public abstract class CanvasViewModelBase : ViewModelBase
+public abstract class SnipViewModelBase : ViewModelBase
 {
+    private static SnipShapeKind tempSelectedSnipKind;
+
+    private static bool isPhotoButtonEnabled;
+
+    public bool IsPhotoButtonEnabled
+    {
+        get => isPhotoButtonEnabled;
+        set
+        {
+            if (isPhotoButtonEnabled != value)
+            {
+                isPhotoButtonEnabled = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    private static bool isVideoButtonEnabled;
+
+    public bool IsVideoButtonEnabled
+    {
+        get => isVideoButtonEnabled;
+        set
+        {
+            if(isVideoButtonEnabled != value)
+            {
+                isVideoButtonEnabled = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+
+    private static bool isPaintListEnabled;
+
+    public bool IsPaintListEnabled
+    {
+        get => isPaintListEnabled;
+        set
+        {
+            if (isPaintListEnabled != value)
+            {
+                isPaintListEnabled = value;
+                NotifyOfPropertyChange();
+            }
+        }
+    }
+
+    protected void SwitchModes(bool isPhotoModeEnabled)
+    {
+        IsPhotoButtonEnabled = !isPhotoModeEnabled;
+        IsVideoButtonEnabled = isPhotoModeEnabled;
+        IsPaintListEnabled = isPhotoModeEnabled;
+    }
+
     protected Size DefaultWindowSize = new(500, 500);
     public NotifyOnCompletionCollection<SnipShapeKind> SnipShapeKinds { get; protected set; }
 
-    protected internal CanvasViewModelBase()
+    protected internal SnipViewModelBase()
     {
         SnipShapeKinds = new();
 
@@ -42,7 +97,6 @@ public abstract class CanvasViewModelBase : ViewModelBase
     #region Selected snip kind
 
     private SnipShapeKind selectedSnipKind;
-
     public SnipShapeKind SelectedSnipKind
     {
         get => selectedSnipKind;

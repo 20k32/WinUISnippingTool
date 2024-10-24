@@ -46,7 +46,7 @@ using System.Runtime.CompilerServices;
 
 namespace WinUISnippingTool.ViewModels;
 
-public sealed partial class SnipScreenWindowViewModel : CanvasViewModelBase
+public sealed partial class SnipScreenWindowViewModel : SnipViewModelBase
 {
     private readonly WeakReference<Image> ImageRelativeToWindow;
     private readonly Dictionary<string, NotifyOnCompletionCollection<UIElement>> shapesDictionary;

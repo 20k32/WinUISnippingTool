@@ -123,9 +123,9 @@
                 <userControl:SnipControl SnipKinds="{x:Bind ViewModel.SnipShapeKinds}"
                                          SelectedSnipKind="{x:Bind ViewModel.SelectedSnipKind, Mode=TwoWay}"
                                          SelectedCaptureType="{x:Bind ViewModel.CaptureType, Mode=TwoWay}"
-                                         IsPhotoButtonEnabled="False"
-                                         IsVideoButtonEnabled="True"
-                                         IsPaintListEnabled="True"
+                                         IsPhotoButtonEnabled="{x:Bind ViewModel.IsPhotoButtonEnabled, Mode=TwoWay}"
+                                         IsVideoButtonEnabled="{x:Bind ViewModel.IsVideoButtonEnabled, Mode=TwoWay}"
+                                         IsPaintListEnabled="{x:Bind ViewModel.IsPaintListEnabled, Mode=TwoWay}"
                                          IsDirectXSupported="True"/>
             </StackPanel>
 

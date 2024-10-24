@@ -257,30 +257,30 @@ internal sealed class CaptureFrameWait : IDisposable
                 using (var smallerSurface = croppedTexture.QueryInterface<Surface>())
                 using (var smallerBitmap = new SharpDX.Direct2D1.Bitmap(renderTarget, smallerSurface, bitmapProperties))
                 {
-                    float originalWidth = croppedTexture.Description.Width;
-                    float originalHeight = croppedTexture.Description.Height;
+                    float newWidth = croppedTexture.Description.Width;
+                    float newHeight = croppedTexture.Description.Height;
 
-                    var originalAspectRatio = originalWidth / originalHeight;
+                    var newAspectRatio = newWidth / newHeight;
                     var targetAspectRatio = originalSize.Width / (float)originalSize.Height;
 
                     float scaledWidth, scaledHeight;
 
-                    if (originalAspectRatio > targetAspectRatio)
+                    if (newAspectRatio > targetAspectRatio)
                     {
                         scaledWidth = originalSize.Width;
-                        scaledHeight = originalSize.Width / originalAspectRatio;
+                        scaledHeight = originalSize.Width / newAspectRatio;
                     }
                     else
                     {
                         scaledHeight = originalSize.Height;
-                        scaledWidth = originalSize.Height * originalAspectRatio;
+                        scaledWidth = originalSize.Height * newAspectRatio;
                     }
 
                     var xOffset = (originalSize.Width - scaledWidth) / 2;
                     var yOffset = (originalSize.Height - scaledHeight) / 2;
 
                     RawRectangleF destinationRectangle = new RawRectangleF(xOffset, yOffset, xOffset + scaledWidth, yOffset + scaledHeight);
-                    RawRectangleF sourceRectangle = new RawRectangleF(0, 0, originalWidth, originalHeight);
+                    RawRectangleF sourceRectangle = new RawRectangleF(0, 0, newWidth, newHeight);
 
                     renderTarget.BeginDraw();
                     renderTarget.DrawBitmap(smallerBitmap, destinationRectangle, 1.0f, BitmapInterpolationMode.Linear, sourceRectangle);

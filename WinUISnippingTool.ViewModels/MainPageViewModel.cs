@@ -24,17 +24,9 @@ using CommunityToolkit.Mvvm.DependencyInjection;
 using System.Diagnostics;
 using WinUISnippingTool.Helpers.DirectX;
 using CommunityToolkit.WinUI.UI;
-using ABI.Windows.UI;
-using Microsoft.UI;
-using Windows.Media.Playback;
-using Microsoft.UI.Composition;
-using ABI.System.Numerics;
-using Microsoft.UI.Xaml.Hosting;
-using System.Threading;
-using WinUISnippingTool.Models.MonitorInfo;
 namespace WinUISnippingTool.ViewModels;
 
-public sealed partial class MainPageViewModel : CanvasViewModelBase
+public sealed partial class MainPageViewModel : SnipViewModelBase
 {
     private Size currentWindowSize;
     private readonly DrawBase simpleBrush;
@@ -92,6 +84,8 @@ public sealed partial class MainPageViewModel : CanvasViewModelBase
 
     public MainPageViewModel(SnipScreenWindowViewModel snipScreenWindowViewModel, VideoCaptureWindowViewModel videoCaptureWindowViewModel)
     {
+        SwitchModes(isPhotoModeEnabled: true);
+
         sizeManager = new(() => WorkingAreaSizeChanged());
         sizeManager.RegisterHandlers();
 

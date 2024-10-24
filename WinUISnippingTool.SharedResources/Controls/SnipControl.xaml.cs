@@ -35,16 +35,17 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         this.InitializeComponent();
     }
 
-    private static bool isPhotoButtonEnabled;
+
+    public static readonly DependencyProperty IsPhotoButtonEnabledProperty = DependencyProperty.Register(
+        nameof(IsPhotoButtonEnabled),
+        typeof(bool),
+        typeof(SnipControl),
+        new(default));
 
     public bool IsPhotoButtonEnabled
     {
-        get => isPhotoButtonEnabled;
-        set
-        {
-            isPhotoButtonEnabled = value;
-            OnPropertyChanged();
-        }
+        get => (bool)GetValue(IsPhotoButtonEnabledProperty);
+        set => SetValue(IsPhotoButtonEnabledProperty, value);
     }
 
     private static bool isDirectXSupported;
@@ -62,50 +63,31 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         }
     }
 
-    private static bool isVideoButtonEnabled;
+    public static readonly DependencyProperty IsVideoButtonEnabledProperty = DependencyProperty.Register(
+        nameof(IsVideoButtonEnabled),
+        typeof(bool),
+        typeof(SnipControl),
+        new(default));
 
     public bool IsVideoButtonEnabled
     {
-        get => isVideoButtonEnabled;
-        set
-        {
-            isVideoButtonEnabled = value;
-            OnPropertyChanged();
-        }
+        get => (bool)GetValue(IsVideoButtonEnabledProperty);
+        set => SetValue(IsVideoButtonEnabledProperty, value);
     }
 
-    private static bool isPaintListEnabled;
+    public static readonly DependencyProperty IsPaintListEnabledProperty = DependencyProperty.Register(
+        nameof(IsPaintListEnabled),
+        typeof(bool),
+        typeof(SnipControl),
+        new(default));
+
 
     public bool IsPaintListEnabled
     {
-        get => isPaintListEnabled;
-        set
-        {
-            isPaintListEnabled = value;
-
-            if (isPaintListEnabled)
-            {
-                if (tempSelectedSnipKind is not null)
-                {
-                    SelectedSnipKind = tempSelectedSnipKind;
-                }
-            }
-            else
-            {
-                tempSelectedSnipKind = SelectedSnipKind;
-                SelectedSnipKind = SnipKinds.First();
-            }
-
-            OnPropertyChanged();
-        }
+        get => (bool)GetValue(IsPaintListEnabledProperty);
+        set => SetValue(IsPaintListEnabledProperty, value);
     }
 
-    private static void ChangeButtonsStateStatic(bool isPhotoMode)
-    {
-        isPhotoButtonEnabled = isPhotoMode;
-        isVideoButtonEnabled = !isPhotoMode;
-        isPaintListEnabled = !isPhotoMode;
-    }
 
     private void ChangeButtonsState(bool isPhotoMode)
     {
@@ -120,6 +102,7 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     {
         SelectedCaptureType = CaptureType.Photo;
         ChangeButtonsState(false);
+        SelectedSnipKind = tempSelectedSnipKind;
     }
 
 
@@ -128,6 +111,9 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
     {
         SelectedCaptureType = CaptureType.Video;
         ChangeButtonsState(true);
+
+        tempSelectedSnipKind = SelectedSnipKind;
+        SelectedSnipKind = SnipKinds.First();
     }
 
     private bool CanVideoButtonClick() => IsDirectXSupported; 
@@ -156,25 +142,12 @@ public sealed partial class SnipControl : UserControl, INotifyPropertyChanged
         set => SetValue(SelectedSnipKindProperty, value);
     }
 
+
     public static readonly DependencyProperty SelectedCaptureTypeProperty = DependencyProperty.Register(
         nameof(SelectedCaptureType),
         typeof(CaptureType),
         typeof(SnipControl),
         new(default));
-
-    private static void SelectedCaptureTypePropertyChangedCallback(DependencyObject sender, DependencyPropertyChangedEventArgs e)
-    {
-        var newCaptureType = (CaptureType)e.NewValue;
-
-        if(newCaptureType == CaptureType.Photo)
-        {
-            ChangeButtonsStateStatic(isPhotoMode: false);
-        }
-        else
-        {
-            ChangeButtonsStateStatic(isPhotoMode: true);
-        }
-    }
 
     public CaptureType SelectedCaptureType
     {
